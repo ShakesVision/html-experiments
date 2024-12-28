@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OCR</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #f5f5f5;
+      }
+
+      input[type="file"] {
+        display: block;
+        width: 300px;
+        margin: 20px 0;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      button {
+        display: block;
+        width: 150px;
+        margin: 20px 0;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: #2196f3;
+        color: #fff;
+        font-size: 16px;
+        font-weight: bold;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #1976d2;
+      }
+
+      textarea {
+        display: block;
+        width: 300px;
+        height: 300px;
+        margin: 20px 0;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        resize: none;
+      }
+
+      #status {
+        margin: 20px 0;
+        font-size: 12px;
+        color: #666;
+      }
+
+      @media (max-width: 600px) {
+        input[type="file"],
+        button,
+        textarea {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HTML structure -->
+    <input type="file" id="input-image" />
+    <button id="convert-button">Convert</button>
+    <textarea id="result-textarea"></textarea>
+    <div id="status"></div>
+    <!-- Include Tesseract.js library -->
+    <script type="module" src="https://unpkg.com/tesseract.js"></script>
+
+    <!-- JavaScript code -->
+  </body>
+  <script>
+    // Get reference to DOM elements
+    const inputImage = document.getElementById("input-image");
+    const convertButton = document.getElementById("convert-button");
+    const statusDiv = document.getElementById("status");
+    const resultTextarea = document.getElementById("result-textarea");
+
+    convertButton.addEventListener("click", () => {
+      console.log("running");
+      // Get selected file
+      const file = inputImage.files[0];
+      ocr(file);
+    });
+
+    async function ocr(file) {
+      // Use Tesseract.js to perform OCR on image
+      const result = await Tesseract.recognize(file);
+      console.log(file, result);
+
+      // Display result in textarea
+      resultTextarea.value = result.data.text;
+
+      // Select and copy result to clipboard
+      resultTextarea.select();
+      document.execCommand("copy");
+    }
+
+    // Add event listener to input element
+    inputImage.addEventListener("change", async () => {
+      // write logic
+      const file = inputImage.files[0];
+      ocr2(file);
+    });
+
+    async function ocr2(file, lang = "eng") {
+      const worker = await Tesseract.createWorker({
+        logger: (m) => (statusDiv.innerText = m.progress * 100 + "%"),
+      });
+      await worker.loadLanguage(lang);
+      await worker.initialize(lang);
+      const {
+        data: { text },
+      } = await worker.recognize(file);
+      console.log(text);
+      resultTextarea.value = text;
+      await worker.terminate();
+    }
+  </script>
+</html>

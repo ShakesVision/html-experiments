@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Folder Reader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex">
+    <!-- Sidebar -->
+    <div id="sidebar"
+        class="bg-white shadow-lg h-full w-64 p-4 flex flex-col fixed left-0 top-0 transform -translate-x-full md:translate-x-0 transition-transform z-50">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-gray-700">File List</h2>
+            <button id="toggle-sidebar" class="text-gray-500 hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <input type="text" id="search-bar" placeholder="Search files..."
+            class="mb-4 p-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-300" />
+        <ul id="file-list" class="text-gray-600 flex-1 overflow-auto border-t pt-2"></ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6 ml-0 md:ml-64">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center space-x-4">
+                <button id="open-folder"
+                    class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:ring-4 focus:ring-blue-300">
+                    Select Folder
+                </button>
+                <button id="mobile-sidebar-toggle" class="text-blue-500 md:hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+            <div class="flex items-center space-x-2">
+                <label class="text-sm font-medium text-gray-700">Render As:</label>
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="radio" name="render-mode" value="html" checked class="hidden peer" />
+                    <span
+                        class="peer-checked:bg-blue-500 peer-checked:text-white px-3 py-1 rounded-lg text-gray-700 hover:bg-gray-200">
+                        HTML
+                    </span>
+                </label>
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="radio" name="render-mode" value="text" class="hidden peer" />
+                    <span
+                        class="peer-checked:bg-blue-500 peer-checked:text-white px-3 py-1 rounded-lg text-gray-700 hover:bg-gray-200">
+                        Text
+                    </span>
+                </label>
+            </div>
+        </div>
+        <div id="output-div" class="text-gray-800 border p-4 rounded-lg bg-gray-50 shadow-inner h-[80vh] overflow-auto">
+            <p class="text-gray-400 italic">File content will appear here...</p>
+        </div>
+    </div>
+
+    <script>
+        const openFolderButton = document.getElementById('open-folder');
+        const fileList = document.getElementById('file-list');
+        const outputDiv = document.getElementById('output-div');
+        const searchBar = document.getElementById('search-bar');
+        const sidebar = document.getElementById('sidebar');
+        const toggleSidebarButton = document.getElementById('toggle-sidebar');
+        const mobileSidebarToggle = document.getElementById('mobile-sidebar-toggle');
+        const renderModeInputs = document.querySelectorAll('input[name="render-mode"]');
+
+        let allFiles = []; // Cache of all files for search filtering
+
+        // Sidebar toggle (desktop and mobile)
+        toggleSidebarButton.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+        mobileSidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Open folder and load file list
+        openFolderButton.addEventListener('click', async () => {
+            try {
+                const directoryHandle = await window.showDirectoryPicker();
+                fileList.innerHTML = '';
+                allFiles = [];
+
+                for await (const entry of directoryHandle.values()) {
+                    if (entry.kind === 'file') {
+                        const file = await entry.getFile();
+                        allFiles.push({ name: file.name, file });
+                    }
+                }
+
+                renderFileList();
+            } catch (err) {
+                console.error('Error accessing folder:', err);
+                fileList.innerHTML = `<li class="text-red-500">Failed to access folder. ${err.message}</li>`;
+            }
+        });
+
+        // Render file list with search filter
+        function renderFileList(filter = '') {
+            fileList.innerHTML = '';
+            const filteredFiles = allFiles.filter(({ name }) =>
+                name.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            filteredFiles.forEach(({ name, file }) => {
+                const listItem = document.createElement('li');
+                listItem.className =
+                    'py-1 px-2 cursor-pointer hover:bg-blue-100 rounded-lg';
+                listItem.textContent = name;
+
+                listItem.addEventListener('click', async () => {
+                    const content = await file.text();
+                    outputDiv.dataset.currentContent = content; // Save the content for future re-renders
+
+                    const renderMode = document.querySelector('input[name="render-mode"]:checked').value;
+                    if (renderMode === 'html') {
+                        outputDiv.innerHTML = content;
+                    } else {
+                        outputDiv.textContent = content;
+                    }
+                    // Close the sidebar
+                    sidebar.classList.toggle('-translate-x-full');
+                });
+
+                fileList.appendChild(listItem);
+            });
+        }
+
+        // Add an event listener to re-render content when the render mode changes
+        renderModeInputs.forEach((input) => {
+            input.addEventListener('change', () => {
+                const renderMode = document.querySelector('input[name="render-mode"]:checked').value;
+
+                // Re-render the content in the selected mode
+                if (outputDiv.dataset.currentContent) {
+                    const content = outputDiv.dataset.currentContent; // Retrieve the last loaded content
+                    if (renderMode === 'html') {
+                        outputDiv.innerHTML = content;
+                    } else {
+                        outputDiv.textContent = content;
+                    }
+                }
+            });
+        });
+
+        // Search bar filtering
+        searchBar.addEventListener('input', (event) => {
+            renderFileList(event.target.value);
+        });
+    </script>
+</body>
+
+</html>

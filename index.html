@@ -1,136 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OCR</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        background-color: #f5f5f5;
-      }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Web Experiments</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans">
 
-      input[type="file"] {
-        display: block;
-        width: 300px;
-        margin: 20px 0;
-        padding: 10px;
-        border: none;
-        border-radius: 5px;
-        background-color: #fff;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      }
+<!-- Master Page Header -->
+<header class="bg-blue-600 text-white text-center p-6">
+    <h1 class="text-4xl font-bold">My Web Experiments</h1>
+    <p class="mt-2 text-lg">Explore my collection of web experiments</p>
+</header>
 
-      button {
-        display: block;
-        width: 150px;
-        margin: 20px 0;
-        padding: 10px;
-        border: none;
-        border-radius: 5px;
-        background-color: #2196f3;
-        color: #fff;
-        font-size: 16px;
-        font-weight: bold;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        cursor: pointer;
-      }
+<!-- Search Bar -->
+<div class="p-6 flex justify-center">
+    <input id="searchBox" type="text" placeholder="Search Projects..." class="p-3 w-1/2 border border-gray-300 rounded-md">
+</div>
 
-      button:hover {
-        background-color: #1976d2;
-      }
+<!-- Project Cards -->
+<div id="projectsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
+    <div class="project-card" data-name="Project 1">
+        <div class="bg-white p-4 rounded-lg shadow-lg">
+            <img class="h-32 w-32 object-cover mx-auto rounded-full" src="project1-icon.png" alt="Project 1">
+            <h3 class="mt-4 text-xl font-semibold">OCR</h3>
+            <p class="text-gray-700 mt-2">OCR try using Tesseract.js.</p>
+            <a href="sample/index.html" class="block mt-4 text-blue-500">Go to Project</a>
+        </div>
+    </div>
 
-      textarea {
-        display: block;
-        width: 300px;
-        height: 300px;
-        margin: 20px 0;
-        padding: 10px;
-        border: none;
-        border-radius: 5px;
-        background-color: #fff;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        resize: none;
-      }
+    <div class="project-card" data-name="Project 2">
+        <div class="bg-white p-4 rounded-lg shadow-lg">
+            <img class="h-32 w-32 object-cover mx-auto rounded-full" src="project2-icon.png" alt="Project 2">
+            <h3 class="mt-4 text-xl font-semibold">Enhanced Folder Reader</h3>
+            <p class="text-gray-700 mt-2">Asks you to select a folder and then lists its file for reading as HTML or plain text.</p>
+            <a href="textRead/index.html" class="block mt-4 text-blue-500">Go to Project</a>
+        </div>
+    </div>
 
-      #status {
-        margin: 20px 0;
-        font-size: 12px;
-        color: #666;
-      }
+    <!-- Add more projects here -->
 
-      @media (max-width: 600px) {
-        input[type="file"],
-        button,
-        textarea {
-          width: 100%;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <!-- HTML structure -->
-    <input type="file" id="input-image" />
-    <button id="convert-button">Convert</button>
-    <textarea id="result-textarea"></textarea>
-    <div id="status"></div>
-    <!-- Include Tesseract.js library -->
-    <script type="module" src="https://unpkg.com/tesseract.js"></script>
+</div>
 
-    <!-- JavaScript code -->
-  </body>
-  <script>
-    // Get reference to DOM elements
-    const inputImage = document.getElementById("input-image");
-    const convertButton = document.getElementById("convert-button");
-    const statusDiv = document.getElementById("status");
-    const resultTextarea = document.getElementById("result-textarea");
+<script>
+    // Search functionality
+    const searchBox = document.getElementById("searchBox");
+    const projectCards = document.querySelectorAll(".project-card");
 
-    convertButton.addEventListener("click", () => {
-      console.log("running");
-      // Get selected file
-      const file = inputImage.files[0];
-      ocr(file);
+    searchBox.addEventListener("input", function() {
+        const searchQuery = searchBox.value.toLowerCase();
+
+        projectCards.forEach(card => {
+            const projectName = card.getAttribute("data-name").toLowerCase();
+            if (projectName.includes(searchQuery)) {
+                card.style.display = "block";
+            } else {
+                card.style.display = "none";
+            }
+        });
     });
+</script>
 
-    async function ocr(file) {
-      // Use Tesseract.js to perform OCR on image
-      const result = await Tesseract.recognize(file);
-      console.log(file, result);
-
-      // Display result in textarea
-      resultTextarea.value = result.data.text;
-
-      // Select and copy result to clipboard
-      resultTextarea.select();
-      document.execCommand("copy");
-    }
-
-    // Add event listener to input element
-    inputImage.addEventListener("change", async () => {
-      // write logic
-      const file = inputImage.files[0];
-      ocr2(file);
-    });
-
-    async function ocr2(file, lang = "eng") {
-      const worker = await Tesseract.createWorker({
-        logger: (m) => (statusDiv.innerText = m.progress * 100 + "%"),
-      });
-      await worker.loadLanguage(lang);
-      await worker.initialize(lang);
-      const {
-        data: { text },
-      } = await worker.recognize(file);
-      console.log(text);
-      resultTextarea.value = text;
-      await worker.terminate();
-    }
-  </script>
+</body>
 </html>
