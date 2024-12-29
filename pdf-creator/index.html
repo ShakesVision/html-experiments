@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convert Image to PDF</title>
+    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2pdf.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .drop-zone {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .image-preview {
+            width: 110px;
+            height: 195px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+
+    <div class="flex min-h-screen flex-col">
+        <!-- Header -->
+        <header class="bg-blue-500 text-white p-4 text-center">
+            <h1 class="text-xl font-bold">CONVERT IMAGE TO PDF</h1>
+            <p>Convert JPEG or PNG images to PDF without uploading your sensitive data anywhere.</p>
+        </header>
+
+        <div class="flex flex-1">
+            <!-- Left Panel: Image Grid -->
+            <div class="w-3/4 p-4" id="dropzone">
+                <div class="drop-zone mb-4 text-gray-600">
+                    <p>Select Images or drop images here</p>
+                    <input type="file" id="file-input" class="hidden" multiple accept="image/png, image/jpeg" />
+                </div>
+
+                <div class="grid grid-cols-4 gap-4" id="image-grid"></div>
+            </div>
+
+            <!-- Right Panel: Configuration Options -->
+            <div class="w-1/4 p-4 bg-white shadow-md">
+                <h3 class="text-lg font-bold mb-4">Page Configuration</h3>
+
+                <label class="block mb-2">Page Orientation</label>
+                <select id="orientation" class="w-full p-2 mb-4 border border-gray-300 rounded">
+                    <option value="portrait">Portrait</option>
+                    <option value="landscape">Landscape</option>
+                </select>
+
+                <label class="block mb-2">Page Size</label>
+                <select id="page-size" class="w-full p-2 mb-4 border border-gray-300 rounded">
+                    <option value="a4">A4</option>
+                    <option value="letter">US Letter</option>
+                    <option value="same">Same as Image</option>
+                </select>
+
+                <label class="block mb-2">Page Margin</label>
+                <select id="page-margin" class="w-full p-2 mb-4 border border-gray-300 rounded">
+                    <option value="none">None</option>
+                    <option value="small">Small</option>
+                    <option value="big">Big</option>
+                </select>
+
+                <label class="block mb-2">Compression</label>
+                <select id="compression" class="w-full p-2 mb-4 border border-gray-300 rounded">
+                    <option value="compress">Compress Images</option>
+                    <option value="no-compress">Don't Compress</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Footer with Sticky Buttons -->
+        <footer class="sticky bottom-0 bg-blue-500 text-white p-4 flex justify-between">
+            <button id="add-page" class="bg-blue-700 px-4 py-2 rounded">Add Page</button>
+            <button id="generate-pdf" class="bg-green-600 px-4 py-2 rounded">Generate PDF</button>
+        </footer>
+    </div>
+
+    <script>
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file-input');
+        const imageGrid = document.getElementById('image-grid');
+        const addPageButton = document.getElementById('add-page');
+        const generatePDFButton = document.getElementById('generate-pdf');
+
+        let images = [];
+
+        // Handle file input changes or drag-and-drop
+        fileInput.addEventListener('change', handleFileSelect);
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (event) => event.preventDefault());
+        dropzone.addEventListener('drop', handleDrop);
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            processFiles(files);
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            const files = event.dataTransfer.files;
+            processFiles(files);
+        }
+
+        function processFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.type === 'image/jpeg' || file.type === 'image/png') {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const img = new Image();
+                        img.src = e.target.result;
+                        images.push(img);
+                        displayImages();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        function displayImages() {
+            imageGrid.innerHTML = '';
+            images.forEach((image, index) => {
+                const imgContainer = document.createElement('div');
+                imgContainer.classList.add('relative');
+                imgContainer.innerHTML = `<img src="${image.src}" class="image-preview" alt="Image" />`;
+                imageGrid.appendChild(imgContainer);
+            });
+        }
+
+        addPageButton.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        generatePDFButton.addEventListener('click', generatePDF);
+
+        function generatePDF() {
+            const doc = jspdf.jsPDF();
+
+            const orientation = document.getElementById('orientation').value;
+            const pageSize = document.getElementById('page-size').value;
+            const pageMargin = document.getElementById('page-margin').value;
+            const compression = document.getElementById('compression').value;
+
+            let pdfOptions = {
+                orientation: orientation,
+                unit: 'mm',
+                format: pageSize === 'a4' ? 'a4' : (pageSize === 'letter' ? 'letter' : 'auto')
+            };
+
+            // Now add images and configure each page with addPage options
+            images.forEach((image, index) => {
+                const scale = pageSize === 'same' ? 1 : 0.2;
+                const imgWidth = image.width * scale; // Scaling the image to fit the page
+                const imgHeight = image.height * scale; // Scaling the image to fit the page
+
+                let margin = 0;
+                if (pageMargin === 'small') margin = 5;
+                if (pageMargin === 'big') margin = 20;
+
+                // For every new image, we will add a new page to the PDF with the options
+                if (index > 0) {
+                    doc.addPage( // Now pass the page options to addPage()
+                        pageSize === 'a4' ? 'a4' : (pageSize === 'letter' ? 'letter' : 'auto'),
+                        orientation
+                    );
+                }
+
+                // Add the image to the current page
+                doc.addImage(image.src, 'JPEG', margin, margin, imgWidth, imgHeight);
+            });
+
+
+            doc.save('generated.pdf');
+        }
+    </script>
+</body>
+
+</html>
