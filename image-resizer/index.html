@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resize PWA Icons</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
+        <h1 class="text-xl font-bold mb-4 text-center">PWA Icon Resizer</h1>
+        <div>
+            <label class="block font-medium text-gray-700 mb-2" for="imageInput">Upload Icon (512x512)</label>
+            <input type="file" id="imageInput" accept="image/png"
+                class="block w-full border border-gray-300 rounded-lg shadow-sm mb-4 p-2 focus:outline-none">
+        </div>
+
+        <img id="uploaded-img" src="" alt="">
+
+        <label class="block font-medium text-gray-700 mb-2" for="sizes">Target Sizes (one per line)</label>
+        <textarea id="sizes"
+            class="block w-full border border-gray-300 rounded-lg shadow-sm mb-4 p-2 focus:outline-none" rows="6">72x72
+96x96
+128x128
+144x144
+152x152
+192x192
+384x384
+512x512
+        </textarea>
+
+        <label class="block font-medium text-gray-700 mb-2" for="filenameFormat">Filename Format</label>
+        <input id="filenameFormat" type="text" placeholder="icon-<width>x<height>.png" value="icon-<width>x<height>.png"
+            class="block w-full border border-gray-300 rounded-lg shadow-sm mb-4 p-2 focus:outline-none">
+
+        <button id="resizeButton"
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none">
+            Generate & Download Resized Icons
+        </button>
+
+        <p id="error" class="text-red-500 mt-4 text-center hidden">Error: Invalid size(s) detected. Ensure all sizes are
+            less than 512x512.</p>
+        <p id="progress" class="text-blue-500 mt-4 text-center hidden">Generating zip file... Please wait.</p>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const sizesTextarea = document.getElementById('sizes');
+        const filenameFormatInput = document.getElementById('filenameFormat');
+        const resizeButton = document.getElementById('resizeButton');
+        const errorElement = document.getElementById('error');
+        const progressElement = document.getElementById('progress');
+
+        imageInput.addEventListener('change', () => {
+            const file = imageInput.files[0];
+            const uploadedImg = document.getElementById('uploaded-img');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedImg.src = e.target.result;
+                    uploadedImg.style.visibility = 'visible';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                uploadedImg.style.visibility = 'hidden';
+            }
+        });
+
+        document.getElementById('uploaded-img').style.visibility = 'hidden';
+
+
+        resizeButton.addEventListener('click', async () => {
+            errorElement.classList.add('hidden');
+            progressElement.classList.add('hidden');
+            const file = imageInput.files[0];
+
+            if (!file) {
+                alert('Please upload an image first.');
+                return;
+            }
+
+            const targetSizes = sizesTextarea.value
+                .split('\n')
+                .map(size => size.trim())
+                .filter(size => size !== '');
+
+            const validSizes = targetSizes.every(size => {
+                const [width, height] = size.split('x').map(Number);
+                // Todo: Replace hardcoded 512 with source img.width and height.
+                return !isNaN(width) && !isNaN(height) && width > 0 && height > 0 && width <= 512 && height <= 512;
+            });
+
+            if (!validSizes) {
+                errorElement.classList.remove('hidden');
+                return;
+            }
+
+            const filenameFormat = filenameFormatInput.value;
+
+            const img = new Image();
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                img.src = reader.result;
+            };
+
+            img.onload = async () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const zip = new JSZip();
+
+                progressElement.classList.remove('hidden');
+
+                try {
+                    await Promise.all(targetSizes.map(size => {
+                        return new Promise(resolve => {
+                            const [width, height] = size.split('x').map(Number);
+                            canvas.width = width;
+                            canvas.height = height;
+                            ctx.clearRect(0, 0, width, height);
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            canvas.toBlob(blob => {
+                                if (blob) {
+                                    const filename = filenameFormat
+                                        .replace('<width>', width)
+                                        .replace('<height>', height);
+                                    zip.file(filename, blob);
+                                }
+                                resolve();
+                            }, 'image/png');
+                        });
+                    }));
+
+                    const zipContent = await zip.generateAsync({ type: 'blob' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(zipContent);
+                    link.download = 'resized-icons.zip';
+                    link.click();
+                } catch (error) {
+                    console.error('An error occurred:', error);
+                } finally {
+                    progressElement.classList.add('hidden');
+                }
+            };
+
+            reader.readAsDataURL(file);
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</body>
+
+</html>

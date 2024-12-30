@@ -1,75 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Web Experiments</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-50 font-sans">
 
-<!-- Master Page Header -->
-<header class="bg-blue-600 text-white text-center p-6">
-    <h1 class="text-4xl font-bold">My Web Experiments</h1>
-    <p class="mt-2 text-lg">Explore my collection of web experiments</p>
-</header>
+    <!-- Master Page Header -->
+    <header class="bg-blue-600 text-white text-center p-6">
+        <h1 class="text-4xl font-bold">My Web Experiments</h1>
+        <p class="mt-2 text-lg">Explore my collection of web experiments</p>
+    </header>
 
-<!-- Search Bar -->
-<div class="p-6 flex justify-center">
-    <input id="searchBox" type="text" placeholder="Search Projects..." class="p-3 w-1/2 border border-gray-300 rounded-md">
-</div>
-
-<!-- Project Cards -->
-<div id="projectsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
-    <div class="project-card" data-name="#1">
-        <div class="bg-white p-4 rounded-lg shadow-lg">
-            <img class="h-32 w-32 object-cover mx-auto rounded-full" src="assets/images/project.png" alt="Project 1">
-            <h3 class="mt-4 text-xl font-semibold">OCR</h3>
-            <p class="text-gray-700 mt-2">OCR try using Tesseract.js.</p>
-            <a href="sample/index.html" class="block mt-4 text-blue-500">Go to Project</a>
-        </div>
+    <!-- Search Bar -->
+    <div class="p-6 flex justify-center">
+        <input id="searchBox" type="text" placeholder="Search Projects..."
+            class="p-3 w-1/2 border border-gray-300 rounded-md">
     </div>
 
-    <div class="project-card" data-name="#2">
-        <div class="bg-white p-4 rounded-lg shadow-lg">
-            <img class="h-32 w-32 object-cover mx-auto rounded-full" src="assets/images/project.png" alt="Project 2">
-            <h3 class="mt-4 text-xl font-semibold">Enhanced Folder Reader</h3>
-            <p class="text-gray-700 mt-2">Asks you to select a folder and then lists its file for reading as HTML or plain text.</p>
-            <a href="textRead/index.html" class="block mt-4 text-blue-500">Go to Project</a>
+    <!-- Project Cards -->
+    <div id="projectsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
+        <div class="project-card" data-name="#1">
+            <div class="bg-white p-4 rounded-lg shadow-lg">
+                <img class="h-32 w-32 object-cover mx-auto rounded-full" src="assets/images/project.png"
+                    alt="Project 1">
+                <h3 class="mt-4 text-xl font-semibold">OCR</h3>
+                <p class="text-gray-700 mt-2">OCR try using Tesseract.js.</p>
+                <a href="sample/index.html" class="block mt-4 text-blue-500">Go to Project</a>
+            </div>
         </div>
+
+        <div class="project-card" data-name="#2">
+            <div class="bg-white p-4 rounded-lg shadow-lg">
+                <img class="h-32 w-32 object-cover mx-auto rounded-full" src="assets/images/project.png"
+                    alt="Project 2">
+                <h3 class="mt-4 text-xl font-semibold">Enhanced Folder Reader</h3>
+                <p class="text-gray-700 mt-2">Asks you to select a folder and then lists its file for reading as HTML or
+                    plain text.</p>
+                <a href="textRead/index.html" class="block mt-4 text-blue-500">Go to Project</a>
+            </div>
+        </div>
+
+        <div class="project-card" data-name="#3">
+            <div class="bg-white p-4 rounded-lg shadow-lg">
+                <img class="h-32 w-32 object-cover mx-auto rounded-full" src="assets/images/project.png"
+                    alt="Project 2">
+                <h3 class="mt-4 text-xl font-semibold">Image to PDF</h3>
+                <p class="text-gray-700 mt-2">Select images and convert them to PDF, offline.</p>
+                <a href="pdf-creator/index.html" class="block mt-4 text-blue-500">Go to Project</a>
+            </div>
+        </div>
+
+        <div class="project-card" data-name="#4">
+            <div class="bg-white p-4 rounded-lg shadow-lg">
+                <img class="h-32 w-32 object-cover mx-auto rounded-full" src="assets/images/project.png"
+                    alt="Project 4">
+                <h3 class="mt-4 text-xl font-semibold">Image Resizer</h3>
+                <p class="text-gray-700 mt-2">Resize images to multiple sizes.</p>
+                <a href="image-resizer/index.html" class="block mt-4 text-blue-500">Go to Project</a>
+            </div>
+        </div>
+
     </div>
 
-    <div class="project-card" data-name="#3">
-        <div class="bg-white p-4 rounded-lg shadow-lg">
-            <img class="h-32 w-32 object-cover mx-auto rounded-full" src="assets/images/project.png" alt="Project 2">
-            <h3 class="mt-4 text-xl font-semibold">Image to PDF</h3>
-            <p class="text-gray-700 mt-2">Select images and convert them to PDF, offline.</p>
-            <a href="pdf-creator/index.html" class="block mt-4 text-blue-500">Go to Project</a>
-        </div>
-    </div>
+    <script>
+        // Search functionality
+        const searchBox = document.getElementById("searchBox");
+        const projectCards = document.querySelectorAll(".project-card");
 
-</div>
+        searchBox.addEventListener("input", function () {
+            const searchQuery = searchBox.value.toLowerCase();
 
-<script>
-    // Search functionality
-    const searchBox = document.getElementById("searchBox");
-    const projectCards = document.querySelectorAll(".project-card");
-
-    searchBox.addEventListener("input", function() {
-        const searchQuery = searchBox.value.toLowerCase();
-
-        projectCards.forEach(card => {
-            const projectName = card.getAttribute("data-name").toLowerCase();
-            const projectHeading = card.querySelector("h3").textContent.toLowerCase();
-            const projectDescription = card.querySelector("p").textContent.toLowerCase();
-            if (projectName.includes(searchQuery) || projectHeading.includes(searchQuery) || projectDescription.includes(searchQuery)) {
-                card.style.display = "block";
-            } else {
-                card.style.display = "none";
-            }
+            projectCards.forEach(card => {
+                const projectName = card.getAttribute("data-name").toLowerCase();
+                const projectHeading = card.querySelector("h3").textContent.toLowerCase();
+                const projectDescription = card.querySelector("p").textContent.toLowerCase();
+                if (projectName.includes(searchQuery) || projectHeading.includes(searchQuery) || projectDescription.includes(searchQuery)) {
+                    card.style.display = "block";
+                } else {
+                    card.style.display = "none";
+                }
+            });
         });
-    });
-</script>
+    </script>
 
 </body>
+
 </html>
