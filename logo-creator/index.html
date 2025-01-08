@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        const googleAPIKey = 'AIzaSyB7F6FC3vPT7wJGiksdBWPg_54XctfcDn0';
+        const apiUrl = `https://www.googleapis.com/webfonts/v1/webfonts?key=${googleAPIKey}`;
+
+        let fontsCache = [];
+
+        async function loadFonts() {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            fontsCache = data.items;
+            return fontsCache;
+        }
+
+        async function populateFontDropdown(language) {
+            const fonts = fontsCache.length ? fontsCache : await loadFonts();
+            const filteredFonts = fonts.filter(font => font.subsets.includes(language));
+            const fontSelect = document.getElementById('fontSelect');
+            fontSelect.innerHTML = '';
+            filteredFonts.forEach(font => {
+                const option = document.createElement('option');
+                option.value = font.family;
+                option.textContent = font.family;
+                fontSelect.appendChild(option);
+            });
+        }
+
+        async function applyFontPreview() {
+            const fontSelect = document.getElementById('fontSelect');
+            const textSample = document.getElementById('textSample');
+            const selectedFont = fontsCache.find(font => font.family === fontSelect.value);
+
+            if (selectedFont) {
+                const fontUrl = selectedFont.files.regular;
+                const fontFace = new FontFace(selectedFont.family, `url(${fontUrl})`);
+                await fontFace.load();
+                document.fonts.add(fontFace);
+                textSample.style.fontFamily = selectedFont.family;
+            }
+        }
+
+        window.onload = async () => {
+            await loadFonts();
+            populateFontDropdown('arabic');
+        };
+    </script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Left Pane: Canvas -->
+        <div class="flex-1 flex flex-col items-center justify-center">
+            <div id="canvasContainer" class="relative w-96 h-96 bg-white shadow-lg">
+                <canvas id="logoCanvas" class="w-full h-full"></canvas>
+            </div>
+            <div class="flex flex-col w-full mt-4 px-4">
+                <!-- Scale -->
+                <div class="mb-4">
+                    <label for="scale" class="block text-sm font-medium">Scale</label>
+                    <input type="number" id="scale" class="w-full mt-1 border-gray-300 rounded" value="1">
+                </div>
+                <!-- Save Button -->
+                <button id="saveButton" class="mb-4 w-full bg-blue-500 text-white py-2 rounded">Save Logo</button>
+                <!-- Eraser Tool -->
+                <button id="eraserButton" class="w-full bg-red-500 text-white py-2 rounded">Eraser Tool</button>
+            </div>
+        </div>
+
+        <!-- Right Pane: Controls -->
+        <div class="w-1/4 bg-white shadow-lg p-4">
+            <h2 class="text-lg font-semibold mb-4">Controls</h2>
+
+            <!-- Language Selection -->
+            <div class="mb-4">
+                <label for="languageSelect" class="block text-sm font-medium">Language</label>
+                <select id="languageSelect" class="w-full mt-1 border-gray-300 rounded" onchange="populateFontDropdown(this.value)">
+                    <option value="arabic">Arabic</option>
+                    <option value="latin">English</option>
+                    <option value="devanagari">Hindi</option>
+                </select>
+            </div>
+
+            <!-- Font Selection -->
+            <div class="mb-4">
+                <label for="fontSelect" class="block text-sm font-medium">Font</label>
+                <select id="fontSelect" class="w-full mt-1 border-gray-300 rounded" onchange="applyFontPreview()"></select>
+            </div>
+
+            <!-- Text Input -->
+            <div class="mb-4">
+                <label for="textInput" class="block text-sm font-medium">Text</label>
+                <input type="text" id="textInput" class="w-full mt-1 border-gray-300 rounded" oninput="updateTextPreview()">
+            </div>
+
+            <!-- Readonly Preview -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium">Preview</label>
+                <div id="textSample" class="p-2 border border-gray-300 rounded bg-gray-50">Sample Text</div>
+            </div>
+
+            <!-- Text Position -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium">Position</label>
+                <select id="positionSelect" class="w-full mt-1 border-gray-300 rounded">
+                    <option value="top-left">Top-Left</option>
+                    <option value="top-center">Top-Center</option>
+                    <option value="top-right">Top-Right</option>
+                    <option value="center-left">Center-Left</option>
+                    <option value="center">Center</option>
+                    <option value="center-right">Center-Right</option>
+                    <option value="bottom-left">Bottom-Left</option>
+                    <option value="bottom-center">Bottom-Center</option>
+                    <option value="bottom-right">Bottom-Right</option>
+                </select>
+            </div>
+
+            <!-- Font Size -->
+            <div class="mb-4">
+                <label for="fontSize" class="block text-sm font-medium">Font Size</label>
+                <input type="number" id="fontSize" class="w-full mt-1 border-gray-300 rounded" value="20" oninput="updateTextPreview()">
+            </div>
+
+            <!-- Text Color -->
+            <div class="mb-4">
+                <label for="textColor" class="block text-sm font-medium">Text Color</label>
+                <input type="color" id="textColor" class="w-full mt-1" oninput="updateTextPreview()">
+            </div>
+
+             <!-- Background Color -->
+             <div class="mb-4">
+                <label for="bgColor" class="block text-sm font-medium">Canvas Background Color</label>
+                <input type="color" id="bgColor" class="w-full mt-1">
+            </div>
+
+            <button id="addTextButton" class="w-full bg-green-500 text-white py-2 rounded">Add Text</button>
+
+            
+            <!-- Text Adjustment -->
+            <div id="textAdjustments" class="hidden mt-4">
+                <h3 class="text-md font-semibold mb-2">Adjust Position</h3>
+                <div class="grid grid-cols-3 gap-2">
+                    <button id="moveUp" class="bg-gray-300 p-2 rounded">⬆️</button>
+                    <button id="moveLeft" class="bg-gray-300 p-2 rounded">⬅️</button>
+                    <button id="moveRight" class="bg-gray-300 p-2 rounded">➡️</button>
+                    <button id="moveDown" class="bg-gray-300 p-2 rounded">⬇️</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('logoCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 384;
+        canvas.height = 384;
+
+        const textInput = document.getElementById('textInput');
+        const fontSize = document.getElementById('fontSize');
+        const textColor = document.getElementById('textColor');
+        const bgColor = document.getElementById('bgColor');
+        const scaleInput = document.getElementById('scale');
+        const saveButton = document.getElementById('saveButton');
+        const addTextButton = document.getElementById('addTextButton');
+        const positionSelect = document.getElementById('positionSelect');
+        const fontSelect = document.getElementById('fontSelect');
+        const textSample = document.getElementById('textSample');
+        const eraserButton = document.getElementById('eraserButton');
+
+        const moveUp = document.getElementById('moveUp');
+        const moveDown = document.getElementById('moveDown');
+        const moveLeft = document.getElementById('moveLeft');
+        const moveRight = document.getElementById('moveRight');
+        const textAdjustments = document.getElementById('textAdjustments');
+
+        const textElements = [];
+        let selectedTextIndex = null;
+
+        // Update canvas background color
+        bgColor?.addEventListener('input', () => {
+            ctx.fillStyle = bgColor.value;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            redrawCanvas();
+        });
+
+
+        function updateTextPreview() {
+            textSample.textContent = textInput.value;
+            textSample.style.fontSize = `${fontSize.value}px`;
+            textSample.style.color = textColor.value;
+        }
+
+        addTextButton.addEventListener('click', () => {
+            const text = {
+                content: textInput.value,
+                font: fontSelect.value,
+                fontSize: parseInt(fontSize.value, 10),
+                color: textColor.value,
+                position: positionSelect.value,
+                offsetX: 0,
+                offsetY: 0
+            };
+            textElements.push(text);
+            selectedTextIndex = textElements.length - 1;
+            textAdjustments.classList.remove('hidden');
+            redrawCanvas();
+        });
+
+        // Adjust position of selected text
+        moveUp.addEventListener('click', () => adjustTextPosition(0, -5));
+        moveDown.addEventListener('click', () => adjustTextPosition(0, 5));
+        moveLeft.addEventListener('click', () => adjustTextPosition(-5, 0));
+        moveRight.addEventListener('click', () => adjustTextPosition(5, 0));
+
+        function adjustTextPosition(deltaX, deltaY) {
+            if (selectedTextIndex !== null) {
+                textElements[selectedTextIndex].offsetX += deltaX;
+                textElements[selectedTextIndex].offsetY += deltaY;
+                redrawCanvas();
+            }
+        }
+
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = bgColor?.value || '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            textElements.forEach(text => {
+                const fontFace = fontsCache.find(font => font.family === text.font);
+                if (fontFace) {
+                    const fontUrl = fontFace.files.regular;
+                    const tempFontFace = new FontFace(text.font, `url(${fontUrl})`);
+                    tempFontFace.load().then(() => {
+                        document.fonts.add(tempFontFace);
+                        ctx.font = `${text.fontSize}px ${text.font}`;
+                        ctx.fillStyle = text.color;
+                        const [x, y] = getPositionCoords(text.position, text.fontSize);
+                        ctx.fillText(text.content, x + text.offsetX, y + text.offsetY);
+                    });
+                }
+            });
+        }
+
+        function getPositionCoords(position, fontSize) {
+            const positions = {
+                'top-left': [10, fontSize],
+                'top-center': [canvas.width / 2, fontSize],
+                'top-right': [canvas.width - 10, fontSize],
+                'center-left': [10, canvas.height / 2],
+                'center': [canvas.width / 2, canvas.height / 2],
+                'center-right': [canvas.width - 10, canvas.height / 2],
+                'bottom-left': [10, canvas.height - 10],
+                'bottom-center': [canvas.width / 2, canvas.height - 10],
+                'bottom-right': [canvas.width - 10, canvas.height - 10],
+            };
+            return positions[position];
+        }
+
+        
+        // Save canvas as image
+        saveButton.addEventListener('click', () => {
+            const scale = parseInt(scaleInput.value, 10) || 1;
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width * scale;
+            tempCanvas.height = canvas.height * scale;
+
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.scale(scale, scale);
+            tempCtx.drawImage(canvas, 0, 0);
+
+            const link = document.createElement('a');
+            link.download = 'logo.png';
+            link.href = tempCanvas.toDataURL();
+            link.click();
+        });
+
+        // Eraser tool
+        let erasing = false;
+        eraserButton.addEventListener('click', () => {
+            canvas.style.cursor = 'crosshair';
+            erasing = true;
+        });
+
+        canvas.addEventListener('mousedown', () => {
+            if (erasing) {
+                canvas.addEventListener('mousemove', erase);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            if (erasing) {
+                canvas.removeEventListener('mousemove', erase);
+            }
+        });
+
+        function erase(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fillStyle = bgColor?.value || '#ffffff';
+            ctx.fill();
+        }
+    </script>
+</body>
+</html>
