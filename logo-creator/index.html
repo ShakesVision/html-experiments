@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -52,7 +53,13 @@
         };
     </script>
 </head>
+
 <body class="bg-gray-100">
+    <div>
+        App icon generator is also <a
+            href="https://romannurik.github.io/AndroidAssetStudio/icons-launcher.html">here</a>, or its <a
+            href="https://icon.kitchen/">successer</a>.
+    </div>
     <div class="flex h-screen">
         <!-- Left Pane: Canvas -->
         <div class="flex-1 flex flex-col items-center justify-center">
@@ -79,7 +86,8 @@
             <!-- Language Selection -->
             <div class="mb-4">
                 <label for="languageSelect" class="block text-sm font-medium">Language</label>
-                <select id="languageSelect" class="w-full mt-1 border-gray-300 rounded" onchange="populateFontDropdown(this.value)">
+                <select id="languageSelect" class="w-full mt-1 border-gray-300 rounded"
+                    onchange="populateFontDropdown(this.value)">
                     <option value="arabic">Arabic</option>
                     <option value="latin">English</option>
                     <option value="devanagari">Hindi</option>
@@ -89,13 +97,15 @@
             <!-- Font Selection -->
             <div class="mb-4">
                 <label for="fontSelect" class="block text-sm font-medium">Font</label>
-                <select id="fontSelect" class="w-full mt-1 border-gray-300 rounded" onchange="applyFontPreview()"></select>
+                <select id="fontSelect" class="w-full mt-1 border-gray-300 rounded"
+                    onchange="applyFontPreview()"></select>
             </div>
 
             <!-- Text Input -->
             <div class="mb-4">
                 <label for="textInput" class="block text-sm font-medium">Text</label>
-                <input type="text" id="textInput" class="w-full mt-1 border-gray-300 rounded" oninput="updateTextPreview()">
+                <input type="text" id="textInput" class="w-full mt-1 border-gray-300 rounded"
+                    oninput="updateTextPreview()">
             </div>
 
             <!-- Readonly Preview -->
@@ -123,7 +133,8 @@
             <!-- Font Size -->
             <div class="mb-4">
                 <label for="fontSize" class="block text-sm font-medium">Font Size</label>
-                <input type="number" id="fontSize" class="w-full mt-1 border-gray-300 rounded" value="20" oninput="updateTextPreview()">
+                <input type="number" id="fontSize" class="w-full mt-1 border-gray-300 rounded" value="20"
+                    oninput="updateTextPreview()">
             </div>
 
             <!-- Text Color -->
@@ -132,15 +143,15 @@
                 <input type="color" id="textColor" class="w-full mt-1" oninput="updateTextPreview()">
             </div>
 
-             <!-- Background Color -->
-             <div class="mb-4">
+            <!-- Background Color -->
+            <div class="mb-4">
                 <label for="bgColor" class="block text-sm font-medium">Canvas Background Color</label>
                 <input type="color" id="bgColor" class="w-full mt-1">
             </div>
 
             <button id="addTextButton" class="w-full bg-green-500 text-white py-2 rounded">Add Text</button>
 
-            
+
             <!-- Text Adjustment -->
             <div id="textAdjustments" class="hidden mt-4">
                 <h3 class="text-md font-semibold mb-2">Adjust Position</h3>
@@ -261,7 +272,7 @@
             return positions[position];
         }
 
-        
+
         // Save canvas as image
         saveButton.addEventListener('click', () => {
             const scale = parseInt(scaleInput.value, 10) || 1;
@@ -310,4 +321,5 @@
         }
     </script>
 </body>
+
 </html>
