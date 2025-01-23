@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WYSIWYG Editor with Urdu Keyboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="ur-phonetic.js"></script>
+    <style>
+        .editor {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            min-height: 200px;
+            outline: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="w-11/12 max-w-2xl bg-white rounded shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-lg font-bold">WYSIWYG Editor</h1>
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" id="urduToggle" class="w-4 h-4">
+                <span class="text-sm">Urdu Keyboard</span>
+            </label>
+        </div>
+        <div contenteditable="true" id="urduTextarea" class="editor bg-gray-50 text-gray-800"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const textarea = document.getElementById('urduTextarea');
+            const urduToggle = document.getElementById('urduToggle');
+
+            // Function to map English keystrokes to Urdu characters
+            function mapToUrdu(event) {
+                if (!urduToggle.checked) return; // Only apply mapping if toggle is on
+
+                const key = event.key;
+                const keyMap = keyboardMap;
+
+                for (let i = 0; i < keyMap.length; i++) {
+                    if (keyMap[i][0] === key) {
+                        event.preventDefault();
+                        insertAtCursor(textarea, keyMap[i][1]);
+                        break;
+                    }
+                }
+            }
+
+            // Function to insert character at cursor position
+            function insertAtCursor(field, char) {
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+
+                range.deleteContents();
+                range.insertNode(document.createTextNode(char));
+
+                // Move the cursor after the inserted character
+                range.setStart(range.endContainer, range.endOffset);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+
+            // Attach the event listener to the editor
+            textarea.addEventListener('keypress', mapToUrdu);
+        });
+    </script>
+</body>
+</html>
