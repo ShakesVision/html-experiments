@@ -29,7 +29,7 @@ function processInput(input) {
         const normalizedEntry = entry.trim().toLowerCase();
 
         // Match patterns for quantity, unit, and item name
-        const match = normalizedEntry.match(/(half|quarter|\d+(?:\.\d+)?)\s*(?:of\s*)?(kilo|kg|g|grams)?\s*(.+)/i);
+        const match = normalizedEntry.match(/(half|quarter|1\/2|1\/4|0.5|0.25|.25|.5|\d+(?:\.\d+)?)\s*(?:of\s*)?(kilo|kg|g|grams)?\s*(.+)/i);
 
         if (match) {
             const rawQuantity = match[1];
@@ -48,7 +48,13 @@ function processInput(input) {
 // Helper function to parse quantities
 function parseQuantity(quantity) {
     if (/half/i.test(quantity)) return '½';
+    if (/1\/2/i.test(quantity)) return '½';
+    if (/.5/i.test(quantity)) return '½';
+    if (/0.5/i.test(quantity)) return '½';
     if (/quarter/i.test(quantity)) return '¼';
+    if (/1\/4/i.test(quantity)) return '¼';
+    if (/.25/i.test(quantity)) return '¼';
+    if (/0.25/i.test(quantity)) return '¼';
     return parseFloat(quantity).toString();
 }
 
@@ -60,7 +66,7 @@ function updateShoppingList(items) {
         const row = document.createElement('tr');
 
         row.innerHTML = `
-            <td class="border border-gray-300 px-4 py-2">${item}</td>
+            <td class="border border-gray-300 px-4 py-2 title-case">${item}</td>
             <td class="border border-gray-300 px-4 py-2">${quantity}</td>
             <td class="border border-gray-300 px-4 py-2"></td>
         `;
