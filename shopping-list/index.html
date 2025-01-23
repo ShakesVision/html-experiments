@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio to Shopping List</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="script.js" defer></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="max-w-4xl mx-auto p-4">
+        <!-- Header Section -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold mb-2">Grocery List Generator</h1>
+            <p class="text-gray-600">Easily generate a shopping list from your voice</p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white shadow-md rounded-lg p-4 mb-6">
+            <div class="flex items-center space-x-4">
+                <button id="micButton" class="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full">
+                    <span class="material-icons">mic</span>
+                </button>
+                <input id="transcription" type="text" class="flex-1 border border-gray-300 rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Speak or type your items here...">
+                <button id="sendButton" class="bg-green-200 hover:bg-blue-600 text-green-800 p-3 rounded-full">
+                    <span class="material-icons">send</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- User Info Section -->
+        <div class="bg-white shadow-md rounded-lg p-4 mb-6">
+            <h2 class="text-lg font-semibold mb-2">Your Information</h2>
+            <div class="mb-3">
+                <label for="userName" class="block text-sm font-medium text-gray-700">Name:</label>
+                <input id="userName" type="text" class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your name">
+            </div>
+            <div>
+                <label for="userAddress" class="block text-sm font-medium text-gray-700">Address:</label>
+                <textarea id="userAddress" class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your address"></textarea>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div class="bg-white shadow-md rounded-lg p-4">
+            <h2 class="text-lg font-semibold mb-4">Shopping List</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full border-collapse border border-gray-300">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border border-gray-300 px-4 py-2 text-left w-3/5">Item</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left w-1/5">Quantity</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left w-1/5">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shoppingList">
+                        <!-- Dynamic rows will be added here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Print Button -->
+        <div class="text-center mt-6">
+            <button id="printButton" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg">
+                <span class="material-icons align-middle">print</span>
+                <span>Print List</span>
+            </button>
+        </div>
+    </div>
+</body>
+</html>
