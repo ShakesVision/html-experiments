@@ -30,7 +30,7 @@
                     alt="Project 1">
                 <h3 class="mt-4 text-xl font-semibold">OCR</h3>
                 <p class="text-gray-700 mt-2">OCR try using Tesseract.js.</p>
-                <a href="sample/index.html" class="block mt-4 text-blue-500">Go to Project</a>
+                <a href="ocr/index.html" class="block mt-4 text-blue-500">Go to Project</a>
             </div>
         </div>
 
@@ -79,39 +79,40 @@
                 <h3 class="mt-4 text-xl font-semibold">Urdu Editor</h3>
                 <p class="text-gray-700 mt-2">Write Urdu / English with your default keyboard.</p>
                 <a href="logo-creator/index.html" class="block mt-4 text-blue-500">Go to Project</a>
-
-                <div class="project-card" data-name="#7">
-                    <div class="bg-white p-4 rounded-lg shadow-lg">
-                        <img class="h-32 w-32 object-cover mx-auto rounded-full" src="pdf-image/icon.png"
-                            alt="Project 4">
-                        <h3 class="mt-4 text-xl font-semibold">PDF to Image converter</h3>
-                        <p class="text-gray-700 mt-2">Convert PDF to images with selected pages and resize options.</p>
-                        <a href="pdf-image/index.html" class="block mt-4 text-blue-500">Go to Project</a>
-                    </div>
-                </div>
-
             </div>
+        </div>
 
-            <script>
-                // Search functionality
-                const searchBox = document.getElementById("searchBox");
-                const projectCards = document.querySelectorAll(".project-card");
+        <div class="project-card" data-name="#7">
+            <div class="bg-white p-4 rounded-lg shadow-lg">
+                <img class="h-32 w-32 object-cover mx-auto rounded-full" src="pdf-image/icon.png" alt="Project 4">
+                <h3 class="mt-4 text-xl font-semibold">PDF to Image converter</h3>
+                <p class="text-gray-700 mt-2">Convert PDF to images with selected pages and resize options.</p>
+                <a href="pdf-image/index.html" class="block mt-4 text-blue-500">Go to Project</a>
+            </div>
+        </div>
 
-                searchBox.addEventListener("input", function () {
-                    const searchQuery = searchBox.value.toLowerCase();
+    </div>
 
-                    projectCards.forEach(card => {
-                        const projectName = card.getAttribute("data-name").toLowerCase();
-                        const projectHeading = card.querySelector("h3").textContent.toLowerCase();
-                        const projectDescription = card.querySelector("p").textContent.toLowerCase();
-                        if (projectName.includes(searchQuery) || projectHeading.includes(searchQuery) || projectDescription.includes(searchQuery)) {
-                            card.style.display = "block";
-                        } else {
-                            card.style.display = "none";
-                        }
-                    });
-                });
-            </script>
+    <script>
+        // Search functionality
+        const searchBox = document.getElementById("searchBox");
+        const projectCards = document.querySelectorAll(".project-card");
+
+        searchBox.addEventListener("input", function () {
+            const searchQuery = searchBox.value.toLowerCase();
+
+            projectCards.forEach(card => {
+                const projectName = card.getAttribute("data-name").toLowerCase();
+                const projectHeading = card.querySelector("h3").textContent.toLowerCase();
+                const projectDescription = card.querySelector("p").textContent.toLowerCase();
+                if (projectName.includes(searchQuery) || projectHeading.includes(searchQuery) || projectDescription.includes(searchQuery)) {
+                    card.style.display = "block";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        });
+    </script>
 
 </body>
 
