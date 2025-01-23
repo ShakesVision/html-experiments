@@ -7,12 +7,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="ur-phonetic.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gulzar&family=Noto+Nastaliq+Urdu&display=swap');
+
         .editor {
             border: 1px solid #ccc;
             border-radius: 5px;
             padding: 10px;
             min-height: 200px;
             outline: none;
+        }
+
+        .urdu-active {
+            font-family: 'Gulzar', 'Noto Nastaliq Urdu', serif;
         }
     </style>
 </head>
@@ -38,12 +44,11 @@
                 if (!urduToggle.checked) return; // Only apply mapping if toggle is on
 
                 const key = event.key;
-                const keyMap = keyboardMap;
 
-                for (let i = 0; i < keyMap.length; i++) {
-                    if (keyMap[i][0] === key) {
+                for (let i = 0; i < keyboardMap.length; i++) {
+                    if (keyboardMap[i][0] === key) {
                         event.preventDefault();
-                        insertAtCursor(textarea, keyMap[i][1]);
+                        insertAtCursor(textarea, keyboardMap[i][1]);
                         break;
                     }
                 }
@@ -63,8 +68,47 @@
                 selection.addRange(range);
             }
 
+            // Toggle direction and font on checkbox change
+            urduToggle.addEventListener('change', () => {
+                if (urduToggle.checked) {
+                    textarea.style.direction = 'rtl';
+                    textarea.classList.add('urdu-active');
+                } else {
+                    textarea.style.direction = 'ltr';
+                    textarea.classList.remove('urdu-active');
+                }
+            });
+
             // Attach the event listener to the editor
             textarea.addEventListener('keypress', mapToUrdu);
+
+            // Enable rich-text formatting with commands
+            textarea.addEventListener('keydown', (event) => {
+                if (event.ctrlKey || event.metaKey) {
+                    switch (event.key.toLowerCase()) {
+                        case 'b':
+                            event.preventDefault();
+                            document.execCommand('bold');
+                            break;
+                        case 'i':
+                            event.preventDefault();
+                            document.execCommand('italic');
+                            break;
+                        case 'u':
+                            event.preventDefault();
+                            document.execCommand('underline');
+                            break;
+                        case 'l':
+                            event.preventDefault();
+                            document.execCommand('insertUnorderedList');
+                            break;
+                        case 'o':
+                            event.preventDefault();
+                            document.execCommand('insertOrderedList');
+                            break;
+                    }
+                }
+            });
         });
     </script>
 </body>
