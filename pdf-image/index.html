@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Images Converter</title>
+    <link rel="icon" href="icon.png" type="image/png" sizes="16x16">
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip-utils/dist/jszip-utils.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
+    <div class="w-full max-w-3xl bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-xl font-bold text-center mb-6">PDF to Images Converter</h1>
+        <div class="mb-4">
+            <label for="pdfFile" class="block text-sm font-medium text-gray-700">Upload PDF</label>
+            <input type="file" id="pdfFile" accept="application/pdf"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-500">
+        </div>
+        <div class="mb-4">
+            <label for="pageRange" class="block text-sm font-medium text-gray-700">Convert Range</label>
+            <input type="text" id="pageRange" placeholder="e.g., All or 1-5,10,15"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-500">
+        </div>
+        <div class="mb-4">
+            <label for="format" class="block text-sm font-medium text-gray-700">Output Format</label>
+            <select id="format"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-500">
+                <option value="jpg">JPG</option>
+                <option value="png">PNG</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <p id="estimatedSize" class="text-sm text-gray-700"></p>
+            <label for="resize" class="block text-sm font-medium text-gray-700">Resize Options</label>
+            <select id="resize"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-500">
+                <option value="100">No Compression (100%)</option>
+                <option value="75">75%</option>
+                <option value="50">50%</option>
+                <option value="25">25%</option>
+            </select>
+        </div>
+        <button id="convertBtn"
+            class="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-500">Convert
+            & Download</button>
+    </div>
+
+    <script>
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+        document.getElementById('convertBtn').addEventListener('click', async () => {
+            const pdfFile = document.getElementById('pdfFile').files[0];
+            const pageRange = document.getElementById('pageRange').value.trim();
+            const format = document.getElementById('format').value;
+            const resizePercent = parseInt(document.getElementById('resize').value);
+
+            if (!pdfFile) {
+                alert('Please upload a PDF file.');
+                return;
+            }
+
+            const pdfData = new Uint8Array(await pdfFile.arrayBuffer());
+            const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+            const totalPages = pdf.numPages;
+
+            let pagesToConvert;
+            if (!pageRange || pageRange.toLowerCase() === 'all') {
+                pagesToConvert = Array.from({ length: totalPages }, (_, i) => i + 1);
+            } else {
+                const ranges = pageRange.split(',').map(r => r.split('-').map(Number));
+                pagesToConvert = [];
+                ranges.forEach(([start, end]) => {
+                    if (end) {
+                        for (let i = start; i <= end; i++) pagesToConvert.push(i);
+                    } else {
+                        pagesToConvert.push(start);
+                    }
+                });
+                pagesToConvert = [...new Set(pagesToConvert)].filter(p => p >= 1 && p <= totalPages);
+            }
+
+            const zip = new JSZip();
+
+            for (const pageNum of pagesToConvert) {
+                const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1 });
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+
+                canvas.width = viewport.width * (resizePercent / 100);
+                canvas.height = viewport.height * (resizePercent / 100);
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: page.getViewport({ scale: resizePercent / 100 })
+                }).promise;
+
+                const imageData = canvas.toDataURL(`image/${format}`, 1);
+                const base64Data = imageData.split(',')[1];
+
+                const filename = `${String(pageNum).padStart(String(totalPages).length, '0')}.${format}`;
+                zip.file(filename, base64Data, { base64: true });
+
+                if (pageNum === 1) {
+                    document.getElementById('estimatedSize').textContent = `Average image size is ${canvas.width}x${canvas.height} pixels and approximately ${(base64Data.length * 0.75 / 1024 / 1024).toFixed(2)} MB.`;
+                }
+            }
+
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            saveAs(zipBlob, 'pdf-images.zip');
+        });
+    </script>
+</body>
+
+</html>
