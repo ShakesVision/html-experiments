@@ -30,13 +30,12 @@ https://www.shakeeb.in
 
 ### Projects
 
-- [Home page](https://shakesvision.github.io/html-experiments/index.html)
+[Home page](https://shakesvision.github.io/html-experiments/index.html)
 - [editor](https://shakesvision.github.io/html-experiments/editor/index.html)
 - [image-resizer](https://shakesvision.github.io/html-experiments/image-resizer/index.html)
 - [logo-creator](https://shakesvision.github.io/html-experiments/logo-creator/index.html)
 - [ocr](https://shakesvision.github.io/html-experiments/ocr/index.html)
 - [pdf-creator](https://shakesvision.github.io/html-experiments/pdf-creator/index.html)
 - [pdf-image](https://shakesvision.github.io/html-experiments/pdf-image/index.html)
-- [random](https://shakesvision.github.io/html-experiments/random/index.html)
 - [shopping-list](https://shakesvision.github.io/html-experiments/shopping-list/index.html)
 - [textRead](https://shakesvision.github.io/html-experiments/textRead/index.html)
