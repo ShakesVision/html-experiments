@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Graphic Designer Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        #designCanvas {
+            border: 2px dashed #4a5568;
+            touch-action: none;
+        }
+
+        .tool-btn {
+            @apply p-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center;
+        }
+
+        .tool-btn.active {
+            @apply bg-blue-500 text-white hover:bg-blue-600;
+        }
+
+        .sidebar {
+            @apply w-64 bg-white p-4 shadow-lg overflow-y-auto;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                @apply w-full;
+            }
+
+            .flex {
+                @apply flex-col;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <h2 class="text-xl font-bold mb-4">Tools</h2>
+
+            <!-- Canvas Size Controls -->
+            <div class="mb-6">
+                <h3 class="font-semibold mb-2">Canvas Size</h3>
+                <input type="number" id="canvasWidth" placeholder="Width" class="w-full p-2 border rounded mb-2"
+                    value="500">
+                <input type="number" id="canvasHeight" placeholder="Height" class="w-full p-2 border rounded mb-2"
+                    value="500">
+                <button onclick="updateCanvasSize()"
+                    class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                    <span class="material-icons">aspect_ratio</span> Update Canvas
+                </button>
+            </div>
+
+            <!-- Unified Color Picker -->
+            <div class="mb-6">
+                <h3 class="font-semibold mb-2">Color</h3>
+                <input type="color" id="colorPicker" class="w-full mb-2">
+                <button onclick="setFillColor()"
+                    class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 mb-2">
+                    <span class="material-icons">format_color_fill</span> Fill Color
+                </button>
+                <button onclick="setStrokeColor()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                    <span class="material-icons">border_color</span> Outline Color
+                </button>
+            </div>
+
+            <!-- Background Controls -->
+            <div class="mb-6">
+                <h3 class="font-semibold mb-2">Background</h3>
+                <button onclick="setBackgroundColor()"
+                    class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 mb-2">
+                    <span class="material-icons">format_color_fill</span> Background Color
+                </button>
+                <input type="file" id="bgImageInput" accept="image/*" class="w-full mb-2">
+            </div>
+
+            <!-- Text Controls -->
+            <div class="mb-6">
+                <h3 class="font-semibold mb-2">Text</h3>
+                <input type="text" id="textInput" placeholder="Enter text" class="w-full p-2 border rounded mb-2">
+                <input type="number" id="fontSize" placeholder="Font size" class="w-full p-2 border rounded mb-2">
+                <select id="fontFamily" class="w-full p-2 border rounded mb-2"></select>
+                <button onclick="addText()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                    <span class="material-icons">text_fields</span> Add Text
+                </button>
+            </div>
+
+            <!-- Shapes Controls -->
+            <div class="mb-6">
+                <h3 class="font-semibold mb-2">Shapes</h3>
+                <div class="flex gap-2">
+                    <button onclick="addRectangle()" class="tool-btn" title="Rectangle">
+                        <span class="material-icons">crop_square</span>
+                    </button>
+                    <button onclick="addCircle()" class="tool-btn" title="Circle">
+                        <span class="material-icons">circle</span>
+                    </button>
+                    <button onclick="addTriangle()" class="tool-btn" title="Triangle">
+                        <span class="material-icons">change_history</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pencil Tool -->
+            <div class="mb-6">
+                <h3 class="font-semibold mb-2">Pencil</h3>
+                <div class="flex gap-2">
+                    <button onclick="enablePencil(1)" class="tool-btn" title="Thin Brush">
+                        <span class="material-icons">brush</span>
+                    </button>
+                    <button onclick="enablePencil(5)" class="tool-btn" title="Medium Brush">
+                        <span class="material-icons">brush</span>
+                    </button>
+                    <button onclick="enablePencil(10)" class="tool-btn" title="Thick Brush">
+                        <span class="material-icons">brush</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hand Tool -->
+            <div class="mb-6">
+                <h3 class="font-semibold mb-2">Mouse Mode</h3>
+                <button onclick="enableMouseMode()" class="tool-btn active" title="Hand Tool">
+                    <span class="material-icons">back_hand</span>
+                </button>
+            </div>
+
+            <!-- Image Controls -->
+            <div class="mb-6">
+                <h3 class="font-semibold mb-2">Image</h3>
+                <input type="file" id="imageInput" accept="image/*" class="w-full mb-2">
+            </div>
+        </div>
+
+        <!-- Main Canvas Area -->
+        <div class="flex-1 p-4">
+            <div class="bg-white p-4 rounded shadow-lg">
+                <canvas id="designCanvas" width="800" height="600"></canvas>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="sidebar">
+            <h2 class="text-xl font-bold mb-4">Export</h2>
+
+            <div class="mb-4">
+                <label class="block mb-2">PNG Scale:</label>
+                <input type="number" id="pngScale" value="1" min="1" class="w-full p-2 border rounded" step="0.1">
+            </div>
+
+            <button onclick="exportPNG()" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 mb-2">
+                <span class="material-icons">image</span> Download PNG
+            </button>
+            <button onclick="exportSVG()" class="w-full bg-purple-500 text-white p-2 rounded hover:bg-purple-600">
+                <span class="material-icons">code</span> Download SVG
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = new fabric.Canvas('designCanvas', {
+            selection: true,
+            preserveObjectStacking: true
+        });
+
+        let fonts = [];
+        let isDrawingMode = false;
+
+        // Load Google Fonts
+        async function loadFonts() {
+            const response = await fetch('https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyB2T-ljecKOY7fY0vUvqBqNqJGjC0k8xX4');
+            const data = await response.json();
+            fonts = data.items.filter(font =>
+                font.subsets.includes('latin') || font.subsets.includes('arabic')
+            );
+
+            const fontSelect = document.getElementById('fontFamily');
+            fonts.forEach(font => {
+                const option = document.createElement('option');
+                option.value = font.family;
+                option.textContent = font.family;
+                fontSelect.appendChild(option);
+            });
+
+            // Load fonts dynamically
+            const WebFontConfig = {
+                google: { families: fonts.map(font => font.family) }
+            };
+            const wf = document.createElement('script');
+            wf.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js';
+            wf.async = true;
+            document.head.appendChild(wf);
+        }
+
+        // Add text to canvas
+        function addText() {
+            const text = document.getElementById('textInput').value;
+            const fontSize = parseInt(document.getElementById('fontSize').value) || 24;
+            const fontFamily = document.getElementById('fontFamily').value;
+
+            const textObj = new fabric.IText(text, {
+                left: 100,
+                top: 100,
+                fontFamily: fontFamily,
+                fontSize: fontSize,
+                fill: getColor(),
+                hasControls: true
+            });
+
+            canvas.add(textObj);
+            canvas.setActiveObject(textObj);
+        }
+
+        // Add shapes
+        function addRectangle() {
+            const rect = new fabric.Rect({
+                left: 100,
+                top: 100,
+                width: 100,
+                height: 50,
+                fill: getColor(),
+                stroke: getStrokeColor(),
+                strokeWidth: 2,
+                hasControls: true
+            });
+            canvas.add(rect);
+        }
+
+        function addCircle() {
+            const circle = new fabric.Circle({
+                left: 100,
+                top: 100,
+                radius: 50,
+                fill: getColor(),
+                stroke: getStrokeColor(),
+                strokeWidth: 2,
+                hasControls: true
+            });
+            canvas.add(circle);
+        }
+
+        function addTriangle() {
+            const triangle = new fabric.Triangle({
+                left: 100,
+                top: 100,
+                width: 100,
+                height: 100,
+                fill: getColor(),
+                stroke: getStrokeColor(),
+                strokeWidth: 2,
+                hasControls: true
+            });
+            canvas.add(triangle);
+        }
+
+        // Enable pencil tool
+        function enablePencil(brushSize) {
+            isDrawingMode = true;
+            canvas.isDrawingMode = true;
+            canvas.freeDrawingBrush.width = brushSize;
+            canvas.freeDrawingBrush.color = getColor();
+        }
+
+        // Enable mouse mode (hand tool)
+        function enableMouseMode() {
+            isDrawingMode = false;
+            canvas.isDrawingMode = false;
+        }
+
+        // Get selected color
+        function getColor() {
+            return document.getElementById('colorPicker').value;
+        }
+
+        // Get selected stroke color
+        function getStrokeColor() {
+            return document.getElementById('colorPicker').value;
+        }
+
+        // Set fill color for selected object
+        function setFillColor() {
+            if (canvas.getActiveObject()) {
+                canvas.getActiveObject().set('fill', getColor());
+                canvas.renderAll();
+            }
+        }
+
+        // Set stroke color for selected object
+        function setStrokeColor() {
+            if (canvas.getActiveObject()) {
+                canvas.getActiveObject().set('stroke', getStrokeColor());
+                canvas.renderAll();
+            }
+        }
+
+        // Handle image upload
+        document.getElementById('imageInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (f) {
+                fabric.Image.fromURL(f.target.result, function (img) {
+                    img.scaleToWidth(200);
+                    canvas.add(img);
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Handle background image upload
+        document.getElementById('bgImageInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (f) {
+                fabric.Image.fromURL(f.target.result, function (img) {
+                    img.set({
+                        scaleX: canvas.width / img.width,
+                        scaleY: canvas.height / img.height,
+                        selectable: false
+                    });
+                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Set background color
+        function setBackgroundColor() {
+            const color = getColor();
+            canvas.setBackgroundColor(color, canvas.renderAll.bind(canvas));
+        }
+
+        // Update canvas size
+        function updateCanvasSize() {
+            const width = parseInt(document.getElementById('canvasWidth').value) || 800;
+            const height = parseInt(document.getElementById('canvasHeight').value) || 600;
+            canvas.setDimensions({ width, height });
+        }
+
+        // Export as PNG
+        function exportPNG() {
+            const scale = parseFloat(document.getElementById('pngScale').value) || 1;
+            const dataURL = canvas.toDataURL({
+                format: 'png',
+                multiplier: scale
+            });
+
+            const link = document.createElement('a');
+            link.download = 'design.png';
+            link.href = dataURL;
+            link.click();
+        }
+
+        // Export as SVG
+        function exportSVG() {
+            const svg = canvas.toSVG();
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.download = 'design.svg';
+            link.href = url;
+            link.click();
+        }
+
+        // Initialize
+        loadFonts();
+    </script>
+</body>
+
+</html>
