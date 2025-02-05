@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Major System Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .selected { background-color: aqua; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4">
+
+    <div class="max-w-lg mx-auto bg-white p-4 rounded shadow-md">
+        <h1 class="text-2xl font-bold text-center mb-4">Major System Converter</h1>
+
+        <!-- Major System Chart -->
+        <div class="mb-4">
+            <h2 class="text-lg font-semibold">Major System Mapping</h2>
+            <div class="grid grid-cols-5 gap-2 text-center p-2 border rounded bg-gray-50">
+                <div class="p-2 border rounded">0 <br><b>S, Z</b></div>
+                <div class="p-2 border rounded">1 <br><b>T, D</b></div>
+                <div class="p-2 border rounded">2 <br><b>N</b></div>
+                <div class="p-2 border rounded">3 <br><b>M</b></div>
+                <div class="p-2 border rounded">4 <br><b>R</b></div>
+                <div class="p-2 border rounded">5 <br><b>L</b></div>
+                <div class="p-2 border rounded">6 <br><b>J, SH, CH</b></div>
+                <div class="p-2 border rounded">7 <br><b>K, G</b></div>
+                <div class="p-2 border rounded">8 <br><b>F, V</b></div>
+                <div class="p-2 border rounded">9 <br><b>P, B</b></div>
+            </div>
+        </div>
+
+        <!-- Number to Letters -->
+        <div class="mb-4">
+            <h2 class="text-lg font-semibold">Convert Number to Letters</h2>
+            <input type="text" id="numberInput" class="w-full p-2 border rounded mt-2" placeholder="Enter numbers e.g., 98765">
+            <div id="numberSelection" class="flex flex-wrap gap-2 mt-3"></div>
+            <div id="letterCombinations" class="mt-3 font-semibold text-lg"></div>
+        </div>
+
+        <!-- Word to Number -->
+        <div class="mb-4">
+            <h2 class="text-lg font-semibold">Convert Word to Number</h2>
+            <input type="text" id="wordInput" class="w-full p-2 border rounded mt-2" placeholder="Enter word e.g., laptop">
+            <div id="wordNumberResult" class="mt-3 font-semibold text-lg"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const majorSystem = {
+            0: ['S', 'Z'], 1: ['T', 'D'], 2: ['N'], 3: ['M'], 4: ['R'],
+            5: ['L'], 6: ['J', 'SH', 'CH'], 7: ['K', 'G'], 8: ['F', 'V'], 9: ['P', 'B']
+        };
+
+        const numberInput = document.getElementById("numberInput");
+        const numberSelection = document.getElementById("numberSelection");
+        const letterCombinations = document.getElementById("letterCombinations");
+        const wordInput = document.getElementById("wordInput");
+        const wordNumberResult = document.getElementById("wordNumberResult");
+
+        let selectedRanges = [];
+
+        numberInput.addEventListener("input", () => {
+            const numStr = numberInput.value.replace(/\D/g, "");
+            numberSelection.innerHTML = "";
+            selectedRanges = [];
+
+            numStr.split("").forEach((digit, index) => {
+                const button = document.createElement("button");
+                button.className = "px-3 py-1 border rounded bg-gray-200 hover:bg-gray-300";
+                button.textContent = digit;
+                button.dataset.index = index;
+
+                button.addEventListener("click", () => toggleNumberSelection(numStr, index));
+                numberSelection.appendChild(button);
+            });
+
+            letterCombinations.innerHTML = "";
+        });
+
+        function toggleNumberSelection(numStr, index) {
+            const newSelection = numStr.substring(0, index + 1);
+            if (selectedRanges.includes(newSelection)) {
+                selectedRanges = selectedRanges.filter(s => s !== newSelection);
+            } else {
+                selectedRanges.push(newSelection);
+            }
+
+            updateSelectionUI();
+        }
+
+        function updateSelectionUI() {
+            document.querySelectorAll("#numberSelection button").forEach(button => {
+                const numStr = numberInput.value.replace(/\D/g, "");
+                const selected = selectedRanges.includes(numStr.substring(0, parseInt(button.dataset.index) + 1));
+                button.classList.toggle("selected", selected);
+            });
+
+            updateLetterCombinations();
+        }
+
+        function updateLetterCombinations() {
+            letterCombinations.innerHTML = "";
+            selectedRanges.forEach(range => {
+                const letterCombos = generateLetterCombinations(range);
+                letterCombinations.innerHTML += `<div class="mt-2"><strong>${range}:</strong> ${letterCombos.join(", ")}</div>`;
+            });
+        }
+
+        function generateLetterCombinations(numberStr) {
+            if (numberStr.length === 0) return [];
+            const digits = numberStr.split("").map(digit => majorSystem[digit] || []);
+            return cartesianProduct(digits);
+        }
+
+        function cartesianProduct(arrays) {
+            return arrays.reduce((a, b) => a.flatMap(d => b.map(e => d + e)), [""]);
+        }
+
+        wordInput.addEventListener("input", () => {
+            const word = wordInput.value.toUpperCase().replace(/[^A-Z]/g, "");
+            let numberStr = "";
+            for (const char of word) {
+                for (const [num, letters] of Object.entries(majorSystem)) {
+                    if (letters.includes(char)) {
+                        numberStr += num;
+                        break;
+                    }
+                }
+            }
+            wordNumberResult.textContent = numberStr ? `➡ ${numberStr}` : "";
+        });
+
+    </script>
+
+</body>
+</html>
