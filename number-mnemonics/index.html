@@ -1,19 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Major System Converter</title>
+    <link rel="icon" href="icon.png" type="image/png" sizes="16x16">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .selected { background-color: aqua; }
+        .selected {
+            background-color: #3b82f6 !important;
+            color: white;
+        }
+
+        .clickable {
+            cursor: pointer;
+            text-decoration: underline;
+        }
     </style>
 </head>
+
 <body class="bg-gray-100 text-gray-800 p-4">
 
     <div class="max-w-lg mx-auto bg-white p-4 rounded shadow-md">
         <h1 class="text-2xl font-bold text-center mb-4">Major System Converter</h1>
 
+        <p class="text-center mb-4">
+            Inspired by <a href="https://mnemonic.ninja/" class="clickable">Mnemonic Ninja</a> | <a href="https://github.com/gabe565/mnemonic-ninja" class="clickable">github</a>
+        </p>
         <!-- Major System Chart -->
         <div class="mb-4">
             <h2 class="text-lg font-semibold">Major System Mapping</h2>
@@ -34,16 +48,30 @@
         <!-- Number to Letters -->
         <div class="mb-4">
             <h2 class="text-lg font-semibold">Convert Number to Letters</h2>
-            <input type="text" id="numberInput" class="w-full p-2 border rounded mt-2" placeholder="Enter numbers e.g., 98765">
+            <input type="text" id="numberInput" class="w-full p-2 border rounded mt-2"
+                placeholder="Enter numbers e.g., 98765">
             <div id="numberSelection" class="flex flex-wrap gap-2 mt-3"></div>
             <div id="letterCombinations" class="mt-3 font-semibold text-lg"></div>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="mb-4">
+            <h2 class="text-lg font-semibold">Notes</h2>
+            <textarea id="notesBox" class="w-full p-2 border rounded mt-2 h-24"></textarea>
+            <button onclick="copyText('notesBox')" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded">Copy
+                Notes</button>
         </div>
 
         <!-- Word to Number -->
         <div class="mb-4">
             <h2 class="text-lg font-semibold">Convert Word to Number</h2>
-            <input type="text" id="wordInput" class="w-full p-2 border rounded mt-2" placeholder="Enter word e.g., laptop">
-            <div id="wordNumberResult" class="mt-3 font-semibold text-lg"></div>
+            <input type="text" id="wordInput" class="w-full p-2 border rounded mt-2"
+                placeholder="Enter word e.g., laptop">
+            <div class="flex items-center gap-2">
+                <div id="wordNumberResult" class="mt-3 font-semibold text-lg"></div>
+                <button onclick="copyText('wordNumberResult')"
+                    class="mt-3 bg-blue-500 text-white px-3 py-1 rounded">Copy</button>
+            </div>
         </div>
 
     </div>
@@ -59,13 +87,14 @@
         const letterCombinations = document.getElementById("letterCombinations");
         const wordInput = document.getElementById("wordInput");
         const wordNumberResult = document.getElementById("wordNumberResult");
+        const notesBox = document.getElementById("notesBox");
 
-        let selectedRanges = [];
+        let selectedNumbers = new Set();
 
         numberInput.addEventListener("input", () => {
             const numStr = numberInput.value.replace(/\D/g, "");
             numberSelection.innerHTML = "";
-            selectedRanges = [];
+            selectedNumbers.clear();
 
             numStr.split("").forEach((digit, index) => {
                 const button = document.createElement("button");
@@ -73,39 +102,68 @@
                 button.textContent = digit;
                 button.dataset.index = index;
 
-                button.addEventListener("click", () => toggleNumberSelection(numStr, index));
+                button.addEventListener("click", () => toggleSelection(numStr, index));
                 numberSelection.appendChild(button);
             });
+
+            if (numStr.length > 0) {
+                const resetBtn = document.createElement("button");
+                resetBtn.className = "ml-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600";
+                resetBtn.textContent = "Reset";
+                resetBtn.onclick = resetSelection;
+                numberSelection.appendChild(resetBtn);
+            }
 
             letterCombinations.innerHTML = "";
         });
 
-        function toggleNumberSelection(numStr, index) {
-            const newSelection = numStr.substring(0, index + 1);
-            if (selectedRanges.includes(newSelection)) {
-                selectedRanges = selectedRanges.filter(s => s !== newSelection);
+        function toggleSelection(numStr, index) {
+            const clickedNumber = numStr[index];
+
+            if (selectedNumbers.has(index)) {
+                selectedNumbers.delete(index);
             } else {
-                selectedRanges.push(newSelection);
+                selectedNumbers.add(index);
             }
 
-            updateSelectionUI();
+            updateSelectionUI(numStr);
         }
 
-        function updateSelectionUI() {
+        function resetSelection() {
+            selectedNumbers.clear();
+            updateSelectionUI(numberInput.value.replace(/\D/g, ""));
+        }
+
+        function updateSelectionUI(numStr) {
             document.querySelectorAll("#numberSelection button").forEach(button => {
-                const numStr = numberInput.value.replace(/\D/g, "");
-                const selected = selectedRanges.includes(numStr.substring(0, parseInt(button.dataset.index) + 1));
-                button.classList.toggle("selected", selected);
+                const index = parseInt(button.dataset.index);
+                button.classList.toggle("selected", selectedNumbers.has(index));
             });
 
-            updateLetterCombinations();
+            updateLetterCombinations(numStr);
         }
 
-        function updateLetterCombinations() {
+        function updateLetterCombinations(numStr) {
             letterCombinations.innerHTML = "";
-            selectedRanges.forEach(range => {
-                const letterCombos = generateLetterCombinations(range);
-                letterCombinations.innerHTML += `<div class="mt-2"><strong>${range}:</strong> ${letterCombos.join(", ")}</div>`;
+            const selectedIndexes = Array.from(selectedNumbers).sort((a, b) => a - b);
+
+            if (selectedIndexes.length === 0) return;
+
+            const selectedSubstrings = new Set();
+
+            selectedIndexes.forEach((endIdx, i) => {
+                for (let startIdx = 0; startIdx <= i; startIdx++) {
+                    const substring = numStr.slice(selectedIndexes[startIdx], endIdx + 1);
+                    selectedSubstrings.add(substring);
+                }
+            });
+
+            selectedSubstrings.forEach(sub => {
+                const letterCombos = generateLetterCombinations(sub);
+                const comboHTML = letterCombos
+                    .map(l => `<span class="clickable" onclick="addToNotes('${sub}: ${l}')">${l}</span>`)
+                    .join(", ");
+                letterCombinations.innerHTML += `<div class="mt-2"><strong>${sub}:</strong> ${comboHTML}</div>`;
             });
         }
 
@@ -119,21 +177,36 @@
             return arrays.reduce((a, b) => a.flatMap(d => b.map(e => d + e)), [""]);
         }
 
+        function addToNotes(entry) {
+            notesBox.value += entry + "\n";
+        }
+
         wordInput.addEventListener("input", () => {
             const word = wordInput.value.toUpperCase().replace(/[^A-Z]/g, "");
             let numberStr = "";
-            for (const char of word) {
-                for (const [num, letters] of Object.entries(majorSystem)) {
-                    if (letters.includes(char)) {
-                        numberStr += num;
-                        break;
+            for (let i = 0; i < word.length; i++) {
+                if (i < word.length - 1 && majorSystem[6].includes(word[i] + word[i + 1])) {
+                    numberStr += "6";
+                    i++;
+                } else {
+                    for (const [num, letters] of Object.entries(majorSystem)) {
+                        if (letters.includes(word[i])) {
+                            numberStr += num;
+                            break;
+                        }
                     }
                 }
             }
             wordNumberResult.textContent = numberStr ? `➡ ${numberStr}` : "";
         });
 
+        function copyText(elementId) {
+            const textElement = document.getElementById(elementId);
+            navigator.clipboard.writeText(textElement.value || textElement.textContent);
+        }
     </script>
+    <script src="../header.js"></script>
 
 </body>
+
 </html>
