@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quran Image Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'Muhammadi Quranic Bold';
+            src: url('fonts/MuhammadiQuranicBold.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'Noto Nastaliq Urdu';
+            src: url('fonts/NotoNastaliqUrdu-Regular.ttf') format('truetype');
+        }
+        .font-arabic {
+            font-family: 'Muhammadi Quranic Bold', serif;
+        }
+        .font-urdu {
+            font-family: 'Noto Nastaliq Urdu', serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-5">
+    <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-bold mb-4">Quran Image Generator</h2>
+        
+        <label class="block font-semibold">Top Heading</label>
+        <input type="text" id="topHeading" class="w-full p-2 border rounded mb-3">
+
+        <label class="block font-semibold">Arabic Text</label>
+        <textarea id="arabicText" class="w-full p-2 border rounded mb-3"></textarea>
+        
+        <label class="block font-semibold">English Translation</label>
+        <textarea id="englishText" class="w-full p-2 border rounded mb-3"></textarea>
+        
+        <label class="block font-semibold">Urdu Translation</label>
+        <textarea id="urduText" class="w-full p-2 border rounded mb-3"></textarea>
+        
+        <label class="block font-semibold">Translator Name</label>
+        <input type="text" id="translatorName" class="w-full p-2 border rounded mb-3">
+
+        <label class="block font-semibold">Fetch Quran Ayahs (e.g., 36:1-4)</label>
+        <input type="text" id="ayahsInput" class="w-full p-2 border rounded mb-3">
+        <button onclick="fetchAyahs()" class="bg-blue-500 text-white px-4 py-2 rounded">Fetch</button>
+        
+        <button onclick="generateImage()" class="bg-green-500 text-white px-4 py-2 rounded mt-4">Generate Image</button>
+
+        <div id="imagePreview" class="mt-6 p-6 rounded-lg shadow-lg text-white text-center hidden">
+            <h2 id="previewHeading" class="text-xl font-bold"></h2>
+            <p id="previewArabic" class="text-2xl font-arabic my-2"></p>
+            <p id="previewEnglish" class="text-lg"></p>
+            <p id="previewUrdu" class="text-lg font-urdu"></p>
+            <p id="previewTranslator" class="text-sm mt-4"></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
