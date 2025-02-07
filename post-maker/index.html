@@ -1,50 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quran Image Generator</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
+        /* @font-face {
+            font-family: "Muhammadi Quranic Bold";
+            src: url("https://db.onlinewebfonts.com/t/650b92acf6cf9b0cef6a51673a66ec75.eot");
+            src: url("https://db.onlinewebfonts.com/t/650b92acf6cf9b0cef6a51673a66ec75.eot?#iefix")format("embedded-opentype"),
+                url("https://db.onlinewebfonts.com/t/650b92acf6cf9b0cef6a51673a66ec75.woff2")format("woff2"),
+                url("https://db.onlinewebfonts.com/t/650b92acf6cf9b0cef6a51673a66ec75.woff")format("woff"),
+                url("https://db.onlinewebfonts.com/t/650b92acf6cf9b0cef6a51673a66ec75.ttf")format("truetype"),
+                url("https://db.onlinewebfonts.com/t/650b92acf6cf9b0cef6a51673a66ec75.svg#F1 MUHAMMADI QURANIC")format("svg");
+        } */
         @font-face {
-            font-family: 'Muhammadi Quranic Bold';
-            src: url('fonts/MuhammadiQuranicBold.ttf') format('truetype');
+            font-family: "AlqalamQuranWbW";
+            src: url("https://quran.com/fonts/quran/hafs/nastaleeq/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2");
         }
+
+
         @font-face {
-            font-family: 'Noto Nastaliq Urdu';
-            src: url('fonts/NotoNastaliqUrdu-Regular.ttf') format('truetype');
+            font-family: "Nafees Nastaleeq";
+            src: url("https://db.onlinewebfonts.com/t/4e99406984f565d64d32a29bd46a456e.eot");
+            src: url("https://db.onlinewebfonts.com/t/4e99406984f565d64d32a29bd46a456e.eot?#iefix")format("embedded-opentype"),
+                url("https://db.onlinewebfonts.com/t/4e99406984f565d64d32a29bd46a456e.woff2")format("woff2"),
+                url("https://db.onlinewebfonts.com/t/4e99406984f565d64d32a29bd46a456e.woff")format("woff"),
+                url("https://db.onlinewebfonts.com/t/4e99406984f565d64d32a29bd46a456e.ttf")format("truetype"),
+                url("https://db.onlinewebfonts.com/t/4e99406984f565d64d32a29bd46a456e.svg#Nafees Nastaleeq")format("svg");
         }
+
         .font-arabic {
-            font-family: 'Muhammadi Quranic Bold', serif;
+            font-family: 'AlqalamQuranWbW', serif;
         }
+
         .font-urdu {
-            font-family: 'Noto Nastaliq Urdu', serif;
+            font-family: 'Nafees Nastaleeq', serif;
         }
     </style>
 </head>
+
 <body class="bg-gray-100 p-5">
     <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-lg">
         <h2 class="text-2xl font-bold mb-4">Quran Image Generator</h2>
-        
+
         <label class="block font-semibold">Top Heading</label>
         <input type="text" id="topHeading" class="w-full p-2 border rounded mb-3">
 
         <label class="block font-semibold">Arabic Text</label>
         <textarea id="arabicText" class="w-full p-2 border rounded mb-3"></textarea>
-        
+
         <label class="block font-semibold">English Translation</label>
         <textarea id="englishText" class="w-full p-2 border rounded mb-3"></textarea>
-        
+
         <label class="block font-semibold">Urdu Translation</label>
         <textarea id="urduText" class="w-full p-2 border rounded mb-3"></textarea>
-        
+
         <label class="block font-semibold">Translator Name</label>
         <input type="text" id="translatorName" class="w-full p-2 border rounded mb-3">
 
         <label class="block font-semibold">Fetch Quran Ayahs (e.g., 36:1-4)</label>
         <input type="text" id="ayahsInput" class="w-full p-2 border rounded mb-3">
         <button onclick="fetchAyahs()" class="bg-blue-500 text-white px-4 py-2 rounded">Fetch</button>
-        
+
         <button onclick="generateImage()" class="bg-green-500 text-white px-4 py-2 rounded mt-4">Generate Image</button>
 
         <div id="imagePreview" class="mt-6 p-6 rounded-lg shadow-lg text-white text-center hidden">
@@ -58,4 +78,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>
