@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ar">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mushaf Page</title>
+    <style>
+        @font-face {
+            font-family: "Indopak";
+            src: url("https://quran.com/fonts/quran/hafs/nastaleeq/indopak/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2");
+            /* src: url("https://www.quranwbw.com/fonts/AlQuranIndoPakv5byQuranWBW.com-Regular.woff2"); */
+        }
+
+        body {
+            font-family: 'Indopak', 'Traditional Arabic', serif;
+            text-align: center;
+            direction: rtl;
+            background-color: #f9f9f9;
+            margin: 20px;
+        }
+
+        .page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 10px;
+            border: 2px solid #000;
+            max-width: 600px;
+            margin: auto;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .line {
+            font-size: 18px;
+            margin: 5px 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            text-align-last: justify;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page" id="mushafPage">
+        <!-- Words will be inserted here dynamically -->
+    </div>
+
+    <script>
+        async function fetchMushafPage() {
+            try {
+                const response = await fetch('https://api.qurancdn.com/api/qdc/verses/by_page/442?words=true&per_page=all&fields=text_uthmani%2Cchapter_id%2Chizb_number%2Ctext_imlaei_simple&reciter=7&word_translation_language=en&word_fields=verse_key%2Cverse_id%2Cpage_number%2Clocation%2Ctext_uthmani%2Ctext_indopak%2Cqpc_uthmani_hafs&mushaf=6');
+                const data = await response.json();
+
+                const groupedLines = {};
+                data.verses.forEach(verse => {
+                    verse.words.forEach(word => {
+                        const lineNumber = word.line_number;
+                        if (!groupedLines[lineNumber]) {
+                            groupedLines[lineNumber] = [];
+                        }
+                        groupedLines[lineNumber].push(word);
+                    });
+                });
+
+                const mushafPage = document.getElementById('mushafPage');
+                Object.keys(groupedLines).sort((a, b) => a - b).forEach(lineNumber => {
+                    const lineDiv = document.createElement('div');
+                    lineDiv.className = 'line';
+                    lineDiv.dataset.lineNumber = lineNumber;
+
+                    groupedLines[lineNumber].forEach((word, index) => {
+                        const wordSpan = document.createElement('span');
+                        wordSpan.className = `word line-${lineNumber} word-${index + 1}`;
+                        wordSpan.textContent = word.text;
+                        lineDiv.appendChild(wordSpan);
+                    });
+
+                    mushafPage.appendChild(lineDiv);
+                });
+            } catch (error) {
+                console.error('Error fetching Mushaf page:', error);
+            }
+        }
+
+        fetchMushafPage();
+    </script>
+</body>
+
+</html>
