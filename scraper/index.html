@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scraper Webapp</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex bg-gray-100">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white border-r p-4 overflow-y-auto">
+    <h2 class="text-xl font-semibold mb-4">Saved Domains</h2>
+    <ul id="domainList" class="space-y-2"></ul>
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 p-6">
+    <h1 class="text-2xl font-bold mb-4">Webpage Scraper <sup>BETA</sup> with <a href="https://gist.github.com/ShakesVision/ba78d011e516aa0ebee1ee111a2717fb" target="_blank" rel="noopener noreferrer">GAS proxy</a></h1>
+    <form id="scraperForm" class="space-y-4">
+      <!-- URL Input -->
+      <div>
+        <label for="urlInput" class="block font-medium">URL to scrape:</label>
+        <input id="urlInput" type="text" placeholder="https://example.com" class="mt-1 p-2 border rounded w-full" required />
+      </div>
+      <!-- CSS Selector -->
+      <div>
+        <label for="selectorInput" class="block font-medium">CSS Selector:</label>
+        <input id="selectorInput" type="text" placeholder="e.g. .content, h1" class="mt-1 p-2 border rounded w-full" required />
+      </div>
+      <!-- Extraction Mode -->
+      <div>
+        <span class="font-medium">Extraction Mode:</span>
+        <div class="mt-1">
+          <label class="inline-flex items-center mr-4">
+            <input type="radio" name="mode" value="one" checked class="form-radio" />
+            <span class="ml-2">One Element</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input type="radio" name="mode" value="all" class="form-radio" />
+            <span class="ml-2">All Elements</span>
+          </label>
+        </div>
+      </div>
+      <!-- Element Index (for one element) -->
+      <div id="oneElementOptions">
+        <label for="elementIndex" class="block font-medium">Element Number (1 = first element):</label>
+        <input id="elementIndex" type="number" value="1" min="1" class="mt-1 p-2 border rounded w-full" />
+      </div>
+      <!-- Joiner (for all elements) -->
+      <div id="allElementsOptions" class="hidden">
+        <label for="joiner" class="block font-medium">Joiner Character (default newline):</label>
+        <input id="joiner" type="text" placeholder="\n" value="\n" class="mt-1 p-2 border rounded w-full" />
+      </div>
+      <!-- Extraction Type -->
+      <div>
+        <span class="font-medium">Extraction Type:</span>
+        <div class="mt-1">
+          <label class="inline-flex items-center mr-4">
+            <input type="radio" name="extractType" value="plain" checked class="form-radio" />
+            <span class="ml-2">Plain Text</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input type="radio" name="extractType" value="html" class="form-radio" />
+            <span class="ml-2">HTML</span>
+          </label>
+        </div>
+      </div>
+      <!-- Fetch Button -->
+      <div>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Fetch</button>
+      </div>
+    </form>
+
+    <!-- Result Area -->
+    <div class="mt-6">
+      <h2 class="text-xl font-semibold mb-2">Result</h2>
+      <textarea id="resultArea" rows="10" class="w-full p-2 border rounded"></textarea>
+      <button id="copyButton" class="mt-2 px-4 py-2 bg-green-600 text-white rounded">Copy</button>
+    </div>
+  </main>
+
+  <script>
+      // const GAS_URL = `https://script.google.com/macros/s/AKfycbw3xJdb-tOYC5uq_SZvW2g_PBmymbLg5fXuwnE3L2k2-4WvNz74i2JRAUgSd5j45HpU/exec`;
+      // Update this variable with the URL of your deployed Google Apps Script id.
+    const deploymentId = "AKfycbw3xJdb-tOYC5uq_SZvW2g_PBmymbLg5fXuwnE3L2k2-4WvNz74i2JRAUgSd5j45HpU";
+    const GAS_URL = `https://script.google.com/macros/s/${deploymentId}/exec`;
+
+    // Form elements
+    const form = document.getElementById("scraperForm");
+    const urlInput = document.getElementById("urlInput");
+    const selectorInput = document.getElementById("selectorInput");
+    const elementIndexInput = document.getElementById("elementIndex");
+    const joinerInput = document.getElementById("joiner");
+    const resultArea = document.getElementById("resultArea");
+    const copyButton = document.getElementById("copyButton");
+    const oneElementOptions = document.getElementById("oneElementOptions");
+    const allElementsOptions = document.getElementById("allElementsOptions");
+
+    // Sidebar domain list
+    const domainListEl = document.getElementById("domainList");
+    const STORAGE_KEY = "scraperSettings";
+
+    // Toggle options based on extraction mode
+    document.querySelectorAll('input[name="mode"]').forEach(radio => {
+      radio.addEventListener("change", () => {
+        if (radio.value === "one" && radio.checked) {
+          oneElementOptions.classList.remove("hidden");
+          allElementsOptions.classList.add("hidden");
+        } else if (radio.value === "all" && radio.checked) {
+          oneElementOptions.classList.add("hidden");
+          allElementsOptions.classList.remove("hidden");
+        }
+      });
+    });
+
+    // Copy result button
+    copyButton.addEventListener("click", () => {
+      resultArea.select();
+      document.execCommand("copy");
+      alert("Copied!");
+    });
+
+    // Save settings per domain in localStorage
+    function saveSettings(domain, settings) {
+      const allSettings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      allSettings[domain] = settings;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(allSettings));
+      loadSavedSettings();
+    }
+
+    // Load settings from localStorage and populate sidebar
+    function loadSavedSettings() {
+      domainListEl.innerHTML = "";
+      const allSettings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      Object.keys(allSettings).forEach(domain => {
+        const li = document.createElement("li");
+        li.className = "p-2 border rounded flex justify-between items-center";
+        li.innerHTML = `<span class="cursor-pointer text-blue-600" data-domain="${domain}">${domain}</span>
+                        <button class="text-red-500 text-sm" data-delete="${domain}">Delete</button>`;
+        domainListEl.appendChild(li);
+      });
+    }
+
+    // When clicking on a saved domain, populate the form with saved settings
+    domainListEl.addEventListener("click", (e) => {
+      if (e.target.dataset.domain) {
+        const domain = e.target.dataset.domain;
+        const allSettings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        const settings = allSettings[domain];
+        if (settings) {
+          urlInput.value = settings.url;
+          selectorInput.value = settings.selector;
+          document.querySelector(`input[name="mode"][value="${settings.mode}"]`).checked = true;
+          if (settings.mode === "one") {
+            oneElementOptions.classList.remove("hidden");
+            allElementsOptions.classList.add("hidden");
+            elementIndexInput.value = settings.index;
+          } else {
+            oneElementOptions.classList.add("hidden");
+            allElementsOptions.classList.remove("hidden");
+            joinerInput.value = settings.joiner;
+          }
+          document.querySelector(`input[name="extractType"][value="${settings.extractType}"]`).checked = true;
+        }
+      }
+      // Handle delete button
+      if (e.target.dataset.delete) {
+        const domain = e.target.dataset.delete;
+        const allSettings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        delete allSettings[domain];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allSettings));
+        loadSavedSettings();
+      }
+    });
+
+    // Extract domain from URL
+    function getDomain(url) {
+      try {
+        return new URL(url).hostname;
+      } catch (err) {
+        return null;
+      }
+    }
+
+    // Process fetched HTML using DOMParser and querySelectorAll
+    function extractContent(html, selector, mode, extractType, index, joiner) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const elements = doc.querySelectorAll(selector);
+      if (!elements.length) return "";
+      if (mode === "one") {
+        const el = elements[index - 1];
+        if (!el) return "";
+        return extractType === "plain" ? el.textContent.trim() : el.innerHTML.trim();
+      } else {
+        // For all elements
+        let arr = [];
+        elements.forEach(el => {
+          arr.push(extractType === "plain" ? el.textContent.trim() : el.innerHTML.trim());
+        });
+        return arr.join(joiner);
+      }
+    }
+
+    // Handle form submission
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      resultArea.value = "Fetching...";
+      const url = urlInput.value.trim();
+      const selector = selectorInput.value.trim();
+      const mode = document.querySelector('input[name="mode"]:checked').value;
+      const extractType = document.querySelector('input[name="extractType"]:checked').value;
+      const index = mode === "one" ? parseInt(elementIndexInput.value, 10) || 1 : null;
+      const joiner = mode === "all" ? joinerInput.value : null;
+
+      // Save settings per domain
+      const domain = getDomain(url);
+      if (domain) {
+        saveSettings(domain, { url, selector, mode, index, joiner, extractType });
+      }
+
+      try {
+        // Fetch using your GAS endpoint
+        const res = await fetch(GAS_URL + "?url=" + encodeURIComponent(url));
+        const data = await res.json();
+        if (data.error) {
+          resultArea.value = "Error: " + data.error;
+          return;
+        }
+        // data.res holds the HTML
+        const html = data.res;
+        const extracted = extractContent(html, selector, mode, extractType, index, joiner || "\n");
+        resultArea.value = extracted || "No content found with that selector.";
+      } catch (error) {
+        resultArea.value = "Fetch error: " + error;
+      }
+    });
+
+    // Initial load of sidebar
+    loadSavedSettings();
+  </script>
+</body>
+</html>
