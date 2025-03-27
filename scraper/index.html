@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,26 +8,36 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="min-h-screen flex bg-gray-100">
   <!-- Sidebar -->
-  <aside class="w-64 bg-white border-r p-4 overflow-y-auto">
+  <aside id="sidebar" class="w-64 bg-white border-r p-4 overflow-y-auto">
     <h2 class="text-xl font-semibold mb-4">Saved Domains</h2>
     <ul id="domainList" class="space-y-2"></ul>
   </aside>
-
+  <!-- Toggle Sidebar Button -->
+  <button id="toggleSidebarBtn" class="absolute bg-blue-200 text-white px-2 py-1 rounded z-10 bg-opacity-45 w-5 h-5 absolute top-0 left-4">
+    <svg class="w-2 h-2" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 50 50">
+      <path d="M 0 9 L 0 11 L 50 11 L 50 9 Z M 0 24 L 0 26 L 50 26 L 50 24 Z M 0 39 L 0 41 L 50 41 L 50 39 Z"></path>
+      </svg>
+  </button>
   <!-- Main content -->
   <main class="flex-1 p-6">
-    <h1 class="text-2xl font-bold mb-4">Webpage Scraper <sup>BETA</sup> with <a href="https://gist.github.com/ShakesVision/ba78d011e516aa0ebee1ee111a2717fb" target="_blank" rel="noopener noreferrer">GAS proxy</a></h1>
+    <h1 class="text-2xl font-bold mb-4">Webpage Scraper <sup>BETA</sup> with <a
+        href="https://gist.github.com/ShakesVision/ba78d011e516aa0ebee1ee111a2717fb" target="_blank"
+        rel="noopener noreferrer">GAS proxy</a></h1>
     <form id="scraperForm" class="space-y-4">
       <!-- URL Input -->
       <div>
         <label for="urlInput" class="block font-medium">URL to scrape:</label>
-        <input id="urlInput" type="text" placeholder="https://example.com" class="mt-1 p-2 border rounded w-full" required />
+        <input id="urlInput" type="text" placeholder="https://example.com" class="mt-1 p-2 border rounded w-full"
+          required />
       </div>
       <!-- CSS Selector -->
       <div>
         <label for="selectorInput" class="block font-medium">CSS Selector:</label>
-        <input id="selectorInput" type="text" placeholder="e.g. .content, h1" class="mt-1 p-2 border rounded w-full" required />
+        <input id="selectorInput" type="text" placeholder="e.g. .content, h1" class="mt-1 p-2 border rounded w-full"
+          required />
       </div>
       <!-- Extraction Mode -->
       <div>
@@ -67,8 +78,11 @@
         </div>
       </div>
       <!-- Fetch Button -->
-      <div>
+      <div class="flex space-x-4">
         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Fetch</button>
+        <button type="button" id="saveSettingButton" class="px-4 py-2 bg-green-600 text-white rounded">
+          Save Setting
+        </button>
       </div>
     </form>
 
@@ -81,8 +95,8 @@
   </main>
 
   <script>
-      // const GAS_URL = `https://script.google.com/macros/s/AKfycbw3xJdb-tOYC5uq_SZvW2g_PBmymbLg5fXuwnE3L2k2-4WvNz74i2JRAUgSd5j45HpU/exec`;
-      // Update this variable with the URL of your deployed Google Apps Script id.
+    // const GAS_URL = `https://script.google.com/macros/s/AKfycbw3xJdb-tOYC5uq_SZvW2g_PBmymbLg5fXuwnE3L2k2-4WvNz74i2JRAUgSd5j45HpU/exec`;
+    // Update this variable with the URL of your deployed Google Apps Script id.
     const deploymentId = "AKfycbw3xJdb-tOYC5uq_SZvW2g_PBmymbLg5fXuwnE3L2k2-4WvNz74i2JRAUgSd5j45HpU";
     const GAS_URL = `https://script.google.com/macros/s/${deploymentId}/exec`;
 
@@ -96,6 +110,22 @@
     const copyButton = document.getElementById("copyButton");
     const oneElementOptions = document.getElementById("oneElementOptions");
     const allElementsOptions = document.getElementById("allElementsOptions");
+    const saveSettingButton = document.getElementById("saveSettingButton");
+    const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
+    const sidebar = document.getElementById("sidebar");
+
+    // Toggle sidebar
+    toggleSidebarBtn.addEventListener("click", () => {
+      if (sidebar.classList.contains("w-64")) {
+        // Collapse
+        sidebar.classList.remove("w-64");
+        sidebar.classList.add("w-0", "overflow-hidden");
+      } else {
+        // Expand
+        sidebar.classList.remove("w-0", "overflow-hidden");
+        sidebar.classList.add("w-64");
+      }
+    });
 
     // Sidebar domain list
     const domainListEl = document.getElementById("domainList");
@@ -129,6 +159,42 @@
       loadSavedSettings();
     }
 
+    // Prompt user for custom setting name, then save
+    saveSettingButton.addEventListener("click", () => {
+      const domain = getDomain(urlInput.value.trim());
+      if (!domain) {
+        alert("Please enter a valid URL before saving.");
+        return;
+      }
+      const name = prompt("Enter a name for this setting:");
+      if (!name) return;
+
+      const currentSettings = gatherFormSettings();
+      currentSettings.name = name;
+      saveSettings(name, currentSettings);
+      alert(`Saved setting "${name}" for domain "${domain}".`);
+      loadSavedSettings();
+    });
+    // Gather current form settings into an object
+    function gatherFormSettings() {
+      const url = urlInput.value.trim();
+      const selector = selectorInput.value.trim();
+      const responseFormat = document.querySelector('input[name="responseFormat"]:checked').value;
+      const mode = document.querySelector('input[name="mode"]:checked').value;
+      const extractType = document.querySelector('input[name="extractType"]:checked').value;
+      const index = parseInt(elementIndexInput.value, 10) || 1;
+      const joiner = joinerInput.value || "\n";
+
+      return {
+        url,
+        selector,
+        responseFormat,
+        mode,
+        index,
+        joiner,
+        extractType
+      };
+    }
     // Load settings from localStorage and populate sidebar
     function loadSavedSettings() {
       domainListEl.innerHTML = "";
@@ -241,4 +307,5 @@
     loadSavedSettings();
   </script>
 </body>
+
 </html>

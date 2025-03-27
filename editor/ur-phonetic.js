@@ -73,8 +73,8 @@ const keyboardMap = [
 	[ '<', 'ِ' ],
 	[ ',', '،' ],
 	[ '>', 'َ' ],
-	/* Arabic full stop */ [ '\\.', '۔' ],
-	/* Arabic question mark */ [ '\\?', '؟' ],
+	/* Arabic full stop */ [ '.', '۔' ],
+	/* Arabic question mark */ [ '?', '؟' ],
 	[ '^', 'ۖ' ],
 	[ '&', 'ٔ' ],
 	[ '*', 'ٌ' ]

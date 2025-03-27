@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Collection</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        ul { list-style: none; padding: 0; }
+        li { cursor: pointer; padding: 5px; border-bottom: 1px solid #ddd; }
+        li:hover { background-color: #f0f0f0; }
+        #story-content { white-space: pre-wrap; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Story Collection</h1>
+    <input type="file" id="file-input" accept=".txt">
+    <input type="text" id="search-box" oninput="searchStories(this.value)" placeholder="Search stories...">
+    
+    <h2>Stories</h2>
+    <ul id="search-results"></ul>
+    <ul id="story-list"></ul>
+    
+    <h2 id="story-title"></h2>
+    <h3 id="story-author"></h3>
+    <p id="story-content"></p>
+    
+    <script src="index.js"></script>
+</body>
+</html>

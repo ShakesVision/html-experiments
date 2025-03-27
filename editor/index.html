@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="ur-phonetic.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Gulzar&family=Noto+Nastaliq+Urdu&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=Gulzar&display=swap');
 
         .editor {
             border: 1px solid #ccc;
@@ -18,16 +19,17 @@
         }
 
         .urdu-active {
-            font-family: 'Gulzar', 'Noto Nastaliq Urdu', serif;
+            font-family: 'Noto Nastaliq Urdu', 'Gulzar', serif;
         }
     </style>
 </head>
+
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
     <div class="w-11/12 max-w-2xl bg-white rounded shadow p-6">
         <div class="flex items-center justify-between mb-4">
             <h1 class="text-lg font-bold">WYSIWYG Editor</h1>
             <label class="flex items-center space-x-2">
-                <input type="checkbox" id="urduToggle" class="w-4 h-4">
+                <input type="checkbox" checked id="urduToggle" class="w-4 h-4">
                 <span class="text-sm">Urdu Keyboard</span>
             </label>
         </div>
@@ -38,6 +40,11 @@
         document.addEventListener('DOMContentLoaded', function () {
             const textarea = document.getElementById('urduTextarea');
             const urduToggle = document.getElementById('urduToggle');
+
+            // By default - Urdu is checked, make style changes accordingly.
+            textarea.style.direction = 'rtl';
+            textarea.style.lineHeight = '2em';
+            textarea.classList.add('urdu-active');
 
             // Function to map English keystrokes to Urdu characters
             function mapToUrdu(event) {
@@ -72,6 +79,7 @@
             urduToggle.addEventListener('change', () => {
                 if (urduToggle.checked) {
                     textarea.style.direction = 'rtl';
+                    textarea.style.lineHeight = '2em';
                     textarea.classList.add('urdu-active');
                 } else {
                     textarea.style.direction = 'ltr';
@@ -112,4 +120,5 @@
         });
     </script>
 </body>
+
 </html>

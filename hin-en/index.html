@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devanagari Transliteration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1b4965',
+                        secondary: '#62b6cb',
+                        tertiary: '#bee9e8'
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+</head>
+<body class="bg-tertiary min-h-screen flex flex-col items-center p-5">
+    <div class="w-full max-w-xl bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-primary text-xl font-bold mb-4">Devanagari Transliteration</h1>
+        <textarea id="inputText" class="w-full border border-secondary p-2 rounded-md" rows="4" placeholder="Enter text..."></textarea>
+        <div class="flex justify-between mt-4">
+            <button id="toEnglish" class="bg-primary text-white px-4 py-2 rounded-md">To English</button>
+            <button id="toDevanagari" class="bg-secondary text-white px-4 py-2 rounded-md">To Devanagari</button>
+        </div>
+        <h2 class="text-primary text-lg font-semibold mt-4">Output:</h2>
+        <div id="outputText" class="w-full bg-tertiary p-2 mt-2 rounded-md min-h-[3rem]"></div>
+    </div>
+    
+    <script src="transliteration.js" defer onerror="console.error('Failed to load transliteration.js')"></script>
+    <script>
+        function handleTransliteration(action) {
+            const inputText = document.getElementById("inputText").value;
+            const outputText = document.getElementById("outputText");
+            
+            if (typeof window[action] === "function") {
+                outputText.innerText = window[action](inputText);
+            } else {
+                outputText.innerText = "Error: Transliteration function not found.";
+                console.error(`${action} function is not defined.`);
+            }
+        }
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("toEnglish").addEventListener("click", function() {
+                handleTransliteration("transliterateToEnglish");
+            });
+            document.getElementById("toDevanagari").addEventListener("click", function() {
+                handleTransliteration("transliterateToDevanagari");
+            });
+        });
+    </script>
+</body>
+</html>

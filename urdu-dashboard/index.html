@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اردو ڈیش بورڈ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap');
+
+        body {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            background-color: #121212;
+            color: #f5c518;
+        }
+        .card {
+            background: #1e1e1e;
+            color: #f5c518;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(255, 215, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="p-6">
+
+    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Word of the Day -->
+        <div class="card">
+            <h2 class="text-xl font-bold">لفظِ امروز</h2>
+            <p class="text-lg mt-2" id="word">محبت</p>
+            <p class="text-sm text-gray-400" id="pronunciation">(Muhabbat)</p>
+            <p class="mt-2 text-gray-300" id="meaning">محبت سب سے بڑی طاقت ہے۔</p>
+        </div>
+
+        <!-- Daily Couplets -->
+        <div class="card">
+            <h2 class="text-xl font-bold">آج کا شعر</h2>
+            <p class="mt-2 text-lg italic text-gray-300">یہ نہ تھی ہماری قسمت کہ وصالِ یار ہوتا</p>
+            <p class="text-sm text-gray-400">— مرزا غالب</p>
+        </div>
+
+        <!-- Ghazal of the Day -->
+        <div class="card">
+            <h2 class="text-xl font-bold">آج کی غزل</h2>
+            <p class="mt-2 text-lg text-gray-300">سنبھل کر قدم رکھنا، یہاں خواب بکھرے ہیں...</p>
+            <button class="mt-2 text-blue-400 hover:underline">🔊 سنیں</button>
+        </div>
+
+        <!-- Dictionary & Thesaurus -->
+        <div class="card">
+            <h2 class="text-xl font-bold">لغت اور مترادفات</h2>
+            <input type="text" placeholder="تلاش کریں..." class="w-full p-2 mt-2 bg-gray-800 text-white border border-gray-600 rounded">
+        </div>
+
+        <!-- Aruuz Analyzer -->
+        <div class="card">
+            <h2 class="text-xl font-bold">عروض و بحر</h2>
+            <p class="mt-2 text-lg text-gray-300">یہ شعر درج کریں اور بحر معلوم کریں۔</p>
+            <input type="text" placeholder="یہاں شعر لکھیں..." class="w-full p-2 mt-2 bg-gray-800 text-white border border-gray-600 rounded">
+            <button class="mt-2 bg-yellow-500 text-black px-4 py-1 rounded">🔍 تجزیہ کریں</button>
+        </div>
+
+        <!-- Short Story -->
+        <div class="card">
+            <h2 class="text-xl font-bold">افسانہ</h2>
+            <p class="mt-2 text-lg text-gray-300">رات کے سائے میں ایک پراسرار کہانی جنم لے رہی تھی...</p>
+            <button class="mt-2 text-blue-400 hover:underline">مزید پڑھیں</button>
+        </div>
+
+        <!-- Trivia & Quiz -->
+        <div class="card">
+            <h2 class="text-xl font-bold">اردو کوئز</h2>
+            <p class="mt-2 text-lg text-gray-300">یہ شعر کس شاعر کا ہے؟</p>
+            <ul class="mt-2">
+                <li><button class="text-blue-400 hover:underline">غالب</button></li>
+                <li><button class="text-blue-400 hover:underline">اقبال</button></li>
+                <li><button class="text-blue-400 hover:underline">فیض</button></li>
+            </ul>
+        </div>
+
+        <!-- Audio-Visual Urdu -->
+        <div class="card">
+            <h2 class="text-xl font-bold">آواز و تصویر</h2>
+            <p class="mt-2 text-lg text-gray-300">مشاعرہ کی بہترین ویڈیو دیکھیں۔</p>
+            <button class="mt-2 text-blue-400 hover:underline">▶️ دیکھیں</button>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -29,3 +29,7 @@ https://www.shakeeb.in
 - [mushaf](https://shakesvision.github.io/html-experiments/mushaf/index.html)
 - [number-mnemonics](https://shakesvision.github.io/html-experiments/number-mnemonics/index.html)
 - [post-maker](https://shakesvision.github.io/html-experiments/post-maker/index.html)
+- [hin-en](https://shakesvision.github.io/html-experiments/hin-en/index.html)
+- [scraper](https://shakesvision.github.io/html-experiments/scraper/index.html)
+- [text-aggregator](https://shakesvision.github.io/html-experiments/text-aggregator/index.html)
+- [urdu-dashboard](https://shakesvision.github.io/html-experiments/urdu-dashboard/index.html)
