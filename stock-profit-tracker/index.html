@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock Profit Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white shadow-xl rounded-xl p-6 w-full max-w-xl space-y-6">
+        <h1 class="text-2xl font-bold text-center text-blue-700">📈 Stock Profit Tracker</h1>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-gray-700 font-medium">Buy Price (₹)</label>
+                <input id="buyPrice" type="number" step="0.01" class="w-full p-2 border rounded"
+                    placeholder="e.g., 113.50" />
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-medium">Current Price (₹)</label>
+                <input id="currentPrice" type="number" step="0.01" class="w-full p-2 border rounded"
+                    placeholder="e.g., 116" />
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-medium">Quantity</label>
+                <input id="quantity" type="number" step="1" class="w-full p-2 border rounded" placeholder="e.g., 13" />
+            </div>
+
+            <button onclick="calculateProfit()"
+                class="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700 transition">
+                Calculate 💰
+            </button>
+        </div>
+
+        <div id="result" class="text-center space-y-3"></div>
+    </div>
+
+    <script>
+        function calculateProfit() {
+            const buy = parseFloat(document.getElementById("buyPrice").value);
+            const current = parseFloat(document.getElementById("currentPrice").value);
+            const qty = parseFloat(document.getElementById("quantity").value || 1);
+
+            if (!buy || !current) {
+                alert("Please enter both buy and current prices.");
+                return;
+            }
+
+            const diff = current - buy;
+            const percent = ((diff / buy) * 100).toFixed(2);
+            const total = (diff * qty).toFixed(2);
+
+            let output = `
+        <div class="text-l font-semibold text-gray-800">
+            Invested: ₹${(buy * qty).toFixed(2)}
+        </div>
+        <div class="text-xl font-semibold text-gray-800">
+          ${diff >= 0 ? "Profit" : "Loss"}: ₹${Math.abs(total)} (${percent}%)
+        </div>
+        <div class="border-t pt-4">
+          <h2 class="text-md font-bold text-gray-700 mb-2">Profit Targets (₹ for ${qty} shares):</h2>
+      `;
+
+            Array.from(Array(15).keys(), item => item + 1).forEach(p => {
+                const price = (buy * (1 + p / 100)).toFixed(2);
+                const gain = ((price - buy) * qty).toFixed(2);
+                output += `<div class="text-sm text-gray-600">+${p}% → ₹${price} = ₹${gain}</div>`;
+            });
+
+            output += "</div>";
+
+            document.getElementById("result").innerHTML = output;
+        }
+    </script>
+</body>
+
+</html>

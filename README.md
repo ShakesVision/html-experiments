@@ -33,3 +33,4 @@ https://www.shakeeb.in
 - [scraper](https://shakesvision.github.io/html-experiments/scraper/index.html)
 - [text-aggregator](https://shakesvision.github.io/html-experiments/text-aggregator/index.html)
 - [urdu-dashboard](https://shakesvision.github.io/html-experiments/urdu-dashboard/index.html)
+- [stock-profit-tracker](https://shakesvision.github.io/html-experiments/stock-profit-tracker/index.html)
