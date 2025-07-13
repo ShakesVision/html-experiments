@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhatsApp DP Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-6 rounded-2xl shadow-md w-full max-w-md text-center space-y-4">
+        <h1 class="text-2xl font-bold">WhatsApp DP Viewer</h1>
+
+        <input id="phoneInput" type="text" placeholder="Enter number with country code (e.g. 919876543210)"
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+
+        <button id="fetchBtn" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">
+            Fetch DP
+        </button>
+
+        <div id="loading" class="hidden text-sm text-gray-500">Fetching...</div>
+
+        <div id="dpContainer" class="hidden flex-col items-center space-y-2">
+            <img id="dpImage" src="" alt="WhatsApp DP" class="w-40 h-40 object-cover rounded-full border shadow" />
+            <a id="downloadBtn" class="bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600"
+                download="whatsapp-dp.jpg">
+                Download DP
+            </a>
+        </div>
+
+        <div id="errorMsg" class="text-red-500 text-sm hidden"></div>
+    </div>
+
+    <script>
+        const scriptBase = "https://script.google.com/macros/s/AKfycbw3xJdb-tOYC5uq_SZvW2g_PBmymbLg5fXuwnE3L2k2-4WvNz74i2JRAUgSd5j45HpU/exec?url=";
+
+        document.getElementById("fetchBtn").addEventListener("click", async () => {
+            const phone = document.getElementById("phoneInput").value.trim();
+            const dpContainer = document.getElementById("dpContainer");
+            const loading = document.getElementById("loading");
+            const errorMsg = document.getElementById("errorMsg");
+            const img = document.getElementById("dpImage");
+            const downloadBtn = document.getElementById("downloadBtn");
+
+            dpContainer.classList.add("hidden");
+            errorMsg.classList.add("hidden");
+            loading.classList.remove("hidden");
+
+            if (!phone.match(/^\d+$/)) {
+                errorMsg.textContent = "Please enter a valid numeric phone number.";
+                errorMsg.classList.remove("hidden");
+                loading.classList.add("hidden");
+                return;
+            }
+
+            const encodedURL = encodeURIComponent(`https://api.whatsapp.com/send?phone=${phone}`);
+            const proxyURL = `${scriptBase}${encodedURL}`;
+
+            try {
+                const res = await fetch(proxyURL);
+                const data = await res.json();
+
+                if (!data.res) throw new Error("No response HTML");
+
+                // Parse DP URL from the HTML
+                const match = data.res.match(/<img[^>]+src="([^"]+)"[^>]*class="[^"]*app-photo[^"]*"/);
+
+                if (match && match[1]) {
+                    const dpUrl = match[1];
+                    img.src = dpUrl;
+                    downloadBtn.href = dpUrl;
+                    dpContainer.classList.remove("hidden");
+                } else {
+                    throw new Error("DP not found. It may be private or blocked.");
+                }
+            } catch (err) {
+                errorMsg.textContent = "Failed to fetch DP. " + err.message;
+                errorMsg.classList.remove("hidden");
+            } finally {
+                loading.classList.add("hidden");
+            }
+        });
+    </script>
+</body>
+
+</html>

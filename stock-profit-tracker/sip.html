@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Halal Early Retirement Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+    <div class="max-w-5xl mx-auto p-6">
+        <h1 class="text-3xl font-bold mb-6 text-center">🕌 Halal Early Retirement Planner</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block mb-2 font-semibold">Current Savings (₹)</label>
+                <input type="number" id="currentSavings" class="w-full p-2 border rounded" value="1500000" />
+            </div>
+            <div>
+                <label class="block mb-2 font-semibold">Monthly Investment (₹)</label>
+                <input type="number" id="monthlyInvestment" class="w-full p-2 border rounded" value="50000" />
+            </div>
+            <div>
+                <label class="block mb-2 font-semibold">Annual Investment Increase (%)</label>
+                <input type="number" id="investmentGrowth" class="w-full p-2 border rounded" value="5" />
+            </div>
+            <div>
+                <label class="block mb-2 font-semibold">Expected Annual Return (%)</label>
+                <input type="number" id="returnRate" class="w-full p-2 border rounded" value="12" />
+            </div>
+            <div>
+                <label class="block mb-2 font-semibold">Annual Zakat Rate (%)</label>
+                <input type="number" id="zakatRate" class="w-full p-2 border rounded" value="2.5" />
+            </div>
+            <div>
+                <label class="block mb-2 font-semibold">Tax Drag (%/year)</label>
+                <input type="number" id="taxRate" class="w-full p-2 border rounded" value="1" />
+            </div>
+            <div>
+                <label class="block mb-2 font-semibold">Inflation Rate (%)</label>
+                <input type="number" id="inflationRate" class="w-full p-2 border rounded" value="6" />
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4 mt-6">
+            <button onclick="calculatePlan()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded">
+                📊 Calculate Retirement Plan
+            </button>
+            <button onclick="downloadCSV()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded">
+                📥 Download Excel (CSV)
+            </button>
+        </div>
+
+        <div id="results" class="mt-10 overflow-x-auto">
+            <!-- Table appears here -->
+        </div>
+    </div>
+
+    <script>
+        let csvData = [];
+
+        function calculatePlan() {
+            const currentSavings = parseFloat(document.getElementById("currentSavings").value);
+            const monthlyInvestment = parseFloat(document.getElementById("monthlyInvestment").value);
+            const annualReturn = parseFloat(document.getElementById("returnRate").value) / 100;
+            const zakatRate = parseFloat(document.getElementById("zakatRate").value) / 100;
+            const taxRate = parseFloat(document.getElementById("taxRate").value) / 100;
+            const inflationRate = parseFloat(document.getElementById("inflationRate").value) / 100;
+            const investmentGrowth = parseFloat(document.getElementById("investmentGrowth").value) / 100;
+            const years = 15;
+
+            let total = currentSavings;
+            let currentMonthlyInvestment = monthlyInvestment;
+
+            csvData = [["Year", "Start Value", "Yearly Investment", "Growth", "Zakat", "Tax", "End Value (Nominal)", "End Value (Real)"]];
+
+            let output = `
+        <h2 class="text-2xl font-semibold mb-4">📊 15-Year Projection</h2>
+        <table class="min-w-full table-auto border-collapse bg-white shadow rounded">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="border p-2">Year</th>
+              <th class="border p-2">Start Value (₹)</th>
+              <th class="border p-2">Investment (₹)</th>
+              <th class="border p-2">Growth (₹)</th>
+              <th class="border p-2">Zakat (₹)</th>
+              <th class="border p-2">Tax (₹)</th>
+              <th class="border p-2">End Value (₹)</th>
+              <th class="border p-2">Real Value (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+            for (let year = 1; year <= years; year++) {
+                const yearlyInvestment = currentMonthlyInvestment * 12;
+                const startValue = total;
+                const growth = (startValue + yearlyInvestment) * annualReturn;
+                const zakat = (startValue + yearlyInvestment + growth) * zakatRate;
+                const tax = (startValue + yearlyInvestment + growth - zakat) * taxRate;
+                total = startValue + yearlyInvestment + growth - zakat - tax;
+                const realValue = total / Math.pow(1 + inflationRate, year);
+
+                output += `
+          <tr class="text-center">
+            <td class="border p-2">${year}</td>
+            <td class="border p-2">${startValue.toFixed(0)}</td>
+            <td class="border p-2">${yearlyInvestment.toFixed(0)}</td>
+            <td class="border p-2">${growth.toFixed(0)}</td>
+            <td class="border p-2 text-red-600">${zakat.toFixed(0)}</td>
+            <td class="border p-2 text-red-500">${tax.toFixed(0)}</td>
+            <td class="border p-2 font-semibold">${total.toFixed(0)}</td>
+            <td class="border p-2 text-green-700">${realValue.toFixed(0)}</td>
+          </tr>
+        `;
+
+                csvData.push([
+                    year,
+                    startValue.toFixed(0),
+                    yearlyInvestment.toFixed(0),
+                    growth.toFixed(0),
+                    zakat.toFixed(0),
+                    tax.toFixed(0),
+                    total.toFixed(0),
+                    realValue.toFixed(0)
+                ]);
+
+                // Increase monthly investment by % each year
+                currentMonthlyInvestment *= 1 + investmentGrowth;
+            }
+
+            output += `</tbody></table>`;
+            document.getElementById("results").innerHTML = output + generateChecklist(currentMonthlyInvestment);
+        }
+
+        function downloadCSV() {
+            if (csvData.length === 0) return alert("Please calculate first.");
+            const csvRows = csvData.map(row => row.join(",")).join("\n");
+            const blob = new Blob([csvRows], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "retirement_plan.csv";
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+        function generateChecklist(monthlyInvestment) {
+            return `
+    <div class="mt-10 p-6 bg-white border rounded shadow">
+      <h2 class="text-2xl font-bold mb-4">📋 Your Personalized Action Checklist</h2>
+      <ul class="list-disc pl-5 space-y-3 text-gray-700">
+        <li>✅ Allocate <strong>₹${(monthlyInvestment * 0.2).toFixed(0)}</strong> monthly to <strong>US Shariah-compliant ETFs</strong> like <code>SPUS</code> or <code>HLAL</code> via apps like INDmoney, Vested, or Winvesta.</li>
+        <li>✅ Invest <strong>₹${(monthlyInvestment * 0.5).toFixed(0)}</strong> in <strong>Indian halal stocks</strong> (via Zerodha/Groww) or Shariah-based Smallcases (e.g., "All Weather Shariah").</li>
+        <li>✅ Put <strong>₹${(monthlyInvestment * 0.1).toFixed(0)}</strong> in <strong>gold</strong> monthly (Gold ETFs or physical; avoid SGBs with interest).</li>
+        <li>✅ Allocate <strong>₹${(monthlyInvestment * 0.2).toFixed(0)}</strong> to a fund for developing your plot into a rental asset within 5–6 years.</li>
+        <li>🧾 Maintain a health & emergency fund of at least <strong>₹3–4L</strong> in a non-interest savings or digital gold account.</li>
+        <li>🕋 Calculate and pay <strong>Zakat annually (2.5%)</strong> on total wealth including stocks and gold.</li>
+        <li>📈 Increase SIP by at least <strong>5–10% per year</strong> to beat inflation and match rising income.</li>
+        <li>📤 Keep track of capital gains and declare them in your ITR (TDS doesn’t cover everything).</li>
+        <li>📚 Keep learning about halal investing through sites like Zoya, Simply Halal Stocks, or Islamic Finance Guru.</li>
+      </ul>
+    </div>
+  `;
+        }
+
+    </script>
+</body>
+
+</html>
