@@ -147,22 +147,69 @@
             URL.revokeObjectURL(url);
         }
         function generateChecklist(monthlyInvestment) {
-            return `
+            const checklist = [
+                {
+                    id: "us-etf",
+                    label: `Invest ₹${(monthlyInvestment * 0.2).toFixed(0)} in US Shariah ETFs like SPUS or HLAL`
+                },
+                {
+                    id: "indian-halal",
+                    label: `Invest ₹${(monthlyInvestment * 0.5).toFixed(0)} in Indian halal stocks or Smallcases`
+                },
+                {
+                    id: "gold",
+                    label: `Invest ₹${(monthlyInvestment * 0.1).toFixed(0)} in gold (ETF or physical)`
+                },
+                {
+                    id: "real-estate",
+                    label: `Save ₹${(monthlyInvestment * 0.2).toFixed(0)} for plot development fund`
+                },
+                {
+                    id: "emergency",
+                    label: `Maintain ₹3–4L as emergency/medical buffer`
+                },
+                {
+                    id: "zakat",
+                    label: `Calculate and pay 2.5% zakat on total wealth`
+                },
+                {
+                    id: "sip-increase",
+                    label: `Increase SIP by 5–10% annually as income grows`
+                },
+                {
+                    id: "tax-track",
+                    label: `Track capital gains & file taxes correctly`
+                },
+                {
+                    id: "learn",
+                    label: `Learn halal investing monthly (YouTube, Zoya, IFG, etc.)`
+                }
+            ];
+
+            let html = `
     <div class="mt-10 p-6 bg-white border rounded shadow">
-      <h2 class="text-2xl font-bold mb-4">📋 Your Personalized Action Checklist</h2>
-      <ul class="list-disc pl-5 space-y-3 text-gray-700">
-        <li>✅ Allocate <strong>₹${(monthlyInvestment * 0.2).toFixed(0)}</strong> monthly to <strong>US Shariah-compliant ETFs</strong> like <code>SPUS</code> or <code>HLAL</code> via apps like INDmoney, Vested, or Winvesta.</li>
-        <li>✅ Invest <strong>₹${(monthlyInvestment * 0.5).toFixed(0)}</strong> in <strong>Indian halal stocks</strong> (via Zerodha/Groww) or Shariah-based Smallcases (e.g., "All Weather Shariah").</li>
-        <li>✅ Put <strong>₹${(monthlyInvestment * 0.1).toFixed(0)}</strong> in <strong>gold</strong> monthly (Gold ETFs or physical; avoid SGBs with interest).</li>
-        <li>✅ Allocate <strong>₹${(monthlyInvestment * 0.2).toFixed(0)}</strong> to a fund for developing your plot into a rental asset within 5–6 years.</li>
-        <li>🧾 Maintain a health & emergency fund of at least <strong>₹3–4L</strong> in a non-interest savings or digital gold account.</li>
-        <li>🕋 Calculate and pay <strong>Zakat annually (2.5%)</strong> on total wealth including stocks and gold.</li>
-        <li>📈 Increase SIP by at least <strong>5–10% per year</strong> to beat inflation and match rising income.</li>
-        <li>📤 Keep track of capital gains and declare them in your ITR (TDS doesn’t cover everything).</li>
-        <li>📚 Keep learning about halal investing through sites like Zoya, Simply Halal Stocks, or Islamic Finance Guru.</li>
-      </ul>
-    </div>
-  `;
+      <h2 class="text-2xl font-bold mb-4">📋 Monthly Action Tracker</h2>
+      <p class="text-gray-600 mb-4">Tick the boxes when done. Progress is saved automatically in your browser.</p>
+      <ul class="space-y-3">`;
+
+            checklist.forEach(item => {
+                const isChecked = localStorage.getItem(item.id) === "true";
+                html += `
+      <li>
+        <label class="flex items-start space-x-3">
+          <input type="checkbox" id="${item.id}" ${isChecked ? "checked" : ""} onchange="saveTaskStatus('${item.id}')">
+          <span>${item.label}</span>
+        </label>
+      </li>`;
+            });
+
+            html += `</ul></div>`;
+            return html;
+        }
+
+        function saveTaskStatus(id) {
+            const checkbox = document.getElementById(id);
+            localStorage.setItem(id, checkbox.checked);
         }
 
     </script>
