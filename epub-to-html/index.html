@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EPUB to One-Page HTML Converter</title>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-white text-gray-800 p-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold mb-4">📘 EPUB to One-Page HTML</h1>
+
+        <div class="mb-6 space-y-4">
+            <input type="file" id="file-input" accept=".epub" class="p-2 border border-gray-300 rounded w-full" />
+
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" id="render-toggle" class="h-4 w-4 text-blue-600 rounded border-gray-300">
+                <span>Render book on this page</span>
+            </label>
+        </div>
+
+        <div class="flex gap-4 mb-6 hidden" id="actions">
+            <button id="download-btn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Download
+                HTML</button>
+            <button id="copy-btn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Copy
+                HTML</button>
+        </div>
+
+        <div id="preview" class="hidden">
+            <div id="toc" class="mb-10"></div>
+            <div id="content" class="space-y-8"></div>
+        </div>
+    </div>
+
+    <script>
+        let fullHTML = "";
+
+        function buildPlainHTML(tocHTML, contentHTML, title = "EPUB Book") {
+            return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 1em;
+      line-height: 1.6;
+      color: #222;
+    }
+    h1 {
+      font-size: 1.8em;
+      margin-bottom: 0.5em;
+    }
+    h2 {
+      font-size: 1.4em;
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+    a {
+      color: #0645ad;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    ul {
+      padding-left: 1.2em;
+    }
+    hr {
+      margin: 2em 0;
+    }
+    .toc {
+      margin-bottom: 2em;
+    }
+    .section {
+      margin-bottom: 2em;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>${title}</h1>
+  ${tocHTML}
+  ${contentHTML}
+</body>
+</html>
+      `.trim();
+        }
+
+        function download(filename, content) {
+            const blob = new Blob([content], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        async function processEPUB(file) {
+            const book = ePub(file);
+            await book.ready;
+
+            const spineItems = book.spine.items;
+
+            const tocList = [];
+            const sections = [];
+            let sectionCount = 0;
+
+            for (const item of spineItems) {
+                try {
+                    const sectionId = `section-${sectionCount++}`;
+
+                    // ✅ Get the actual spine item with `.load()` method
+                    const spineItem = book.spine.get(item.idref);
+
+                    // ✅ Load the XHTML content
+                    const content = await spineItem.load(book.load.bind(book));
+
+                    console.log(`Loaded content for ${item.href}:`, content.slice(0, 200));
+
+                    // ✅ Parse as XHTML
+                    const html = new DOMParser().parseFromString(content, 'application/xhtml+xml');
+
+                    // ✅ Get heading
+                    const heading =
+                        html.querySelector('h1, h2, h3, title')?.textContent.trim() || `Section ${sectionCount}`;
+
+                    tocList.push(`<li><a href="#${sectionId}">${heading}</a></li>`);
+
+                    sections.push(`<div class="section" id="${sectionId}">
+  <h2>${heading}</h2>
+  ${html.body?.innerHTML || ''}
+</div>`);
+
+                    // ✅ Optional cleanup
+                    await spineItem.unload?.();
+                } catch (err) {
+                    console.error(`Error processing ${item.href}:`, err);
+                }
+            }
+
+
+            const tocHTML = `<div class="toc"><h2>Table of Contents</h2><ul>${tocList.join('\n')}</ul></div>`;
+            const contentHTML = sections.join('\n');
+            const title = book.package?.metadata?.title || "EPUB Book";
+
+            fullHTML = buildPlainHTML(tocHTML, contentHTML, title);
+
+            // Show buttons
+            document.getElementById("actions").classList.remove("hidden");
+
+            // Optional rendering
+            const shouldRender = document.getElementById("render-toggle").checked;
+            const tocDiv = document.getElementById("toc");
+            const contentDiv = document.getElementById("content");
+
+            if (shouldRender) {
+                document.getElementById("preview").classList.remove("hidden");
+                tocDiv.innerHTML = tocHTML;
+                contentDiv.innerHTML = contentHTML;
+            } else {
+                document.getElementById("preview").classList.add("hidden");
+                tocDiv.innerHTML = "";
+                contentDiv.innerHTML = "";
+            }
+        }
+
+        document.getElementById('file-input').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) processEPUB(file);
+        });
+
+        document.getElementById('download-btn').addEventListener('click', () => {
+            download("epub-book.html", fullHTML);
+        });
+
+        document.getElementById('copy-btn').addEventListener('click', () => {
+            navigator.clipboard.writeText(fullHTML).then(() => {
+                alert("HTML copied to clipboard!");
+            }).catch(() => {
+                alert("Failed to copy HTML.");
+            });
+        });
+    </script>
+</body>
+
+</html>

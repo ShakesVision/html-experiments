@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <!-- Prevent indexing -->
+    <meta name="robots" content="noindex, nofollow">
+    <title>Shariah Watchlist</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-3xl mx-auto p-6">
+        <header class="flex items-center justify-between mb-4">
+            <h1 class="text-2xl font-bold">Shariah Watchlist</h1>
+            <div class="flex gap-2">
+                <button id="refreshBtn" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white">Refresh Data</button>
+                <span id="status" class="text-sm text-gray-600"></span>
+            </div>
+        </header>
+
+        <section class="mb-6">
+            <div class="flex flex-col md:flex-row gap-3 items-stretch">
+                <input id="symbolInput" type="text" placeholder="Enter NSE symbol e.g. TCS"
+                    class="flex-1 border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-400 uppercase" />
+                <button id="addBtn" class="px-4 py-2 rounded-lg bg-green-600 text-white">Add</button>
+                <button id="clearBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800">Clear All</button>
+            </div>
+            <p class="mt-2 text-sm text-gray-600">Tip: press Enter to add. Symbols are stored locally on your device.
+            </p>
+        </section>
+
+        <section class="mb-4">
+            <div class="flex items-center gap-3 text-sm">
+                <span class="inline-flex items-center gap-1"><span
+                        class="w-2.5 h-2.5 rounded-full bg-green-600"></span>YES = compliant (Shariah Status 2 =
+                    1)</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>NO
+                    = not compliant</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-gray-400"></span>?
+                    = not found</span>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-xl shadow">
+            <div class="px-4 py-3 border-b flex items-center justify-between">
+                <h2 class="font-semibold">My Watchlist</h2>
+                <input id="filterInput" type="text" placeholder="Filter…"
+                    class="border rounded-md px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="text-left text-xs font-semibold tracking-wider text-gray-600 p-3">Symbol</th>
+                            <th class="text-left text-xs font-semibold tracking-wider text-gray-600 p-3">Company</th>
+                            <th class="text-left text-xs font-semibold tracking-wider text-gray-600 p-3">Compliance</th>
+                            <th class="text-left text-xs font-semibold tracking-wider text-gray-600 p-3">Industry</th>
+                            <th class="text-right text-xs font-semibold tracking-wider text-gray-600 p-3">Market Cap
+                            </th>
+                            <th class="text-center text-xs font-semibold tracking-wider text-gray-600 p-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const LS_KEY = "shariah_watchlist";
+
+        let master = []; // full dataset from API
+        let watchlist = []; // symbols user added
+
+        // --- utils ---
+        const bySymbol = (s) => master.find(r => (r.symbol || "").toUpperCase() === s.toUpperCase());
+        const fmtCap = (v) => typeof v === "number" ? v.toLocaleString() : (v || "");
+        const complianceText = (row) => {
+            if (!row) return "?";
+            const v = row.shariahStatus2;
+            // handle 1, "1", true
+            return (v === 1 || v === "1" || v === true) ? "YES" : "NO";
+        };
+        const complianceColor = (txt) => txt === "YES" ? "bg-green-100 text-green-700"
+            : txt === "NO" ? "bg-red-100 text-red-700"
+                : "bg-gray-100 text-gray-600";
+
+        function saveWatchlist() { localStorage.setItem(LS_KEY, JSON.stringify(watchlist)); }
+        function loadWatchlist() {
+            try { watchlist = JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }
+            catch { watchlist = []; }
+        }
+
+        function setStatus(msg) {
+            document.getElementById("status").textContent = msg || "";
+        }
+
+        async function fetchData() {
+            setStatus("Loading…");
+            try {
+                const res = await fetch(getCacheRefId(), { cache: "no-store" });
+                const data = await res.json();
+                // data is an array of objects per your doGet result
+                master = Array.isArray(data) ? data : (data.data || []);
+                setStatus(`Loaded ${master.length} records`);
+            } catch (e) {
+                console.error(e);
+                setStatus("Error loading data");
+            }
+        }
+
+        function render() {
+            const tbody = document.getElementById("tbody");
+            const filter = document.getElementById("filterInput").value.trim().toUpperCase();
+            tbody.innerHTML = "";
+
+            const rows = watchlist
+                .map(s => {
+                    const row = bySymbol(s);
+                    return { s, row, txt: complianceText(row) };
+                })
+                .filter(item => !filter || item.s.includes(filter) || (item.row?.companyName || "").toUpperCase().includes(filter))
+                .sort((a, b) => a.s.localeCompare(b.s));
+
+            if (rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-500">No symbols yet. Add from the box above.</td></tr>`;
+                return;
+            }
+
+            for (const { s, row, txt } of rows) {
+                const pill = complianceColor(txt);
+                const company = row?.companyName || "";
+                const industry = row?.industry || "";
+                const mcap = fmtCap(row?.marketCap);
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+          <td class="p-3 border-t font-medium">${s}</td>
+          <td class="p-3 border-t">${company}</td>
+          <td class="p-3 border-t">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${pill}">${txt}</span>
+          </td>
+          <td class="p-3 border-t">${industry}</td>
+          <td class="p-3 border-t text-right">${mcap}</td>
+          <td class="p-3 border-t text-center">
+            <button class="px-2.5 py-1 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800" data-remove="${s}">Remove</button>
+          </td>
+        `;
+                tbody.appendChild(tr);
+            }
+
+            // attach remove handlers
+            tbody.querySelectorAll("[data-remove]").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const sym = e.currentTarget.getAttribute("data-remove");
+                    watchlist = watchlist.filter(x => x !== sym);
+                    saveWatchlist();
+                    render();
+                });
+            });
+        }
+
+        function addSymbol() {
+            const inp = document.getElementById("symbolInput");
+            const raw = inp.value.trim().toUpperCase();
+            if (!raw) return;
+
+            // normalize common NSE formats like "NSE:TCS"
+            const symbol = raw.includes(":") ? raw.split(":").pop().trim() : raw;
+
+            if (!watchlist.includes(symbol)) {
+                watchlist.push(symbol);
+                saveWatchlist();
+                render();
+            }
+            inp.value = "";
+            inp.focus();
+        }
+
+        function clearAll() {
+            if (!watchlist.length) return;
+            if (confirm("Clear entire watchlist?")) {
+                watchlist = [];
+                saveWatchlist();
+                render();
+            }
+        }
+
+        // --- wire up ---
+        document.getElementById("addBtn").addEventListener("click", addSymbol);
+        document.getElementById("clearBtn").addEventListener("click", clearAll);
+        document.getElementById("refreshBtn").addEventListener("click", async () => {
+            await fetchData();
+            render();
+        });
+        document.getElementById("symbolInput").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") addSymbol();
+        });
+        document.getElementById("filterInput").addEventListener("input", render);
+
+        // boot
+        (async function init() {
+            loadWatchlist();
+            await fetchData();
+            render();
+        })();
+
+        function __resolveMetaInfo(chunk) {
+            return atob(chunk);
+        }
+
+        // GAS
+        function getCacheRefId() {
+            const a = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcw==";
+            const b = "L0FLZnljYnh4VmdRa1EwSFNPS1BK";
+            const c = "M0VGM3VSMTRJYmhxYnRUd3RvZzRY";
+            const d = "TFlmTnlZTmpDeWVuLUZGR19QSlNNWnFSSkxvS21PNA==";
+            const e = "L2V4ZWM=";
+
+            const full = [
+                __resolveMetaInfo(a),
+                __resolveMetaInfo(b),
+                __resolveMetaInfo(c),
+                __resolveMetaInfo(d),
+                __resolveMetaInfo(e)
+            ].join('');
+
+            return full;
+        }
+
+    </script>
+</body>
+
+</html>

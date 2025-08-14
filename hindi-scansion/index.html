@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="hi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Devanagari Taqti — Scansion & Metre Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-6">
+    <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-4xl">
+        <h1 class="text-2xl font-bold mb-3">Devanagari Scansion (Taqti) — with Feet & Metre Detection</h1>
+        <p class="text-sm text-gray-600 mb-4">Short = <span class="font-mono">-</span> (hija-e-kotah), Long = <span
+                class="font-mono">=</span> (hija-e-buland)</p>
+
+        <textarea id="input" rows="5" class="w-full p-3 border rounded-lg mb-3"
+            placeholder="यहाँ देवनागरी टेक्स्ट पेस्ट करें...">नमस्ते दुनिया। आज मौसम अच्छा है।</textarea>
+
+        <div class="flex gap-2 mb-4">
+            <button onclick="scan()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Scan</button>
+            <button onclick="example()" class="bg-gray-200 px-3 py-2 rounded">Example: newspaper</button>
+            <button onclick="clearAll()" class="bg-red-100 px-3 py-2 rounded">Clear</button>
+        </div>
+
+        <div id="results" class="space-y-4"></div>
+    </div>
+
+    <script>
+        /*
+         Linguistically-aware scansion for Devanagari (Hindi/Urdu text).
+         Rules used (simplified but robust):
+         - Independent vowels -> syllable with corresponding mora length
+         - Consonant clusters with virama (्) -> no inherent vowel between cluster members
+         - Consonant without following virama or vowel matra -> inherent 'a' (short, 1 mora)
+         - Vowel matras replace inherent vowel and determine mora length
+         - Anusvara (ं) / chandrabindu (ँ) / visarga (ः) treated as +0 or +1 mora (we add 1 as pragmatic choice)
+         - Output: numeric morae (1/2), symbols '-' for 1 and '=' for 2
+         - Feet grouping: try to detect repeating foot length from common metre patterns; fallback to 4 morae per foot
+         - Metre detection: compare repeating feet to known foot patterns and pick best match by coverage
+        */
+
+        // Devanagari character classes
+        const VIRAMA = '\u094D'; // ्
+        const ANUSVARA = '\u0902'; // ं
+        const CHANDRA = '\u0901'; // ँ
+        const VISARGA = '\u0903'; // ः
+        const NUKTA = '\u093C'; // ़ (handled as part of char stream)
+
+        // independent vowels (अ..औ) U+0905..U+0914
+        const independentVowels = {
+            '\u0905': 1, // अ
+            '\u0906': 2, // आ
+            '\u0907': 1, // इ
+            '\u0908': 2, // ई
+            '\u0909': 1, // उ
+            '\u090A': 2, // ऊ
+            '\u090B': 1, // ऋ (approx short)
+            '\u090F': 2, // ए
+            '\u0910': 2, // ऐ (treat as long)
+            '\u0913': 2, // ओ
+            '\u0914': 2  // औ
+        };
+
+        // matra (dependent vowel signs)
+        const matraMap = {
+            '\u093E': 2, // ा
+            '\u093F': 1, // ि
+            '\u0940': 2, // ी
+            '\u0941': 1, // ु
+            '\u0942': 2, // ू
+            '\u0943': 1, // ृ (approx)
+            '\u0947': 2, // े
+            '\u0948': 2, //ै
+            '\u094B': 2, //ो
+            '\u094C': 2  //ौ
+        };
+
+        // extra: candrabindu/anusvara/visarga treated as +1 mora (nasalization/aspiration)
+        const nasalMarks = new Set([ANUSVARA, CHANDRA, VISARGA]);
+
+        // consonant ranges cover common Devanagari consonants and nukta variants
+        const consonantRegex = /[\u0915-\u0939\u0958-\u095F\u0910-\u0914\u0979-\u097F\u0930\u0924\u0915-\u0939\u0958-\u095F]/;
+
+        // known foot patterns (simplified examples). Patterns are strings of '-' and '='.
+        const knownFeet = [
+            { name: "Fa'ūlun (فعولن)", pattern: "=-==" },
+            { name: "Mafā'īlun (مفاعلن)", pattern: "=-===" },
+            { name: "Mutafā'ilun (متفاعلن)", pattern: "=-=-=" },
+            { name: "Maf'ūlatun (مفعولات)", pattern: "===-" },
+            { name: "Fa'ūlātun (فعولات)", pattern: "=-=--" },
+            { name: "Kāmil (کمیل)", pattern: "=-=-" },
+            // add more patterns if needed
+        ];
+
+        // helper: split into Unicode codepoints array
+        function charsOf(s) { return Array.from(s); }
+
+        // Primary function: return array of mora numbers (1 or 2) for the input text (per word or global)
+        function getMoraeForWord(word) {
+            // strip punctuation and danda
+            const clean = word.replace(/[\u0964\u0965,।॥\u200D\u200C\d‒—–…\u002E\u002C;:!?"]/g, '');
+            const chars = charsOf(clean);
+            const morae = [];
+            let i = 0;
+            while (i < chars.length) {
+                const ch = chars[i];
+
+                // independent vowel => syllable of that length
+                if (independentVowels[ch]) {
+                    morae.push(independentVowels[ch]);
+                    i++;
+                    continue;
+                }
+
+                // nasal/visarga if standalone: count as 1 mora (attach to previous if exists ideally)
+                if (nasalMarks.has(ch)) {
+                    // if no previous vowel, treat as short syllable
+                    morae.push(1);
+                    i++;
+                    continue;
+                }
+
+                // consonant start?
+                if (consonantRegex.test(ch)) {
+                    // gather consonant cluster while next is virama + consonant
+                    let j = i;
+                    j++; // move past first consonant
+                    while (j < chars.length) {
+                        if (chars[j] === VIRAMA && j + 1 < chars.length && consonantRegex.test(chars[j + 1])) {
+                            // cluster continues; skip virama and next consonant
+                            j += 2;
+                        } else break;
+                    }
+
+                    // now at j; check if there is a matra at j
+                    if (j < chars.length && matraMap[chars[j]]) {
+                        morae.push(matraMap[chars[j]]);
+                        // advance to after matra (and possibly nasal marks)
+                        i = j + 1;
+                        // if immediately followed by nasal marks, optionally add 1 (we'll add nasal separately below)
+                        continue;
+                    } else {
+                        // if the consonant cluster ended with a virama (i.e., the last consumed char at j-1 was virama), then there's no vowel here
+                        // detect if the last consumed char before j was virama
+                        const prevIndex = j - 1;
+                        if (prevIndex >= 0 && chars[prevIndex] === VIRAMA) {
+                            // no vowel (consonant cluster with halant) => no mora for vowel here
+                            i = j; // continue parsing from j
+                            continue;
+                        } else {
+                            // no matra and no virama => inherent 'a' short vowel
+                            morae.push(1);
+                            i = j;
+                            continue;
+                        }
+                    }
+                }
+
+                // anything else (spaces, punctuation etc) -> skip
+                i++;
+            }
+
+            // post-process: attach nasal marks to previous vowel if present
+            // simple approach: if a nasal mark occurs as own mora, it's fine; otherwise it's already counted
+            return morae;
+        }
+
+        // For full text: compute per-word morae and global concatenated sequence
+        function analyzeText(text) {
+            // split into words by whitespace but keep punctuation trimmed
+            const words = text.trim().split(/\s+/).filter(Boolean);
+            const perWord = words.map(w => {
+                return { word: w, morae: getMoraeForWord(w) };
+            });
+            // flatten morae for whole line join with a single space between words
+            const whole = perWord.map(p => p.morae.join('')).join(' ');
+            return { perWord, whole };
+        }
+
+        // convert numeric morae string to symbols (- and =)
+        function moraeNumbersToSymbols(moraeStr) {
+            return moraeStr.replace(/1/g, '-').replace(/2/g, '=');
+        }
+
+        // group into feet with given footSize (in mora symbols). keep spaces between words as separators
+        function groupIntoFeet(symbolsStr, footSize) {
+            // remove spaces
+            const clean = symbolsStr.replace(/\s+/g, '');
+            const feet = [];
+            for (let i = 0; i < clean.length; i += footSize) {
+                feet.push(clean.slice(i, i + footSize));
+            }
+            return feet.join(' | ');
+        }
+
+        // Attempt metre detection: find best matching known foot pattern by scanning whole symbol string
+        function detectMetre(symbolsStr) {
+            const clean = symbolsStr.replace(/\s+/g, '');
+            if (!clean) return { name: '(none)', pattern: '', score: 0 };
+
+            // Try to find repeating foot-size by checking known feet first
+            let best = { name: 'No strong match', pattern: '', score: 0, footSize: 4 };
+
+            for (const f of knownFeet) {
+                const pat = f.pattern;
+                const pLen = pat.length;
+                // how many full repeats of pat in clean? compute matching score
+                let score = 0;
+                for (let i = 0; i + pLen <= clean.length; i += pLen) {
+                    const slice = clean.slice(i, i + pLen);
+                    if (slice === pat) score++;
+                }
+                // partial match for last foot: allow some prefix match
+                const remainder = clean.length % pLen;
+                if (remainder > 0) {
+                    const lastSlice = clean.slice(Math.floor(clean.length / pLen) * pLen);
+                    // count characters equal at start
+                    let m = 0;
+                    for (let k = 0; k < lastSlice.length && k < pat.length; k++) {
+                        if (lastSlice[k] === pat[k]) m++;
+                    }
+                    score += m / pLen; // partial contribution
+                }
+                // normalise by number of possible feet
+                const possible = Math.ceil(clean.length / pLen);
+                const normScore = score / possible;
+                if (normScore > best.score) {
+                    best = { name: f.name, pattern: pat, score: normScore, footSize: pLen };
+                }
+            }
+
+            // if best.score is small, try to detect self repeating smallest unit via prefix-function (KMP style)
+            if (best.score < 0.35) {
+                // find smallest repeating unit in string (heuristic)
+                for (let unit = 2; unit <= 6; unit++) {
+                    let count = 0;
+                    for (let i = 0; i + unit <= clean.length; i += unit) {
+                        const s = clean.slice(i, i + unit);
+                        if (s.length < unit) break;
+                        // check how many times this s repeats
+                        let repeats = 0;
+                        for (let j = 0; j + unit <= clean.length; j += unit) {
+                            if (clean.slice(j, j + unit) === s) repeats++;
+                        }
+                        // prefer units with many repeats
+                        if (repeats >= 2 && repeats > count) {
+                            count = repeats;
+                            best = { name: `Repeating foot (${unit})`, pattern: s, score: repeats / Math.ceil(clean.length / unit), footSize: unit };
+                        }
+                    }
+                    if (best.name.startsWith('Repeating foot')) break;
+                }
+            }
+
+            // fallback: if still nothing, default foot size 4
+            if (!best.footSize) best.footSize = 4;
+            return best;
+        }
+
+        // Utilities for UI rendering
+        function renderResults(analysis) {
+            const results = document.getElementById('results');
+            const perWord = analysis.perWord;
+            const whole = analysis.whole;
+
+            const numDisplay = whole || '';
+            const symDisplay = moraeNumbersToSymbols(numDisplay);
+
+            const metre = detectMetre(symDisplay);
+            const footSize = metre.footSize || 4;
+            const grouped = groupIntoFeet(symDisplay, footSize);
+
+            // Build HTML
+            let html = '';
+
+            // per-word table with morae numbers and symbols
+            html += `<div class="bg-gray-100 p-3 rounded">`;
+            html += `<h3 class="font-semibold mb-2">Per-word breakdown</h3>`;
+            html += `<div class="overflow-x-auto"><table class="w-full text-left table-auto"><thead><tr class="text-sm text-gray-700"><th class="p-2 border-b">Word</th><th class="p-2 border-b">Morae (nums)</th><th class="p-2 border-b">Symbols</th></tr></thead><tbody>`;
+            perWord.forEach(p => {
+                const nums = p.morae.join('');
+                const syms = moraeNumbersToSymbols(nums);
+                html += `<tr><td class="p-2 border-b align-top">${escapeHtml(p.word)}</td><td class="p-2 border-b font-mono align-top">${nums || '<i>—</i>'}</td><td class="p-2 border-b font-mono align-top">${syms || '<i>—</i>'}</td></tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+
+            // whole-line displays
+            html += `<div class="grid md:grid-cols-2 gap-3 mt-3">`;
+            html += `<div class="bg-white p-3 rounded border"><h3 class="font-semibold mb-1">Whole-line Morae (numbers)</h3><div class="font-mono p-2 bg-gray-50 rounded">${numDisplay || '<i>—</i>'}</div></div>`;
+            html += `<div class="bg-white p-3 rounded border"><h3 class="font-semibold mb-1">Symbols (- short, = long)</h3><div class="font-mono p-2 bg-gray-50 rounded">${escapeHtml(symDisplay) || '<i>—</i>'}</div></div>`;
+            html += `</div>`;
+
+            html += `<div class="mt-3 bg-white p-3 rounded border">`;
+            html += `<h3 class="font-semibold mb-1">Feet grouping (foot size = ${footSize} morae)</h3>`;
+            html += `<div class="font-mono p-2 bg-gray-50 rounded">${escapeHtml(grouped)}</div>`;
+            html += `<div class="mt-2 text-sm text-gray-700"><strong>Detected metre:</strong> ${escapeHtml(metre.name)} — score ${Math.round(metre.score * 100) / 100}</div>`;
+            html += `</div>`;
+
+            results.innerHTML = html;
+        }
+
+        // simple escape
+        function escapeHtml(s) { return (s + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+        function scan() {
+            const txt = document.getElementById('input').value || '';
+            if (!txt.trim()) {
+                document.getElementById('results').innerHTML = `<div class="text-red-600">Enter some Devanagari text above.</div>`;
+                return;
+            }
+            const analysis = analyzeText(txt);
+            renderResults(analysis);
+        }
+
+        // helper example text (news-like)
+        function example() {
+            const ex = `दिल्ली में आज बारिश के बाद वातावरण साफ़ रहा और तापमान में गिरावट दर्ज की गई। लोगों ने खुले मैदानों में अच्छी सैर की।`;
+            document.getElementById('input').value = ex;
+            scan();
+        }
+        function clearAll() { document.getElementById('input').value = ''; document.getElementById('results').innerHTML = ''; }
+
+        // run on load with default
+        document.addEventListener('DOMContentLoaded', () => { scan(); });
+
+    </script>
+</body>
+
+</html>
