@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Alphabet Adventure — Kids Letter Game</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Friendly fonts for different scripts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&family=Noto+Sans+Devanagari&family=Noto+Sans+Arabic&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --card-size: 18rem;
+        }
+
+        body {
+            font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+        }
+
+        /* gentle float animation for the letter card */
+        @keyframes floaty {
+            0% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-12px);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        .animate-floaty {
+            animation: floaty 3.6s ease-in-out infinite;
+        }
+
+        /* slow pulse for the reveal button */
+        @keyframes slowPulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.04);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .animate-slow-pulse {
+            animation: slowPulse 2.2s ease-in-out infinite;
+        }
+
+        /* small, joyful bounce for badges */
+        @keyframes tinyBounce {
+            0% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-6px);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        .animate-tiny-bounce {
+            animation: tinyBounce 1.6s ease-in-out infinite;
+        }
+
+        /* Confetti placeholder (JS will create colorful pieces) */
+        .confetti-piece {
+            position: absolute;
+            width: 8px;
+            height: 12px;
+            border-radius: 1px;
+            opacity: 0.95;
+        }
+
+        /* responsive large letter sizing */
+        .letter-large {
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        /* subtle glass effect for control panel */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(6px);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-pink-200 via-yellow-100 to-indigo-200 p-6">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800 tracking-tight">Alphabet Adventure</h1>
+                <p class="text-sm text-gray-700">Fun, colorful letter recognition for kids — supports Arabic, Urdu,
+                    Hindi (Devanagari) and English. Add your voice for hints!</p>
+            </div>
+            <div class="space-x-2">
+                <button id="helpBtn" class="px-4 py-2 rounded-full bg-white shadow-md hover:scale-105 transition">How to
+                    use</button>
+                <a href="#play"
+                    class="px-4 py-2 rounded-full bg-indigo-600 text-white shadow-md hover:scale-105 transition">Play
+                    now</a>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Left column: Controls -->
+            <section class="md:col-span-1 glass p-4 rounded-2xl shadow-lg">
+                <h2 class="font-bold text-lg mb-3">Settings & custom letters</h2>
+
+                <!-- Language toggles -->
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Languages</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button data-lang="english"
+                            class="lang-chip px-3 py-1 rounded-full bg-white shadow-sm">English</button>
+                        <button data-lang="arabic"
+                            class="lang-chip px-3 py-1 rounded-full bg-white shadow-sm">Arabic</button>
+                        <button data-lang="urdu"
+                            class="lang-chip px-3 py-1 rounded-full bg-white shadow-sm">Urdu</button>
+                        <button data-lang="hindi"
+                            class="lang-chip px-3 py-1 rounded-full bg-white shadow-sm">Hindi</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Tap to include/exclude a language. At least one language must
+                        be active.</p>
+                </div>
+
+                <!-- Reveal delay & modes -->
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Reveal delay (seconds)</label>
+                    <input id="revealDelay" type="range" min="0" max="8" value="3" class="w-full" />
+                    <div class="flex justify-between text-xs text-gray-600"><span>0s</span><span
+                            id="revealDelayVal">3s</span><span>8s</span></div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mode</label>
+                    <div class="flex gap-2">
+                        <button id="modeToggle" data-mode="infinite"
+                            class="px-3 py-2 rounded-xl bg-emerald-500 text-white shadow">Infinite</button>
+                        <button id="timeModeBtn" class="px-3 py-2 rounded-xl bg-white shadow">Time-bound</button>
+                    </div>
+                    <div id="timeOptions" class="mt-3 hidden">
+                        <label class="text-sm text-gray-600">Round length (seconds)</label>
+                        <input id="roundSeconds" type="number" min="5" value="60" class="w-full mt-1 p-2 rounded-lg" />
+                    </div>
+                </div>
+
+                <!-- Audio upload and letter input -->
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Add your voice (optional)</label>
+                    <input id="audioFiles" type="file" accept="audio/*" multiple class="mb-2" />
+                    <p class="text-xs text-gray-500">Tip: name audio files exactly as the letter they represent (e.g.
+                        "A.mp3" or "ا.mp3") for automatic mapping. Or upload and map in the next screen.</p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Custom letters</label>
+                    <p class="text-xs text-gray-600 mb-2">Paste letters for a language (one per line or comma
+                        separated). Press "Load" to apply.</p>
+                    <div class="grid grid-cols-1 gap-2">
+                        <select id="customLangSelect" class="p-2 rounded-lg">
+                            <option value="english">English</option>
+                            <option value="arabic">Arabic</option>
+                            <option value="urdu">Urdu</option>
+                            <option value="hindi">Hindi</option>
+                        </select>
+                        <textarea id="customLetters" rows="4" class="p-2 rounded-lg"
+                            placeholder="A, B, C or ا, ب, ت"></textarea>
+                        <div class="flex gap-2">
+                            <button id="loadCustom"
+                                class="flex-1 px-3 py-2 rounded-lg bg-indigo-600 text-white">Load</button>
+                            <button id="resetDefaults" class="flex-1 px-3 py-2 rounded-lg bg-white border">Reset
+                                defaults</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-xs text-gray-600">
+                    <strong>Note:</strong> We build apps for all these languages. Hire us!
+                </div>
+            </section>
+
+            <!-- Middle column: Play area -->
+            <section id="play" class="md:col-span-2 p-6 rounded-3xl shadow-2xl bg-white relative overflow-hidden">
+
+                <!-- Top controls: scoreboard and progress -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 rounded-xl bg-gradient-to-br from-purple-400 to-pink-300 shadow-md">
+                            <div class="text-xs text-white">Streak</div>
+                            <div id="streak" class="text-2xl font-extrabold text-white">0</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-gradient-to-br from-yellow-300 to-emerald-200 shadow-md">
+                            <div class="text-xs text-gray-800">Score</div>
+                            <div id="score" class="text-2xl font-extrabold">0</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <div class="text-sm text-gray-600">Lives</div>
+                        <div id="lives" class="px-3 py-1 rounded-full bg-red-100 text-red-700 font-bold">3</div>
+                    </div>
+                </div>
+
+                <!-- Large letter card -->
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="flex-1 flex items-center justify-center">
+                        <div id="letterCard"
+                            class="relative w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-white shadow-2xl flex items-center justify-center letter-large text-6xl sm:text-8xl animate-floaty">
+                            <div id="letterDisplay" class="select-none text-6xl sm:text-9xl tracking-wide"
+                                aria-live="polite">?</div>
+
+                            <!-- ephemeral hint bubble -->
+                            <div id="hintBubble"
+                                class="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white px-4 py-1 rounded-full text-sm opacity-0 pointer-events-none">
+                                Seen</div>
+                        </div>
+                    </div>
+
+                    <!-- Right side controls -->
+                    <div class="w-full md:w-1/3">
+                        <div class="mb-4">
+                            <button id="startBtn"
+                                class="w-full px-4 py-3 rounded-2xl bg-emerald-500 text-white text-lg font-bold shadow-lg hover:scale-105 transition">Start
+                                Game</button>
+                        </div>
+                        <div class="flex gap-2 mb-3">
+                            <button id="nextBtn" class="flex-1 px-3 py-2 rounded-lg bg-white shadow">Next</button>
+                            <button id="pauseBtn" class="flex-1 px-3 py-2 rounded-lg bg-white shadow">Pause</button>
+                        </div>
+                        <div class="mb-3 grid grid-cols-2 gap-2">
+                            <button id="showAnswerBtn" class="px-3 py-2 rounded-lg bg-yellow-300">Show</button>
+                            <button id="markCorrect" class="px-3 py-2 rounded-lg bg-blue-400 text-white">I knew
+                                it</button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="text-sm text-gray-700">Game speed</label>
+                            <input id="speedRange" type="range" min="400" max="2500" value="1200" step="100"
+                                class="w-full" />
+                        </div>
+
+                        <div class="rounded-lg p-3 bg-gradient-to-br from-white to-gray-100 shadow-inner">
+                            <div class="text-sm text-gray-500">Round info</div>
+                            <div class="flex justify-between mt-2">
+                                <div class="text-xs text-gray-700">Rounds played</div>
+                                <div id="roundsPlayed" class="font-bold">0</div>
+                            </div>
+                            <div class="flex justify-between mt-1">
+                                <div class="text-xs text-gray-700">Correct</div>
+                                <div id="correctCount" class="font-bold">0</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Footer controls: small utilities -->
+                <div class="mt-6 flex items-center justify-between">
+                    <div class="text-sm text-gray-600">Random letter every round — letters don't repeat until the pool
+                        is exhausted.</div>
+                    <div class="flex gap-2">
+                        <button id="exportBtn" class="px-3 py-2 rounded-lg bg-white shadow">Export letters</button>
+                        <button id="importBtn" class="px-3 py-2 rounded-lg bg-white shadow">Import</button>
+                    </div>
+                </div>
+
+                <!-- hidden audio player used by JS -->
+                <audio id="hintAudio" preload="auto"></audio>
+
+                <!-- default letters stored as JSON for the JS file to read and manipulate easily -->
+                <script type="application/json" id="defaultLetters">{
+  "english": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"],
+  "arabic": ["ا","ب","ت","ث","ج","ح","خ","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ع","غ","ف","ق","ك","ل","م","ن","ه","و","ي"],
+  "urdu": ["ا","ب","پ","ت","ٹ","ث","ج","چ","ح","خ","د","ڈ","ذ","ر","ز","ژ","س","ش","ص","ض","ط","ظ","ع","غ","ف","ق","ک","گ","ل","م","ن","ں","ہ","ء","و","ی"],
+  "hindi": ["अ","आ","इ","ई","उ","ऊ","ए","ऐ","ओ","औ","क","ख","ग","घ","च","छ","ज","झ","ट","ठ","ड","ढ","त","थ","द","ध","न","प","फ","ब","भ","म","य","र","ल","व","श","ष","स","ह"]
+}</script>
+
+                <!-- small friendly help modal (simple) -->
+                <div id="helpModal"
+                    class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-40 z-50">
+                    <div class="bg-white rounded-2xl p-6 w-11/12 max-w-xl">
+                        <h3 class="text-xl font-bold mb-2">How to use</h3>
+                        <ul class="list-disc pl-5 text-sm text-gray-700 space-y-2">
+                            <li>Choose which languages to include by tapping the chips on the left.</li>
+                            <li>Paste your custom letters (one per line) and press Load — or use defaults.</li>
+                            <li>Upload audio files (optional). Name files exactly as the letter to map automatically, or
+                                map manually using the mapping screen.</li>
+                            <li>Press Start. The app will show a letter, wait for the reveal delay, then play your audio
+                                and show the correct answer.</li>
+                            <li>Use Infinite mode for practice, or Time-bound for quick rounds. Score is tracked on the
+                                top right.</li>
+                        </ul>
+                        <div class="mt-4 text-right">
+                            <button id="closeHelp" class="px-4 py-2 rounded-lg bg-indigo-600 text-white">Got it</button>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+
+        <footer class="mt-8 text-center text-sm text-gray-600">Made with ❤️ — by shakeeb.in</footer>
+    </div>
+
+    <!-- Link to external JS (you asked for JS in a separate file) -->
+    <script src="main.js" defer></script>
+</body>
+
+</html>
