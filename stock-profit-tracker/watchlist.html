@@ -14,22 +14,22 @@
     <div class="max-w-3xl mx-auto p-6">
         <header class="flex items-center justify-between mb-4">
             <h1 class="text-2xl font-bold">Shariah Watchlist</h1>
-            <div class="flex gap-2">
-                <button id="refreshBtn" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white">Refresh Data</button>
-                <span id="status" class="text-sm text-gray-600"></span>
+            <div class="flex gap-2 items-center">
+                <button id="refreshBtn" class="px-3 py-1.5 rounded-lg bg-pink-300 text-white">Refresh Data</button>
+                <span id="status" class="text-xs text-gray-600"></span>
             </div>
         </header>
 
         <section class="mb-6">
             <div class="flex flex-col md:flex-row gap-3 items-stretch">
                 <input id="symbolInput" type="text" placeholder="Enter NSE symbol e.g. TCS"
-                    class="flex-1 border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-400 uppercase" />
-                <button id="addBtn" class="px-4 py-2 rounded-lg bg-green-600 text-white">Add</button>
+                    class="flex-1 border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-pink-400 uppercase" />
+                <button id="addBtn" class="px-4 py-2 rounded-lg bg-green-400 text-white">Add</button>
+                <button id="batchCheckerBtn" class="px-3 py-1 bg-green-300 text-black rounded-md">Batch Checker</button>
                 <button id="clearBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800">Clear All</button>
             </div>
             <p class="mt-2 text-sm text-gray-600">Tip: press Enter to add. Symbols are stored locally on your device.
             </p>
-            <button id="batchCheckerBtn" class="px-3 py-1 bg-indigo-500 text-white rounded-md">Batch Checker</button>
 
             <!-- Popup -->
             <div id="batchPopup" class="fixed inset-0 hidden items-center justify-center bg-black/40 z-50">
@@ -57,7 +57,7 @@
 
                         <div class="flex justify-end space-x-2 mb-2">
                             <button id="copyCompliantBtn" class="px-3 py-1 bg-gray-200 rounded-md">Copy</button>
-                            <button id="importCompliantBtn" class="px-3 py-1 bg-indigo-500 text-white rounded-md">Import
+                            <button id="importCompliantBtn" class="px-3 py-1 bg-pink-300 text-white rounded-md">Import
                                 to Watchlist</button>
                         </div>
 
@@ -83,7 +83,7 @@
             <div class="px-4 py-3 border-b flex items-center justify-between">
                 <h2 class="font-semibold">My Watchlist</h2>
                 <input id="filterInput" type="text" placeholder="Filter…"
-                    class="border rounded-md px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-400" />
+                    class="border rounded-md px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-pink-200" />
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
@@ -278,8 +278,10 @@
 
         // Handle check
         document.getElementById("findComplianceBtn").onclick = () => {
-            const lines = document.getElementById("batchInput").value
-                .split("\n")
+            const batchInputEl = document.getElementById("batchInput");
+
+            const lines = batchInputEl.value
+                .split(/[,\n,]/)
                 .map(l => l.trim().toUpperCase())
                 .filter(Boolean);
 
