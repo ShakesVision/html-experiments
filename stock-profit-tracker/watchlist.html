@@ -29,13 +29,49 @@
             </div>
             <p class="mt-2 text-sm text-gray-600">Tip: press Enter to add. Symbols are stored locally on your device.
             </p>
+            <button id="batchCheckerBtn" class="px-3 py-1 bg-indigo-500 text-white rounded-md">Batch Checker</button>
+
+            <!-- Popup -->
+            <div id="batchPopup" class="fixed inset-0 hidden items-center justify-center bg-black/40 z-50">
+                <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 relative">
+                    <button id="closeBatchPopup"
+                        class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">✕</button>
+                    <h2 class="text-xl font-semibold mb-3">Batch Compliance Checker</h2>
+
+                    <!-- Step 1: Textarea Input -->
+                    <textarea id="batchInput" class="w-full border rounded-lg p-3 h-40 mb-3"
+                        placeholder="Enter one stock symbol per line..."></textarea>
+                    <button id="findComplianceBtn" class="bg-green-600 text-white px-4 py-2 rounded-md">Find Shariah
+                        Compliance</button>
+
+                    <!-- Step 2: Result Tabs -->
+                    <div id="batchResults" class="hidden mt-4">
+                        <div class="flex space-x-2 mb-2">
+                            <button data-tab="compliant"
+                                class="tab-btn bg-green-100 text-green-800 px-3 py-1 rounded-md font-medium">Compliant</button>
+                            <button data-tab="noncompliant"
+                                class="tab-btn bg-red-100 text-red-800 px-3 py-1 rounded-md">Non-Compliant</button>
+                            <button data-tab="all"
+                                class="tab-btn bg-gray-100 text-gray-800 px-3 py-1 rounded-md">All</button>
+                        </div>
+
+                        <div class="flex justify-end space-x-2 mb-2">
+                            <button id="copyCompliantBtn" class="px-3 py-1 bg-gray-200 rounded-md">Copy</button>
+                            <button id="importCompliantBtn" class="px-3 py-1 bg-indigo-500 text-white rounded-md">Import
+                                to Watchlist</button>
+                        </div>
+
+                        <div id="tabContent" class="overflow-y-auto max-h-80 border rounded-lg"></div>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
         <section class="mb-4">
             <div class="flex items-center gap-3 text-sm">
                 <span class="inline-flex items-center gap-1"><span
-                        class="w-2.5 h-2.5 rounded-full bg-green-600"></span>YES = compliant (Shariah Status 2 =
-                    1)</span>
+                        class="w-2.5 h-2.5 rounded-full bg-green-600"></span>YES = compliant</span>
                 <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>NO
                     = not compliant</span>
                 <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-gray-400"></span>?
@@ -75,7 +111,7 @@
         let watchlist = []; // symbols user added
 
         // --- utils ---
-        const bySymbol = (s) => master.find(r => (r.symbol || "").toUpperCase() === s.toUpperCase());
+        const bySymbol = (s) => master.find(r => (r.ticker || "").toUpperCase() === s.toUpperCase());
         const fmtCap = (v) => typeof v === "number" ? v.toLocaleString() : (v || "");
         const complianceText = (row) => {
             if (!row) return "?";
@@ -170,13 +206,18 @@
             // normalize common NSE formats like "NSE:TCS"
             const symbol = raw.includes(":") ? raw.split(":").pop().trim() : raw;
 
+            pushSymbolIfNotExist(symbol);
+
+            inp.value = "";
+            inp.focus();
+        }
+
+        function pushSymbolIfNotExist(symbol) {
             if (!watchlist.includes(symbol)) {
                 watchlist.push(symbol);
                 saveWatchlist();
                 render();
             }
-            inp.value = "";
-            inp.focus();
         }
 
         function clearAll() {
@@ -228,6 +269,92 @@
             ].join('');
 
             return full;
+        }
+
+        // Open / Close popup
+        const popup = document.getElementById("batchPopup");
+        document.getElementById("batchCheckerBtn").onclick = () => popup.classList.remove("hidden");
+        document.getElementById("closeBatchPopup").onclick = () => popup.classList.add("hidden");
+
+        // Handle check
+        document.getElementById("findComplianceBtn").onclick = () => {
+            const lines = document.getElementById("batchInput").value
+                .split("\n")
+                .map(l => l.trim().toUpperCase())
+                .filter(Boolean);
+
+            if (!lines.length) return alert("Please enter at least one symbol");
+
+            const results = lines.map(s => {
+                const found = master.find(r => r.ticker === s);
+                return {
+                    symbol: s,
+                    status: found
+                        ? found.compliant === true ? "YES" : found.compliant === false ? "NO" : "?"
+                        : "?"
+                };
+            });
+
+            renderTabs(results);
+        };
+
+        function renderTabs(results) {
+            const resDiv = document.getElementById("batchResults");
+            resDiv.classList.remove("hidden");
+
+            const tabs = {
+                compliant: results.filter(r => r.status === "YES"),
+                noncompliant: results.filter(r => r.status === "NO"),
+                all: results
+            };
+
+            function renderTabContent(type) {
+                const data = tabs[type];
+                const rows = data.map(r => `
+      <tr>
+        <td class="border p-2 font-medium">${r.symbol}</td>
+        <td class="border p-2">
+          <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${r.status === "YES"
+                        ? "bg-green-100 text-green-800"
+                        : r.status === "NO"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-600"
+                    }">${r.status}</span>
+        </td>
+      </tr>`).join("");
+
+                document.getElementById("tabContent").innerHTML = `
+      <table class="w-full border-collapse text-sm">
+        <thead><tr class="bg-gray-50"><th class="p-2 border text-left">Symbol</th><th class="p-2 border text-left">Compliance</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+            }
+
+            // Default to compliant
+            renderTabContent("compliant");
+
+            document.querySelectorAll(".tab-btn").forEach(btn => {
+                btn.onclick = () => renderTabContent(btn.dataset.tab);
+            });
+
+            // Copy compliant
+            document.getElementById("copyCompliantBtn").onclick = () => {
+                const text = tabs.compliant.map(x => x.symbol).join("\n");
+                navigator.clipboard.writeText(text);
+                alert("Copied compliant symbols!");
+            };
+
+            // Import compliant
+            document.getElementById("importCompliantBtn").onclick = () => {
+                tabs.compliant.forEach(x => addToWatchlist(x.symbol));
+                popup.classList.add("hidden");
+            };
+        }
+
+        // Example existing add function
+        function addToWatchlist(symbol) {
+            pushSymbolIfNotExist(symbol);
+            console.log("Added to watchlist:", symbol);
         }
 
     </script>
