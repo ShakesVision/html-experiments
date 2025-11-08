@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Offline Mock Generator — ShakesVision</title>
+    <meta name="description"
+        content="Simple offline mockup generator. Upload your mock (blank device/photo), upload artwork, drag corners to fit." />
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* small extra styling for handles and subtle shadows */
+        .handle {
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background: white;
+            border: 2px solid rgba(15, 23, 42, 0.12);
+            box-shadow: 0 4px 10px rgba(2, 6, 23, 0.08);
+            touch-action: none;
+        }
+
+        .mock-wrap {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(248, 250, 252, 0.6));
+            border-radius: 12px;
+        }
+
+        .control-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(6px);
+        }
+
+        .mini {
+            font-size: 12px;
+            color: #6b7280
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gray-50 text-slate-800 antialiased">
+    <div class="max-w-7xl mx-auto p-6">
+        <header class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+                    SV</div>
+                <div>
+                    <h1 class="text-lg font-semibold">Offline Mock Generator</h1>
+                    <div class="mini">Attribution: <a href="https://github.com/ShakesVision" target="_blank"
+                            class="underline">ShakesVision</a></div>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="downloadBtn" class="px-3 py-2 rounded-md text-sm font-medium control-card">Download
+                    PNG</button>
+                <a href="#" id="resetAll" class="text-sm mini underline">Reset</a>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-12 gap-6">
+            <!-- left: mocks list -->
+            <section class="col-span-3">
+                <div class="p-4 mock-wrap">
+                    <h2 class="font-medium mb-3">Mocks</h2>
+                    <p class="mini mb-3">Upload blank device photos or any mock image. Click a mock to use it.</p>
+                    <input id="mockUpload" type="file" accept="image/*" class="mb-3 w-full" />
+                    <div id="mocksList" class="space-y-3 max-h-[60vh] overflow-auto"></div>
+                </div>
+            </section>
+
+            <!-- center: preview area -->
+            <section class="col-span-6">
+                <div class="p-4 mock-wrap relative">
+                    <h2 class="font-medium mb-3">Preview</h2>
+                    <div id="previewArea"
+                        class="w-full h-[60vh] rounded-md bg-white flex items-center justify-center overflow-hidden relative">
+                        <!-- canvases get injected here -->
+                        <div id="canvasContainer" class="relative"></div>
+                        <div id="handles" class="absolute inset-0 pointer-events-none"></div>
+                        <div id="placeholder"
+                            class="absolute inset-0 flex flex-col items-center justify-center mini text-slate-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mb-2" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M3 7v4a1 1 0 001 1h3m10-5h3a1 1 0 011 1v8a1 1 0 01-1 1h-3M7 21h10M7 3h10" />
+                            </svg>
+                            Drop or upload a mock & artwork to begin
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- right: artwork + controls -->
+            <section class="col-span-3">
+                <div class="p-4 control-card rounded-md">
+                    <h2 class="font-medium mb-3">Artwork</h2>
+                    <input id="artUpload" type="file" accept="image/*" class="mb-3 w-full" />
+                    <div class="mb-4">
+                        <label class="mini">Opacity</label>
+                        <input id="opacity" type="range" min="0" max="1" step="0.01" value="1" class="w-full" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="mini">Brightness</label>
+                        <input id="brightness" type="range" min="0.2" max="2" step="0.01" value="1" class="w-full" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="mini">Fit mode</label>
+                        <select id="fitMode" class="w-full p-2 rounded border mini">
+                            <option value="cover">Cover</option>
+                            <option value="contain">Contain</option>
+                            <option value="stretch">Stretch</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="autoFit" class="flex-1 py-2 rounded mini">Auto Fit</button>
+                        <button id="clearArt" class="flex-1 py-2 rounded mini">Clear</button>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <h3 class="font-medium mb-2">Adjust corners</h3>
+                    <p class="mini mb-2">Drag the four handles shown on the preview to map the artwork.</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs mini">
+                        <div>Top-left: <span id="coords0">-</span></div>
+                        <div>Top-right: <span id="coords1">-</span></div>
+                        <div>Bottom-right: <span id="coords2">-</span></div>
+                        <div>Bottom-left: <span id="coords3">-</span></div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="mini text-slate-500">Made with ❤️ — ShakesVision</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Utility: create element
+        const $ = (s) => document.querySelector(s);
+        const $$ = (s) => document.querySelectorAll(s);
+
+        const mockUpload = $('#mockUpload');
+        const mocksList = $('#mocksList');
+        const canvasContainer = $('#canvasContainer');
+        const placeholder = $('#placeholder');
+        const handlesLayer = $('#handles');
+        const artUpload = $('#artUpload');
+        const opacityInp = $('#opacity');
+        const brightnessInp = $('#brightness');
+        const fitMode = $('#fitMode');
+        const autoFitBtn = $('#autoFit');
+        const clearArtBtn = $('#clearArt');
+        const downloadBtn = $('#downloadBtn');
+        const resetAll = $('#resetAll');
+        const coordEls = [$('#coords0'), $('#coords1'), $('#coords2'), $('#coords3')];
+
+        let mocks = []; // {id, img}
+        let selectedMock = null; // {img, w, h}
+        let artworkImg = null;
+
+        // Main canvases
+        let baseCanvas, baseCtx, artCanvas, artCtx;
+
+        function ensureCanvases(w, h) {
+            canvasContainer.innerHTML = '';
+            baseCanvas = document.createElement('canvas'); baseCanvas.width = w; baseCanvas.height = h; baseCanvas.style.maxWidth = '100%'; baseCanvas.style.display = 'block'; baseCanvas.style.width = '100%'; baseCanvas.className = 'rounded-md';
+            artCanvas = document.createElement('canvas'); artCanvas.width = w; artCanvas.height = h; artCanvas.style.position = 'absolute'; artCanvas.style.left = 0; artCanvas.style.top = 0; artCanvas.style.maxWidth = '100%'; artCanvas.style.width = '100%'; artCanvas.className = 'rounded-md';
+            canvasContainer.appendChild(baseCanvas);
+            canvasContainer.appendChild(artCanvas);
+            baseCtx = baseCanvas.getContext('2d');
+            artCtx = artCanvas.getContext('2d');
+            canvasContainer.style.height = '';
+            // attach click to toggle placeholder
+            placeholder.style.display = 'none';
+        }
+
+        function addMockToList(img) {
+            const id = Date.now() + Math.random();
+            mocks.push({ id, img });
+            const el = document.createElement('div');
+            el.className = 'flex items-center gap-3 p-2 rounded hover:bg-slate-50 cursor-pointer';
+            el.innerHTML = `<img src="${img.src}" class="w-14 h-10 object-cover rounded"/><div class="mini">Mock ${mocks.length}</div>`;
+            el.onclick = () => selectMock(id);
+            mocksList.prepend(el);
+        }
+
+        mockUpload.addEventListener('change', (e) => {
+            const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f);
+            const img = new Image(); img.onload = () => { addMockToList(img); }; img.src = url;
+            mockUpload.value = '';
+        });
+
+        function selectMock(id) {
+            selectedMock = mocks.find(m => m.id === id).img;
+            setupPreviewWithMock(selectedMock);
+        }
+
+        function setupPreviewWithMock(img) {
+            const w = img.naturalWidth; const h = img.naturalHeight;
+            ensureCanvases(w, h);
+            // draw mock into base
+            baseCtx.clearRect(0, 0, w, h);
+            baseCtx.drawImage(img, 0, 0);
+            // initialize handles to screen corners of where artwork will be
+            initHandles(w, h);
+            renderArt();
+        }
+
+        // Handles state in image space (pixels)
+        let handles = [{ x: 50, y: 50 }, { x: 450, y: 50 }, { x: 450, y: 350 }, { x: 50, y: 350 }];
+
+        function initHandles(w, h) {
+            // center-ish rectangle covering 60% of mock
+            const marginX = Math.round(w * 0.15), marginY = Math.round(h * 0.15);
+            handles = [{ x: marginX, y: marginY }, { x: w - marginX, y: marginY }, { x: w - marginX, y: h - marginY }, { x: marginX, y: h - marginY }];
+            renderHandles();
+        }
+
+        function renderHandles() {
+            handlesLayer.innerHTML = '';
+            const rect = baseCanvas.getBoundingClientRect();
+            const scaleX = rect.width / baseCanvas.width;
+            const scaleY = rect.height / baseCanvas.height;
+            for (let i = 0; i < 4; i++) {
+                const h = handles[i];
+                const el = document.createElement('div');
+                el.className = 'handle absolute touchable';
+                el.style.left = (h.x * scaleX - 9) + 'px';
+                el.style.top = (h.y * scaleY - 9) + 'px';
+                el.style.pointerEvents = 'auto';
+                el.setAttribute('data-i', i);
+                el.addEventListener('pointerdown', startDrag);
+                handlesLayer.appendChild(el);
+                coordEls[i].textContent = Math.round(h.x) + ',' + Math.round(h.y);
+            }
+        }
+
+        let dragState = null;
+        function startDrag(e) {
+            e.preventDefault();
+            const i = Number(e.currentTarget.dataset.i);
+            dragState = { i, startX: e.clientX, startY: e.clientY };
+            window.addEventListener('pointermove', onDrag);
+            window.addEventListener('pointerup', endDrag);
+        }
+        function onDrag(e) {
+            if (!dragState) return;
+            const rect = baseCanvas.getBoundingClientRect();
+            const scaleX = baseCanvas.width / rect.width;
+            const scaleY = baseCanvas.height / rect.height;
+            const dx = (e.clientX - dragState.startX) * scaleX;
+            const dy = (e.clientY - dragState.startY) * scaleY;
+            handles[dragState.i].x += dx; handles[dragState.i].y += dy;
+            dragState.startX = e.clientX; dragState.startY = e.clientY;
+            constrainHandles();
+            renderHandles();
+            renderArt();
+        }
+        function endDrag(e) {
+            dragState = null;
+            window.removeEventListener('pointermove', onDrag);
+            window.removeEventListener('pointerup', endDrag);
+        }
+
+        function constrainHandles() {
+            if (!baseCanvas) return;
+            const w = baseCanvas.width, h = baseCanvas.height;
+            for (let p of handles) {
+                p.x = Math.max(0, Math.min(w, p.x));
+                p.y = Math.max(0, Math.min(h, p.y));
+            }
+        }
+
+        // Artwork upload
+        artUpload.addEventListener('change', (e) => {
+            const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f);
+            const img = new Image(); img.onload = () => { artworkImg = img; autoFit(); renderArt(); }; img.src = url;
+            artUpload.value = '';
+        });
+
+        opacityInp.addEventListener('input', renderArt);
+        brightnessInp.addEventListener('input', renderArt);
+        fitMode.addEventListener('change', renderArt);
+        autoFitBtn.addEventListener('click', () => { autoFit(); renderArt(); });
+        clearArtBtn.addEventListener('click', () => { artworkImg = null; renderArt(); });
+
+        function autoFit() {
+            if (!baseCanvas || !artworkImg) return;
+            // fit artwork bounding box to quad bounding box
+            const minX = Math.min(...handles.map(h => h.x));
+            const maxX = Math.max(...handles.map(h => h.x));
+            const minY = Math.min(...handles.map(h => h.y));
+            const maxY = Math.max(...handles.map(h => h.y));
+            const w = maxX - minX, h = maxY - minY;
+            // create transform that maps artwork center to quad center by keeping source normalized
+            // We'll just remember fitMode and use during rendering
+        }
+
+        function renderArt() {
+            if (!baseCanvas) return;
+            const w = baseCanvas.width, h = baseCanvas.height;
+            artCtx.clearRect(0, 0, w, h);
+            if (!artworkImg) return;
+            // Prepare source rectangle according to fitMode
+            let sx = 0, sy = 0, sw = artworkImg.naturalWidth, sh = artworkImg.naturalHeight;
+            if (fitMode.value === 'cover') {
+                const rImg = artworkImg.naturalWidth / artworkImg.naturalHeight;
+                const rDest = (handles[1].x - handles[0].x) / (handles[3].y - handles[0].y + 1e-6);
+                if (rImg > rDest) { // image wider -> crop sides
+                    sh = artworkImg.naturalHeight; sw = Math.round(sh * rDest); sx = Math.round((artworkImg.naturalWidth - sw) / 2);
+                } else { // image taller -> crop top/bottom
+                    sw = artworkImg.naturalWidth; sh = Math.round(sw / rDest); sy = Math.round((artworkImg.naturalHeight - sh) / 2);
+                }
+            } else if (fitMode.value === 'contain') {
+                // use full image, will letterbox by triangles mapping
+                sx = 0; sy = 0; sw = artworkImg.naturalWidth; sh = artworkImg.naturalHeight;
+            } else { // stretch
+                sx = 0; sy = 0; sw = artworkImg.naturalWidth; sh = artworkImg.naturalHeight;
+            }
+
+            // compute destination quad: handles array
+            const dst = handles.map(p => ({ x: p.x, y: p.y }));
+            // split source into two triangles
+            // source coordinates in image pixel space
+            const sW = sw, sH = sh;
+            // we'll use two source triangles: (0,0)-(sW,0)-(0,sH) and (sW,0)-(sW,sH)-(0,sH)
+            const srcTri1 = [{ x: 0, y: 0 }, { x: sW, y: 0 }, { x: 0, y: sH }];
+            const srcTri2 = [{ x: sW, y: 0 }, { x: sW, y: sH }, { x: 0, y: sH }];
+            // destination triangles map from quad: [p0,p1,p2] and [p2,p3,p0]
+            const dstTri1 = [dst[0], dst[1], dst[3]];
+            const dstTri2 = [dst[1], dst[2], dst[3]];
+
+            artCtx.save();
+            artCtx.globalAlpha = parseFloat(opacityInp.value || 1);
+            // brightness via filter
+            artCtx.filter = `brightness(${brightnessInp.value || 1})`;
+            // draw triangle helper
+            drawImageTriangle(artCtx, artworkImg, sx, sy, sw, sh, srcTri1, dstTri1);
+            drawImageTriangle(artCtx, artworkImg, sx, sy, sw, sh, srcTri2, dstTri2);
+            artCtx.restore();
+        }
+
+        // drawImageTriangle: map a portion of image (sx,sy,sw,sh) into destination triangle
+        function drawImageTriangle(ctx, img, sx, sy, sw, sh, srcTri, dstTri) {
+            // srcTri are relative to the cropped area; but currently srcTri defined starting at (0,0)
+            // We'll use canvas transform to map source triangle to destination triangle using affine transform
+            // Compute affine transform matrix that maps srcTri to dstTri
+            // Solve matrix A such that: [x']   [a c e][x]
+            //                         [y'] = [b d f][y]
+            // where (x,y) are src coords, (x',y') are dst coords
+            const x0 = srcTri[0].x, y0 = srcTri[0].y;
+            const x1 = srcTri[1].x, y1 = srcTri[1].y;
+            const x2 = srcTri[2].x, y2 = srcTri[2].y;
+            const u0 = dstTri[0].x, v0 = dstTri[0].y;
+            const u1 = dstTri[1].x, v1 = dstTri[1].y;
+            const u2 = dstTri[2].x, v2 = dstTri[2].y;
+
+            // Solve for a,b,c,d,e,f
+            // Using linear equations:
+            // a*x0 + c*y0 + e = u0
+            // b*x0 + d*y0 + f = v0
+            // a*x1 + c*y1 + e = u1
+            // b*x1 + d*y1 + f = v1
+            // a*x2 + c*y2 + e = u2
+            // b*x2 + d*y2 + f = v2
+            // Solve first for a,c,e using 3x3 system, then b,d,f similarly
+            const denom = (x0 * (y1 - y2) + x1 * (y2 - y0) + x2 * (y0 - y1));
+            if (Math.abs(denom) < 1e-6) return; // degenerate
+            const a = (u0 * (y1 - y2) + u1 * (y2 - y0) + u2 * (y0 - y1)) / denom;
+            const c = (u0 * (x2 - x1) + u1 * (x0 - x2) + u2 * (x1 - x0)) / denom;
+            const e = (u0 * (x1 * y2 - x2 * y1) + u1 * (x2 * y0 - x0 * y2) + u2 * (x0 * y1 - x1 * y0)) / denom;
+
+            const b = (v0 * (y1 - y2) + v1 * (y2 - y0) + v2 * (y0 - y1)) / denom;
+            const d = (v0 * (x2 - x1) + v1 * (x0 - x2) + v2 * (x1 - x0)) / denom;
+            const f = (v0 * (x1 * y2 - x2 * y1) + v1 * (x2 * y0 - x0 * y2) + v2 * (x0 * y1 - x1 * y0)) / denom;
+
+            ctx.save();
+            // create clipping path for destination triangle
+            ctx.beginPath();
+            ctx.moveTo(dstTri[0].x, dstTri[0].y);
+            ctx.lineTo(dstTri[1].x, dstTri[1].y);
+            ctx.lineTo(dstTri[2].x, dstTri[2].y);
+            ctx.closePath();
+            ctx.clip();
+
+            // set transform
+            // transform maps source space to destination space
+            // but we need to translate source coords relative to cropped sx,sy
+            // We'll translate by (-sx,-sy) before transform by using drawImage source rectangle
+            ctx.setTransform(a, b, c, d, e - a * sx - c * sy, f - b * sx - d * sy);
+            // draw the relevant part of the source image
+            try {
+                ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+            } catch (err) {
+                // fallback: draw full image
+                ctx.drawImage(img, 0, 0);
+            }
+            ctx.restore();
+        }
+
+        // Download composed image (base + art)
+        downloadBtn.addEventListener('click', () => {
+            if (!baseCanvas) return alert('Nothing to download');
+            const out = document.createElement('canvas'); out.width = baseCanvas.width; out.height = baseCanvas.height;
+            const octx = out.getContext('2d');
+            octx.drawImage(baseCanvas, 0, 0);
+            octx.drawImage(artCanvas, 0, 0);
+            const url = out.toDataURL('image/png');
+            const a = document.createElement('a'); a.href = url; a.download = 'mock-result.png'; a.click();
+        });
+
+        resetAll.addEventListener('click', () => { mocks = []; selectedMock = null; artworkImg = null; canvasContainer.innerHTML = ''; mocksList.innerHTML = ''; placeholder.style.display = 'flex'; handlesLayer.innerHTML = ''; });
+
+        // Allow drag & drop of mock and artwork into preview
+        const previewArea = document.getElementById('previewArea');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
+            previewArea.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); });
+        });
+        previewArea.addEventListener('drop', (e) => {
+            const f = e.dataTransfer.files && e.dataTransfer.files[0];
+            if (!f) return;
+            // heuristics: if mock not set, treat as mock else as artwork
+            if (!selectedMock) {
+                const url = URL.createObjectURL(f);
+                const img = new Image(); img.onload = () => { addMockToList(img); selectMock(mocks[0].id); }; img.src = url;
+            } else {
+                const url = URL.createObjectURL(f);
+                const img = new Image(); img.onload = () => { artworkImg = img; autoFit(); renderArt(); }; img.src = url;
+            }
+        });
+
+        // small helper: if user clicks on mock list item created earlier, it's already wired
+
+        // Notes: This implements a two-triangle affine approximation of a perspective warp.
+        // It works well for most rectangular screen mockups. For tighter perspective you can split into more triangles.
+
+    </script>
+</body>
+
+</html>
