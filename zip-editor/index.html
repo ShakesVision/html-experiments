@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ZIP File Viewer & Editor</title>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-6">
+
+    <div class="max-w-3xl mx-auto bg-white shadow-md rounded p-6">
+        <h1 class="text-2xl font-bold mb-4">🔍 ZIP File Viewer & Replacer</h1>
+
+        <input type="file" id="zipInput" accept=".zip" class="mb-4" />
+        <div id="zipContent" class="mb-4"></div>
+
+        <div id="replaceSection" class="hidden">
+            <h2 class="text-xl font-semibold mt-6 mb-2">🔄 Replace a File</h2>
+            <select id="fileSelector" class="mb-2 p-2 border rounded w-full"></select>
+            <input type="file" id="replacementFile" class="mb-2" />
+            <button onclick="replaceFile()"
+                class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Replace File</button>
+        </div>
+
+        <button onclick="downloadZip()" id="downloadBtn"
+            class="hidden mt-6 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">⬇️ Download Updated
+            ZIP</button>
+    </div>
+
+    <script>
+        let zip;
+        let zipFileName = '';
+
+        document.getElementById('zipInput').addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            zipFileName = file.name;
+            const arrayBuffer = await file.arrayBuffer();
+            zip = await JSZip.loadAsync(arrayBuffer);
+
+            displayZipContents();
+        });
+
+        function displayZipContents() {
+            const zipContentDiv = document.getElementById('zipContent');
+            const fileSelector = document.getElementById('fileSelector');
+
+            zipContentDiv.innerHTML = `<h2 class="text-xl font-semibold mb-2">📂 Contents:</h2>`;
+            const ul = document.createElement('ul');
+            ul.classList.add('list-disc', 'pl-5');
+
+            fileSelector.innerHTML = '';
+
+            zip.forEach((relativePath, file) => {
+                const li = document.createElement('li');
+                li.textContent = file.dir ? `[Folder] ${relativePath}` : relativePath;
+                ul.appendChild(li);
+
+                if (!file.dir) {
+                    const option = document.createElement('option');
+                    option.value = relativePath;
+                    option.textContent = relativePath;
+                    fileSelector.appendChild(option);
+                }
+            });
+
+            zipContentDiv.appendChild(ul);
+
+            document.getElementById('replaceSection').classList.remove('hidden');
+            document.getElementById('downloadBtn').classList.remove('hidden');
+        }
+
+        async function replaceFile() {
+            const selectedFile = document.getElementById('fileSelector').value;
+            const newFile = document.getElementById('replacementFile').files[0];
+
+            if (!selectedFile || !newFile) {
+                alert('Please select a file to replace and upload a new one.');
+                return;
+            }
+
+            const newContent = await newFile.arrayBuffer();
+            zip.file(selectedFile, newContent);
+            alert(`✅ Replaced "${selectedFile}" with "${newFile.name}"`);
+        }
+
+        async function downloadZip() {
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `updated-${zipFileName}`;
+            a.click();
+        }
+    </script>
+</body>
+
+</html>

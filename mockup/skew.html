@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>3D Tilt Image Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-6">
+
+    <h1 class="text-3xl font-bold mb-4 text-center">3D Tilt / Skew Image Tool</h1>
+
+    <div class="max-w-4xl mx-auto bg-white shadow-lg p-6 rounded-lg">
+
+        <!-- Upload -->
+        <div class="mb-6">
+            <label class="font-semibold text-lg">Upload Image:</label>
+            <input id="imageInput" type="file" accept="image/*" class="block mt-2" />
+        </div>
+
+        <!-- Preview Section -->
+        <div class="flex flex-col md:flex-row gap-6">
+
+            <!-- Controls -->
+            <div class="w-full md:w-1/3 space-y-4">
+
+                <h2 class="font-semibold text-lg mb-2">Transform Controls</h2>
+
+                <div>
+                    <label>Perspective</label>
+                    <input id="perspective" type="range" min="100" max="2000" value="800" class="w-full">
+                </div>
+
+                <div>
+                    <label>Rotate X</label>
+                    <input id="rotateX" type="range" min="-80" max="80" value="0" class="w-full">
+                </div>
+
+                <div>
+                    <label>Rotate Y</label>
+                    <input id="rotateY" type="range" min="-80" max="80" value="0" class="w-full">
+                </div>
+
+                <div>
+                    <label>Rotate Z</label>
+                    <input id="rotateZ" type="range" min="-180" max="180" value="0" class="w-full">
+                </div>
+
+                <div>
+                    <label>Skew X</label>
+                    <input id="skewX" type="range" min="-50" max="50" value="0" class="w-full">
+                </div>
+
+                <div>
+                    <label>Skew Y</label>
+                    <input id="skewY" type="range" min="-50" max="50" value="0" class="w-full">
+                </div>
+
+                <div>
+                    <label>Scale</label>
+                    <input id="scale" type="range" min="0.5" max="2" step="0.01" value="1" class="w-full">
+                </div>
+
+                <button id="downloadBtn"
+                    class="mt-4 w-full bg-blue-600 text-white py-2 rounded shadow hover:bg-blue-700">
+                    Download Transformed Image
+                </button>
+
+            </div>
+
+            <!-- Preview -->
+            <div class="w-full md:w-2/3 flex justify-center items-center">
+                <div class="bg-gray-200 p-4 rounded-lg shadow-inner">
+                    <img id="preview" class="max-w-full max-h-[500px] origin-center transition-transform duration-150">
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        const imageInput = document.getElementById("imageInput");
+        const preview = document.getElementById("preview");
+
+        const perspective = document.getElementById("perspective");
+        const rotateX = document.getElementById("rotateX");
+        const rotateY = document.getElementById("rotateY");
+        const rotateZ = document.getElementById("rotateZ");
+        const skewX = document.getElementById("skewX");
+        const skewY = document.getElementById("skewY");
+        const scale = document.getElementById("scale");
+
+        function updateTransform() {
+            preview.style.transform = `
+    perspective(${perspective.value}px)
+    rotateX(${rotateX.value}deg)
+    rotateY(${rotateY.value}deg)
+    rotateZ(${rotateZ.value}deg)
+    skew(${skewX.value}deg, ${skewY.value}deg)
+    scale(${scale.value})
+  `;
+        }
+
+        [perspective, rotateX, rotateY, rotateZ, skewX, skewY, scale].forEach(el => {
+            el.addEventListener("input", updateTransform);
+        });
+
+        imageInput.addEventListener("change", e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                preview.src = reader.result;
+                updateTransform();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Download image logic: render onto canvas
+        document.getElementById("downloadBtn").addEventListener("click", () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            const img = preview;
+
+            const width = img.naturalWidth;
+            const height = img.naturalHeight;
+            canvas.width = width;
+            canvas.height = height;
+
+            // Apply SAME transform approximated using Canvas
+            ctx.translate(width / 2, height / 2);
+            ctx.rotate(parseFloat(rotateZ.value) * Math.PI / 180);
+            ctx.scale(scale.value, scale.value);
+            ctx.drawImage(img, -width / 2, -height / 2);
+
+            const link = document.createElement("a");
+            link.download = "tilted-output.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        });
+    </script>
+
+</body>
+
+</html>

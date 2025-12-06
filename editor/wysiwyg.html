@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Urdu WYSIWYG — Quill + ShakeebJustify</title>
+
+    <!-- Tailwind CDN (Play) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Quill CSS -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+
+    <!-- Google Fonts choices -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Gulzar&family=Noto+Nastaliq+Urdu:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* small editor page styling */
+        body {
+            background: #f8fafc;
+        }
+
+        .editor-wrapper {
+            max-width: 900px;
+            margin: 2rem auto;
+        }
+
+        .ql-editor.urdu {
+            font-family: "Noto Nastaliq Urdu", "Gulzar", serif;
+            font-size: 20px;
+            line-height: 1.7;
+        }
+
+        /* Sher table classes are injected/used by ShakeebJustify; a little spacing & container */
+        .sher-container {
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+        }
+
+        /* Preview area for PDF export (we clone editor content into this area) */
+        #pdf-preview {
+            display: none;
+        }
+
+        /* Basic printable page settings; jsPDF/html2pdf will handle margins but this helps print preview if using window.print */
+        @page {
+            margin: 20mm;
+        }
+    </style>
+</head>
+
+<body class="p-4">
+
+    <div class="editor-wrapper">
+        <h1 class="text-2xl mb-3 font-semibold">Urdu WYSIWYG — Quill + Poetry Justify</h1>
+
+        <!-- Controls -->
+        <div class="flex gap-2 items-center mb-3">
+            <label class="text-sm">Font:</label>
+            <select id="fontSelect" class="border rounded px-2 py-1 text-sm">
+                <option value="noto">Noto Nastaliq Urdu</option>
+                <option value="gulzar">Gulzar</option>
+                <option value="custom">Upload TTF…</option>
+            </select>
+
+            <input id="uploadFont" type="file" accept=".ttf,.otf" class="hidden" />
+
+            <label class="ml-3 text-sm">Page margin (mm):</label>
+            <input id="marginInput" type="number" value="20" min="0" class="w-20 border rounded px-2 py-1 text-sm" />
+
+            <button id="exportPdf" class="ml-auto bg-blue-600 text-white px-3 py-1 rounded text-sm">Export PDF</button>
+            <button id="printBtn" class="ml-2 bg-slate-600 text-white px-3 py-1 rounded text-sm">Print</button>
+        </div>
+
+        <!-- Quill toolbar (we add a custom button with id 'shake-justify' and an RTL toggle button) -->
+        <div id="toolbar" class="mb-2">
+            <span class="ql-formats">
+                <select class="ql-size"></select>
+                <button class="ql-bold"></button>
+                <button class="ql-italic"></button>
+            </span>
+            <span class="ql-formats">
+                <button id="rtlToggle" title="Toggle RTL (زر/زبر)" class="px-2 py-1 border rounded text-sm">RTL</button>
+                <!-- custom poetry justify button -->
+                <button id="shakeJustifyBtn" title="Poetry Justify (Force)"
+                    class="px-2 py-1 border rounded text-sm ml-2">Poetry ⇋</button>
+            </span>
+            <span class="ql-formats">
+                <button class="ql-align" value=""></button>
+                <button class="ql-align" value="center"></button>
+                <button class="ql-align" value="right"></button>
+                <button class="ql-align" value="justify"></button>
+            </span>
+        </div>
+
+        <!-- Editor -->
+        <div class="sher-container">
+            <div id="editor" style="height: 360px;" class="bg-white"></div>
+        </div>
+
+        <!-- Hidden preview container (for PDF generation) -->
+        <div id="pdf-preview" class="p-6 bg-white mt-4"></div>
+    </div>
+
+    <!-- Quill JS -->
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
+    <!-- html2pdf (wraps jsPDF + html2canvas) -->
+    <script src="https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+
+    <!-- Load your shakeeb-justify library from the CDN -->
+    <script
+        src="https://cdn.jsdelivr.net/gh/shakesvision/PoetryJustification@latest/dist/shakeeb-justify.min.js"></script>
+    <script>
+        // Initialize Quill
+        const toolbarOptions = {
+            container: '#toolbar',
+            handlers: {
+                // leaving default handlers for built-ins; custom buttons below handled separately
+            }
+        };
+
+        const quill = new Quill('#editor', {
+            modules: {
+                toolbar: toolbarOptions,
+                history: { delay: 1000, maxStack: 100 }
+            },
+            theme: 'snow'
+        });
+
+        // Helper: wrap selection in a div with class 'sher' or 'sher2' depending on user needs.
+        function wrapSelectionInSher(which = 'sher') {
+            const range = quill.getSelection();
+            if (!range) {
+                alert('Select the poem lines in the editor first, then click the Poetry ⇋ button.');
+                return;
+            }
+
+            // Get the selected HTML fragment
+            const container = document.createElement('div');
+            const editorEl = document.querySelector('.ql-editor');
+            const html = editorEl.innerHTML;
+
+            // Create a temporary wrapper to extract selected portion
+            const selectionHtml = quill.getText(range.index, range.length);
+            if (!selectionHtml.trim()) {
+                alert('Selection is empty.');
+                return;
+            }
+
+            // Extract the DOM nodes that correspond to the selection
+            // Approach: clone editor DOM, slice its innerHTML by range boundaries
+            // But simpler: get the actual <p> tags that intersect with the selection
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = quill.root.innerHTML;
+            const ps = tempDiv.querySelectorAll('p');
+
+            let charsCount = 0;
+            let collected = [];
+            ps.forEach(p => {
+                const text = p.innerText;
+                const start = charsCount;
+                const end = charsCount + text.length + 1; // +1 for newline
+                if (end > range.index && start < range.index + range.length) {
+                    collected.push(text.trim());
+                }
+                charsCount = end;
+            });
+
+            if (!collected.length) {
+                alert('Could not determine selected lines.');
+                return;
+            }
+
+            const joined = collected.join('\n');
+            const wrapperHtml = `<div class="${which}" dir="rtl">${escapeHtml(joined)}</div><p><br></p>`;
+
+            const Delta = Quill.import('delta');
+            quill.deleteText(range.index, range.length);
+            const clipboard = quill.getModule('clipboard');
+            const delta = clipboard.convert(wrapperHtml);
+            quill.updateContents(new Delta().retain(range.index).concat(delta), Quill.sources.USER);
+            quill.setSelection(range.index + delta.length(), 0);
+
+            // Trigger your justify library
+            if (window.ShakeebJustify && typeof window.ShakeebJustify.apply === 'function') {
+                setTimeout(() => {
+                    window.ShakeebJustify.apply();
+                }, 30);
+            }
+        }
+
+
+        // Escape HTML helper
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\n/g, "<br>");
+        }
+
+        // Button handlers
+        document.getElementById('shakeJustifyBtn').addEventListener('click', () => {
+            // Use 'sher' by default. Could prompt for 'sher2' if desired.
+            wrapSelectionInSher('sher');
+        });
+
+        // RTL toggle: toggle dir on current block
+        document.getElementById('rtlToggle').addEventListener('click', () => {
+            const range = quill.getSelection(true);
+            if (!range) return;
+            // find block format start index
+            const [block, offset] = quill.getLine(range.index);
+            if (!block) return;
+            const currentDir = block.domNode.getAttribute('dir') || block.domNode.style.direction || '';
+            const newDir = currentDir === 'rtl' ? 'ltr' : 'rtl';
+            // Apply by wrapping with a block embed of attributes
+            quill.formatLine(range.index, range.length || 1, { 'direction': newDir });
+            // also apply style on DOM node to be safe
+            block.domNode.setAttribute('dir', newDir);
+        });
+
+        // Font selector + custom ttf upload handler
+        const fontSelect = document.getElementById('fontSelect');
+        const uploadFont = document.getElementById('uploadFont');
+
+        fontSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                uploadFont.click();
+                return;
+            }
+            const val = e.target.value;
+            const editor = document.querySelector('.ql-editor');
+            editor.classList.remove('urdu');
+            // apply specific family via inline style for demo
+            if (val === 'noto') {
+                editor.style.fontFamily = `"Noto Nastaliq Urdu", serif`;
+                editor.classList.add('urdu');
+            } else if (val === 'gulzar') {
+                editor.style.fontFamily = `"Gulzar", serif`;
+                editor.classList.add('urdu');
+            }
+        });
+
+        // handle custom TTF upload -> create @font-face and apply
+        uploadFont.addEventListener('change', async (ev) => {
+            const file = ev.target.files && ev.target.files[0];
+            if (!file) return;
+            const name = file.name.replace(/\.[^.]+$/, '');
+            // create blob url to feed @font-face
+            const blobUrl = URL.createObjectURL(file);
+            const style = document.createElement('style');
+            style.id = 'custom-uploaded-font';
+            style.textContent = `@font-face{ font-family: "user-${name}"; src: url("${blobUrl}"); } .ql-editor { font-family: "user-${name}", serif !important; }`;
+            document.head.appendChild(style);
+            // mark select visually
+            fontSelect.value = 'custom';
+            // forcibly apply to editor
+            document.querySelector('.ql-editor').style.fontFamily = `"user-${name}", serif`;
+        });
+
+        // Export to PDF using html2pdf
+        document.getElementById('exportPdf').addEventListener('click', async () => {
+            // Clone editor content into a clean printable container
+            const editorHtml = document.querySelector('.ql-editor').innerHTML;
+            const preview = document.getElementById('pdf-preview');
+            preview.innerHTML = editorHtml;
+            preview.style.display = 'block';
+            // let ShakeebJustify style apply (if any sher containers exist in cloned HTML)
+            if (window.ShakeebJustify && typeof window.ShakeebJustify.apply === 'function') {
+                // Because ShakeebJustify.apply works on document.getElementsByClassName('sher'), we can call it.
+                window.ShakeebJustify.apply();
+            }
+            // get margins from input (mm)
+            const mm = parseFloat(document.getElementById('marginInput').value || 20);
+            // html2pdf options (paper format A4, margin in mm)
+            const opt = {
+                margin: mm / 25.4, // html2pdf accepts unitless numbers interpreted as inches in some versions; to be safe we pass inches
+                filename: 'document.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            // html2pdf expects element node
+            const element = preview;
+            // call
+            html2pdf().set(opt).from(element).save().finally(() => {
+                // optionally hide preview
+                preview.style.display = 'none';
+            });
+        });
+
+        // Print (simple window.print) — uses @page margin but better results through PDF export above
+        document.getElementById('printBtn').addEventListener('click', () => {
+            // open new window with content for printing to keep editor UI out
+            const w = window.open('', '_blank', 'toolbar=0,location=0,menubar=0');
+            const doc = w.document;
+            doc.write('<!doctype html><html><head><meta charset="utf-8"><title>Print</title>');
+            // inject fonts/styles
+            doc.write('<link href="https://fonts.googleapis.com/css2?family=Gulzar&family=Noto+Nastaliq+Urdu:ital,wght@0,400;0,700&display=swap" rel="stylesheet">');
+            doc.write('<style>body{font-family: "Noto Nastaliq Urdu", serif; padding:20mm;} .sher, .sher2{direction:rtl; text-align:justify; text-align-last:justify;} </style>');
+            doc.write('</head><body>');
+            doc.write(document.querySelector('.ql-editor').innerHTML);
+            doc.write('</body></html>');
+            doc.close();
+            w.focus();
+            setTimeout(() => w.print(), 300);
+        });
+
+        // Optional: apply ShakeebJustify at load if there are elements (the library auto-applies on DOMContentLoaded but Quill content is dynamic)
+        // We'll expose a helper to run on the editor if someone wants
+        window.applyPoetryJustifyToEditor = function () {
+            // copy editor content into a temporary div inside document body so ShakeebJustify.apply can find .sher elements
+            // But the easier way: ensure existing '.sher' inside editor are processed by calling apply and also by ensuring styles are present
+            if (window.ShakeebJustify && typeof window.ShakeebJustify.apply === 'function') {
+                window.ShakeebJustify.apply();
+            }
+        };
+
+        // End of script
+    </script>
+
+</body>
+
+</html>

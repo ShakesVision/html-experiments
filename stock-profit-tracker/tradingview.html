@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TradingView Embed Example</title>
+    <style>
+        body {
+            display: flex;
+            margin: 0;
+            height: 100vh;
+            font-family: sans-serif;
+        }
+
+        #stock-list {
+            width: 200px;
+            background: #f4f4f4;
+            border-right: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        #stock-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        #stock-list li {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        #stock-list li:hover {
+            background: #ddd;
+        }
+
+        #chart-container {
+            flex: 1;
+            padding: 10px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="stock-list">
+        <ul>
+            <li onclick="loadChart('NSE:TCS')">TCS</li>
+            <li onclick="loadChart('NSE:INFY')">Infosys</li>
+            <li onclick="loadChart('NSE:RELIANCE')">Reliance</li>
+            <li onclick="loadChart('NSE:HDFCBANK')">HDFC Bank</li>
+        </ul>
+    </div>
+
+    <div id="chart-container">
+        <!-- TradingView chart will load here -->
+        <div id="tv_chart_container"></div>
+    </div>
+
+    <!-- TradingView Script -->
+    <script type="text/javascript">
+        function loadChart(symbol) {
+            const container = document.getElementById("tv_chart_container");
+            container.innerHTML = ""; // Clear previous chart
+
+            new TradingView.widget({
+                "width": "100%",
+                "height": "100%",
+                "symbol": symbol,
+                "interval": "D",
+                "timezone": "Etc/UTC",
+                "theme": "light",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "hide_side_toolbar": false,
+                "allow_symbol_change": true,
+                "container_id": "tv_chart_container"
+            });
+        }
+
+        // Load initial chart
+        window.onload = function () {
+            loadChart('NSE:TCS');
+        };
+    </script>
+
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+</body>
+
+</html>
