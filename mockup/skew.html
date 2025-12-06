@@ -2,114 +2,199 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <title>3D Tilt Image Tool</title>
+    <meta charset="UTF-8">
+    <title>ShakeVision — 3D Image Tilt Tool</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Extra polished product styles */
+        body {
+            background: linear-gradient(145deg, #20102f, #0f0c29, #302b63, #24243e);
+            background-size: 400% 400%;
+            animation: bgMove 14s ease infinite;
+        }
+
+        @keyframes bgMove {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.06));
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Modal backdrop */
+        #templateModal {
+            backdrop-filter: blur(6px);
+        }
+
+        /* Luxury gradient button */
+        .btn-primary {
+            background: linear-gradient(135deg, #7f5af0, #9775fa, #ff7ce5);
+            color: white;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.15);
+            transform: translateY(-2px);
+        }
+
+        .slider-val {
+            width: 60px;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100 min-h-screen p-6">
+<body class="min-h-screen text-white">
 
-    <h1 class="text-3xl font-bold mb-4 text-center">3D Tilt / Skew Image Tool</h1>
+    <!-- Header -->
+    <div class="flex justify-between items-center p-6">
+        <h1
+            class="text-3xl font-extrabold tracking-wide bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+            ShakeVision 3D Tilt Studio
+        </h1>
 
-    <div class="max-w-4xl mx-auto bg-white shadow-lg p-6 rounded-lg">
+        <div class="space-x-3">
+            <button id="saveTemplate" class="btn-primary px-4 py-2 rounded-lg">Save Template</button>
+            <button id="loadTemplate" class="btn-primary px-4 py-2 rounded-lg">Load Template</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="max-w-6xl mx-auto card p-8 rounded-xl shadow-xl mt-4">
 
         <!-- Upload -->
         <div class="mb-6">
             <label class="font-semibold text-lg">Upload Image:</label>
-            <input id="imageInput" type="file" accept="image/*" class="block mt-2" />
+            <input id="imageInput" type="file" accept="image/*" class="block mt-3 bg-white/10 px-4 py-2 rounded-lg" />
         </div>
 
-        <!-- Preview Section -->
-        <div class="flex flex-col md:flex-row gap-6">
+        <div class="flex flex-col md:flex-row gap-8">
 
             <!-- Controls -->
-            <div class="w-full md:w-1/3 space-y-4">
+            <div class="w-full md:w-1/3 space-y-6">
 
-                <h2 class="font-semibold text-lg mb-2">Transform Controls</h2>
+                <h2 class="text-xl font-bold mb-3">Transform Controls</h2>
 
-                <div>
-                    <label>Perspective</label>
-                    <input id="perspective" type="range" min="100" max="2000" value="800" class="w-full">
-                </div>
+                <!-- Control Template -->
+                <div id="controls"></div>
 
-                <div>
-                    <label>Rotate X</label>
-                    <input id="rotateX" type="range" min="-80" max="80" value="0" class="w-full">
-                </div>
-
-                <div>
-                    <label>Rotate Y</label>
-                    <input id="rotateY" type="range" min="-80" max="80" value="0" class="w-full">
-                </div>
-
-                <div>
-                    <label>Rotate Z</label>
-                    <input id="rotateZ" type="range" min="-180" max="180" value="0" class="w-full">
-                </div>
-
-                <div>
-                    <label>Skew X</label>
-                    <input id="skewX" type="range" min="-50" max="50" value="0" class="w-full">
-                </div>
-
-                <div>
-                    <label>Skew Y</label>
-                    <input id="skewY" type="range" min="-50" max="50" value="0" class="w-full">
-                </div>
-
-                <div>
-                    <label>Scale</label>
-                    <input id="scale" type="range" min="0.5" max="2" step="0.01" value="1" class="w-full">
-                </div>
-
-                <button id="downloadBtn"
-                    class="mt-4 w-full bg-blue-600 text-white py-2 rounded shadow hover:bg-blue-700">
-                    Download Transformed Image
+                <!-- Download Button -->
+                <button id="downloadBtn" class="btn-primary w-full py-3 rounded-xl mt-4 shadow-lg">
+                    Download Transformed PNG
                 </button>
 
             </div>
 
             <!-- Preview -->
             <div class="w-full md:w-2/3 flex justify-center items-center">
-                <div class="bg-gray-200 p-4 rounded-lg shadow-inner">
-                    <img id="preview" class="max-w-full max-h-[500px] origin-center transition-transform duration-150">
+                <div class="p-4 rounded-xl shadow-2xl bg-black/20 backdrop-blur-lg border border-white/10">
+                    <img id="preview" class="max-w-full max-h-[600px] transition-transform duration-200 origin-center">
                 </div>
             </div>
 
         </div>
-
     </div>
 
-    <script>
-        const imageInput = document.getElementById("imageInput");
-        const preview = document.getElementById("preview");
+    <!-- Attribution -->
+    <div class="text-center mt-10 text-sm opacity-70">
+        Built by <a href="#" class="text-pink-300 font-semibold">ShakeVision</a> — GitHub
+    </div>
 
-        const perspective = document.getElementById("perspective");
-        const rotateX = document.getElementById("rotateX");
-        const rotateY = document.getElementById("rotateY");
-        const rotateZ = document.getElementById("rotateZ");
-        const skewX = document.getElementById("skewX");
-        const skewY = document.getElementById("skewY");
-        const scale = document.getElementById("scale");
+
+    <!-- Modal for Template Loading -->
+    <div id="templateModal" class="hidden fixed inset-0 bg-black/50 flex justify-center items-center p-4">
+        <div class="card p-8 rounded-xl max-w-md w-full shadow-2xl">
+            <h2 class="text-xl font-bold mb-4">Saved Templates</h2>
+            <div id="templateList" class="space-y-4 max-h-64 overflow-y-auto"></div>
+
+            <button id="closeModal" class="btn-primary mt-6 w-full py-2 rounded-lg">Close</button>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script>
+        /* -----------------------------------------
+           Controls Setup
+        ----------------------------------------- */
+
+        const CONTROL_CONFIG = [
+            { id: "perspective", label: "Perspective", min: 100, max: 2000, step: 1, value: 800 },
+            { id: "rotateX", label: "Rotate X", min: -80, max: 80, step: 1, value: 0 },
+            { id: "rotateY", label: "Rotate Y", min: -80, max: 80, step: 1, value: 0 },
+            { id: "rotateZ", label: "Rotate Z", min: -180, max: 180, step: 1, value: 0 },
+            { id: "skewX", label: "Skew X", min: -50, max: 50, step: 1, value: 0 },
+            { id: "skewY", label: "Skew Y", min: -50, max: 50, step: 1, value: 0 },
+            { id: "scale", label: "Scale", min: 0.5, max: 2, step: 0.01, value: 1 }
+        ];
+
+        const controlsDiv = document.getElementById("controls");
+
+        controlsDiv.innerHTML = CONTROL_CONFIG.map(ctrl => `
+  <div>
+    <label class="block mb-1 font-semibold">${ctrl.label}</label>
+    <div class="flex items-center gap-3">
+      <input id="${ctrl.id}" type="range"
+        min="${ctrl.min}" max="${ctrl.max}" value="${ctrl.value}" step="${ctrl.step}"
+        class="w-full">
+      <input id="${ctrl.id}-val" type="number"
+        class="text-black rounded-lg px-2 py-1 slider-val"
+        min="${ctrl.min}" max="${ctrl.max}" step="${ctrl.step}" value="${ctrl.value}">
+    </div>
+  </div>
+`).join("");
+
+        /* -----------------------------------------
+           Elements
+        ----------------------------------------- */
+        const preview = document.getElementById("preview");
+        const imageInput = document.getElementById("imageInput");
 
         function updateTransform() {
+            const v = id => document.getElementById(id).value;
+
             preview.style.transform = `
-    perspective(${perspective.value}px)
-    rotateX(${rotateX.value}deg)
-    rotateY(${rotateY.value}deg)
-    rotateZ(${rotateZ.value}deg)
-    skew(${skewX.value}deg, ${skewY.value}deg)
-    scale(${scale.value})
+    perspective(${v("perspective")}px)
+    rotateX(${v("rotateX")}deg)
+    rotateY(${v("rotateY")}deg)
+    rotateZ(${v("rotateZ")}deg)
+    skew(${v("skewX")}deg, ${v("skewY")}deg)
+    scale(${v("scale")})
   `;
         }
 
-        [perspective, rotateX, rotateY, rotateZ, skewX, skewY, scale].forEach(el => {
-            el.addEventListener("input", updateTransform);
+        CONTROL_CONFIG.forEach(ctrl => {
+            const slider = document.getElementById(ctrl.id);
+            const input = document.getElementById(ctrl.id + "-val");
+
+            slider.addEventListener("input", e => {
+                input.value = e.target.value;
+                updateTransform();
+            });
+
+            input.addEventListener("input", e => {
+                slider.value = e.target.value;
+                updateTransform();
+            });
         });
 
+        /* -----------------------------------------
+           Image Upload
+        ----------------------------------------- */
         imageInput.addEventListener("change", e => {
             const file = e.target.files[0];
-            if (!file) return;
             const reader = new FileReader();
             reader.onload = () => {
                 preview.src = reader.result;
@@ -118,29 +203,100 @@
             reader.readAsDataURL(file);
         });
 
-        // Download image logic: render onto canvas
+        /* -----------------------------------------
+           Download Image
+        ----------------------------------------- */
         document.getElementById("downloadBtn").addEventListener("click", () => {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
-
             const img = preview;
 
-            const width = img.naturalWidth;
-            const height = img.naturalHeight;
-            canvas.width = width;
-            canvas.height = height;
+            const w = img.naturalWidth;
+            const h = img.naturalHeight;
 
-            // Apply SAME transform approximated using Canvas
-            ctx.translate(width / 2, height / 2);
-            ctx.rotate(parseFloat(rotateZ.value) * Math.PI / 180);
-            ctx.scale(scale.value, scale.value);
-            ctx.drawImage(img, -width / 2, -height / 2);
+            canvas.width = w;
+            canvas.height = h;
+
+            ctx.translate(w / 2, h / 2);
+            ctx.rotate(parseFloat(document.getElementById("rotateZ").value) * Math.PI / 180);
+            ctx.scale(parseFloat(document.getElementById("scale").value),
+                parseFloat(document.getElementById("scale").value));
+
+            ctx.drawImage(img, -w / 2, -h / 2);
 
             const link = document.createElement("a");
-            link.download = "tilted-output.png";
-            link.href = canvas.toDataURL("image/png");
+            link.download = "tilted_output.png";
+            link.href = canvas.toDataURL();
             link.click();
         });
+
+        /* -----------------------------------------
+           Templates (LocalStorage)
+        ----------------------------------------- */
+        function getTemplates() {
+            return JSON.parse(localStorage.getItem("shakevision-templates") || "{}");
+        }
+
+        function saveTemplates(obj) {
+            localStorage.setItem("shakevision-templates", JSON.stringify(obj));
+        }
+
+        document.getElementById("saveTemplate").onclick = () => {
+            const name = prompt("Template name:");
+            if (!name) return;
+
+            const data = {};
+            CONTROL_CONFIG.forEach(c => {
+                data[c.id] = document.getElementById(c.id).value;
+            });
+
+            const all = getTemplates();
+            all[name] = data;
+            saveTemplates(all);
+
+            alert("Template saved!");
+        };
+
+        document.getElementById("loadTemplate").onclick = () => {
+            const modal = document.getElementById("templateModal");
+            const list = document.getElementById("templateList");
+            const templates = getTemplates();
+
+            list.innerHTML = Object.keys(templates).map(name => `
+    <div class="flex justify-between items-center bg-white/10 p-3 rounded-lg">
+      <span class="font-semibold">${name}</span>
+      <div class="space-x-2">
+        <button class="btn-primary px-2 py-1 rounded" onclick="applyTemplate('${name}')">Load</button>
+        <button class="bg-red-500 px-2 py-1 rounded" onclick="deleteTemplate('${name}')">Delete</button>
+      </div>
+    </div>
+  `).join("");
+
+            modal.classList.remove("hidden");
+        };
+
+        function applyTemplate(name) {
+            const templates = getTemplates();
+            const t = templates[name];
+
+            CONTROL_CONFIG.forEach(c => {
+                document.getElementById(c.id).value = t[c.id];
+                document.getElementById(c.id + "-val").value = t[c.id];
+            });
+
+            updateTransform();
+        }
+
+        function deleteTemplate(name) {
+            const all = getTemplates();
+            delete all[name];
+            saveTemplates(all);
+            document.getElementById("loadTemplate").click();
+        }
+
+        document.getElementById("closeModal").onclick = () => {
+            document.getElementById("templateModal").classList.add("hidden");
+        };
     </script>
 
 </body>
