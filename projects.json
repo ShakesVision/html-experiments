@@ -1,0 +1,93 @@
+[
+  {
+    "id": 1,
+    "title": "OCR",
+    "desc": "OCR try using Tesseract.js.",
+    "img": "ocr/ocr.png",
+    "link": "ocr/index.html"
+  },
+  {
+    "id": 2,
+    "title": "Enhanced Folder Reader",
+    "desc": "Asks you to select a folder and then lists its file for reading as HTML or plain text.",
+    "img": "textRead/folder-text-reader.png",
+    "link": "textRead/index.html"
+  },
+  {
+    "id": 3,
+    "title": "Image to PDF",
+    "desc": "Select images and convert them to PDF, offline.",
+    "img": "pdf-creator/img-pdf.png",
+    "link": "pdf-creator/index.html"
+  },
+  {
+    "id": 4,
+    "title": "Image Resizer",
+    "desc": "Resize images to multiple sizes.",
+    "img": "image-resizer/image-resizer.png",
+    "link": "image-resizer/index.html"
+  },
+  {
+    "id": 5,
+    "title": "Logo Creator",
+    "desc": "Create logos using simple intuitive interface.",
+    "img": "logo-creator/icon.png",
+    "link": "logo-creator/index.html"
+  },
+  {
+    "id": 6,
+    "title": "Urdu Editor",
+    "desc": "Write Urdu / English with your default keyboard.",
+    "img": "editor/urdu-editor.png",
+    "link": "editor/index.html"
+  },
+  {
+    "id": 7,
+    "title": "PDF to Image Converter",
+    "desc": "Convert PDF to images with selected pages and resize options.",
+    "img": "pdf-image/pdf-image.png",
+    "link": "pdf-image/index.html"
+  },
+  {
+    "id": 8,
+    "title": "Graphic Designer",
+    "desc": "A simple graphic designer which allows you to add image, text, pencil brush, colors, custom canvas size and png/svg exports in any size.",
+    "img": "graphic-designer/graphic-designer.png",
+    "link": "graphic-designer/index.html"
+  },
+  {
+    "id": 9,
+    "title": "Mnemonic Mapper",
+    "desc": "A Major System converter that helps you easily translate numbers into phonetic letter combinations and vice versa. 🚀",
+    "img": "number-mnemonics/icon.png",
+    "link": "number-mnemonics/index.html"
+  },
+  {
+    "id": 10,
+    "title": "Arabic/Urdu Post Maker",
+    "desc": "Create beautiful social media images with Quranic Ayahs and translations in Arabic, English, and Urdu.",
+    "img": "post-maker/post-maker-quran.png",
+    "link": "post-maker/index.html"
+  },
+  {
+    "id": 11,
+    "title": "Web Scraper & Data Extractor",
+    "desc": "Extract text or HTML from web pages using custom selectors with GAS proxy.",
+    "img": "scraper/icon.webp",
+    "link": "scraper/index.html"
+  },
+  {
+    "id": 12,
+    "title": "Stock Profit Tracker",
+    "desc": "Tracks your stock profit and loss, with % profit targets.",
+    "img": "stock-profit-tracker/icon.png",
+    "link": "stock-profit-tracker/index.html"
+  },
+  {
+    "id": 13,
+    "title": "Grocery List Generator (In-Progress)",
+    "desc": "Easily generate a shopping list from your voice.",
+    "img": "shopping-list/shopping-list-icon.jpg",
+    "link": "shopping-list/index.html"
+  }
+]
