@@ -26,6 +26,11 @@
 
 <body
     class="bg-gray-100 text-black dark:bg-gray-900 dark:text-white min-h-screen flex items-center justify-center transition-colors duration-300">
+    <!-- Poetry Editor -->
+    <a href="poetry.html"
+        class="absolute top-4 left-4 px-3 py-2 text-sm rounded bg-green-600 text-white dark:bg-green-200 dark:text-black shadow-md">
+        🖋️ Poetry Editor
+    </a>
     <!-- Dark Toggle -->
     <button id="toggleDark"
         class="absolute top-4 right-16 px-3 py-2 text-sm rounded bg-gray-800 text-white dark:bg-gray-200 dark:text-black shadow-md">
@@ -66,7 +71,7 @@
                         <th class="border px-3 py-1">Key 3</th>
                         <th class="border px-3 py-1">Key 4</th>
                         <!-- Add more headers as necessary -->
-                      </tr>
+                    </tr>
                 </thead>
                 <tbody id="keyboardTableBody" class="text-sm">
                     <!-- JS will populate this -->
@@ -190,25 +195,25 @@
         * Modal help logic
         */
 
-         // Fill table in multiple columns
-  const tbody = document.getElementById('keyboardTableBody');
+        // Fill table in multiple columns
+        const tbody = document.getElementById('keyboardTableBody');
 
-// Define how many columns you want (4 for example)
-const numColumns = 4;
+        // Define how many columns you want (4 for example)
+        const numColumns = 4;
 
-// Loop through keyboardMap and add them to the table
-for (let i = 0; i < keyboardMap.length; i++) {
-  if (i % numColumns === 0) {
-    const row = document.createElement('tr');
-    tbody.appendChild(row);
-  }
+        // Loop through keyboardMap and add them to the table
+        for (let i = 0; i < keyboardMap.length; i++) {
+            if (i % numColumns === 0) {
+                const row = document.createElement('tr');
+                tbody.appendChild(row);
+            }
 
-  const currentRow = tbody.lastElementChild;
-  const cell = document.createElement('td');
-  cell.classList.add('border', 'px-3', 'py-1', 'font-mono');
-  cell.textContent = `${keyboardMap[i][0]} - ${keyboardMap[i][1]}`;
-  currentRow.appendChild(cell);
-}
+            const currentRow = tbody.lastElementChild;
+            const cell = document.createElement('td');
+            cell.classList.add('border', 'px-3', 'py-1', 'font-mono');
+            cell.textContent = `${keyboardMap[i][0]} - ${keyboardMap[i][1]}`;
+            currentRow.appendChild(cell);
+        }
 
         // Modal show/hide logic
         const helpModal = document.getElementById('helpModal');

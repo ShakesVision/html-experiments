@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ur">
+
+<head>
+    <meta charset="UTF-8" />
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Urdu Font -->
+    <link href="https://fonts.googleapis.com/earlyaccess/notonastaliqurdudraft.css" rel="stylesheet" />
+
+    <!-- html2canvas for download -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <style>
+        * {
+            font-family: "Jameel Noori Nastaleeq", "Alvi Nastaleeq",
+                "Noto Nastaliq Urdu Draft", serif;
+        }
+
+        .sher {
+            margin: 0 auto;
+            direction: rtl;
+            line-height: 1.8em;
+        }
+
+        .sher td {
+            text-align: justify;
+            text-align-last: justify;
+        }
+
+        .sher tr:nth-child(2n) td {
+            padding-bottom: 16px;
+        }
+
+        /* Print only the result */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #print-area,
+            #print-area * {
+                visibility: visible;
+            }
+
+            #print-area {
+                position: absolute;
+                inset: 0;
+                margin: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-6">
+    <!-- Controls -->
+    <div class="max-w-4xl mx-auto mb-6 space-y-4">
+        <textarea id="inputText" rows="8" class="w-full p-4 rounded-lg border text-lg text-right"
+            placeholder="یہاں غزل کا متن پیسٹ کریں، ہر مصرع ایک لائن میں"></textarea>
+
+        <div class="flex gap-3 justify-center">
+            <button onclick="generateGhazal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                Generate
+            </button>
+
+            <button onclick="downloadImage()" class="px-4 py-2 bg-green-600 text-white rounded-lg">
+                Download Image
+            </button>
+
+            <button onclick="window.print()" class="px-4 py-2 bg-gray-700 text-white rounded-lg">
+                Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Result -->
+    <div class="flex justify-center">
+        <div id="print-area" class="bg-white rounded-xl shadow-lg px-16 py-12 text-center">
+            <div class="mb-6 text-lg">
+                <h2 class="text-2xl mb-1" style="font-family: 'diwani letter'">
+                    غزل
+                </h2>
+                شکیبؔ احمد
+            </div>
+
+            <div id="ghazalOutput"></div>
+
+            <div class="mt-8 text-sm">
+                (نومبر 2021)
+                <div class="mt-2" style="font-family: 'diwani letter'">
+                    معانی کے ساتھ پڑھنے کے لیے بلاگ پر تشریف لائیں
+                </div>
+                <div class="underline font-sans text-xs mt-1">
+                    ur.shakeeb.in
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function textToTable(text) {
+            const lines = text
+                .split("\n")
+                .map(l => l.trim())
+                .filter(l => l.length);
+
+            let html = '<table class="sher">';
+            lines.forEach(line => {
+                html += `<tr><td>${line}</td></tr>`;
+            });
+            html += "</table>";
+            return html;
+        }
+
+        function generateGhazal() {
+            const text = document.getElementById("inputText").value;
+            document.getElementById("ghazalOutput").innerHTML =
+                textToTable(text);
+        }
+
+        function downloadImage() {
+            const area = document.getElementById("print-area");
+            html2canvas(area, {
+                backgroundColor: "#ffffff",
+                scale: 2,
+            }).then(canvas => {
+                const link = document.createElement("a");
+                link.download = "ghazal.png";
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+    </script>
+</body>
+
+</html>

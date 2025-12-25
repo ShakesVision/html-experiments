@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <title>ShakeVision — 3D Tilt Studio (Perfect Export)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         body {
             background: linear-gradient(145deg, #20102f, #0f0c29, #302b63, #24243e);
@@ -551,42 +552,40 @@
         }
 
         // Download handler
-        document.getElementById("downloadBtn").addEventListener("click", () => {
-            if (!preview.src) {
-                alert("Please upload an image first.");
+        downloadBtn.addEventListener('click', async () => {
+            const preview = document.getElementById('preview');
+            if (!preview) {
+                alert('Preview not found');
                 return;
             }
 
-            const controls = {};
-            CONTROL_CONFIG.forEach(c => {
-                controls[c.id] = parseFloat(document.getElementById(c.id).value);
-            });
+            // Force layout settle
+            await new Promise(r => requestAnimationFrame(r));
 
-            const img = preview;
+            const scale = window.devicePixelRatio || 1;
 
-            const w = img.naturalWidth;
-            const h = img.naturalHeight;
-
-            // Create offscreen canvas
-            const canvas = document.createElement("canvas");
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext("2d");
-
-            // Compute transformed corners
-            const corners = getTransformedCorners(img, controls);
-
-            // Draw warped image
-            drawImageWarped(ctx, img, corners);
-
-            // Download image
-            canvas.toBlob(blob => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "tilted_image.png";
-                a.click();
-                URL.revokeObjectURL(url);
+            html2canvas(preview, {
+                backgroundColor: null,          // transparent bg
+                scale: scale,                   // retina quality
+                useCORS: true,                  // REQUIRED
+                allowTaint: false,
+                foreignObjectRendering: false,  // more stable for transforms
+                imageTimeout: 15000,
+                logging: false
+            }).then(canvas => {
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'mock-result.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            }).catch(err => {
+                console.error('html2canvas failed:', err);
+                alert('Failed to export image');
             });
         });
 
