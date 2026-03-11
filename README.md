@@ -17,9 +17,9 @@ https://www.shakeeb.in
 ### Projects
 
 [Home page](https://shakesvision.github.io/html-experiments/index.html)
-
 - [alphabet](https://shakesvision.github.io/html-experiments/alphabet/index.html)
 - [bayaz-proto](https://shakesvision.github.io/html-experiments/bayaz-proto/index.html)
+- [bloggerflux](https://shakesvision.github.io/html-experiments/bloggerflux/index.html)
 - [editor](https://shakesvision.github.io/html-experiments/editor/index.html)
 - [epub-to-html](https://shakesvision.github.io/html-experiments/epub-to-html/index.html)
 - [graphic-designer](https://shakesvision.github.io/html-experiments/graphic-designer/index.html)
@@ -34,10 +34,12 @@ https://www.shakeeb.in
 - [pdf-creator](https://shakesvision.github.io/html-experiments/pdf-creator/index.html)
 - [pdf-image](https://shakesvision.github.io/html-experiments/pdf-image/index.html)
 - [post-maker](https://shakesvision.github.io/html-experiments/post-maker/index.html)
+- [rss-reader](https://shakesvision.github.io/html-experiments/rss-reader/index.html)
 - [scraper](https://shakesvision.github.io/html-experiments/scraper/index.html)
 - [shopping-list](https://shakesvision.github.io/html-experiments/shopping-list/index.html)
 - [stock-profit-tracker](https://shakesvision.github.io/html-experiments/stock-profit-tracker/index.html)
 - [super-scrape](https://shakesvision.github.io/html-experiments/super-scrape/index.html)
+- [svg-theme](https://shakesvision.github.io/html-experiments/svg-theme/index.html)
 - [text-aggregator](https://shakesvision.github.io/html-experiments/text-aggregator/index.html)
 - [textRead](https://shakesvision.github.io/html-experiments/textRead/index.html)
 - [urdu-dashboard](https://shakesvision.github.io/html-experiments/urdu-dashboard/index.html)
