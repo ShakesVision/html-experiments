@@ -16,20 +16,16 @@
         background: #fafafa;
       }
 
-      .reader-font {
-        line-height: 1.7;
-      }
-
-      .post {
-        margin-bottom: 40px;
-      }
-
       .toolbar {
         backdrop-filter: blur(10px);
       }
 
+      .post {
+        margin-bottom: 36px;
+      }
+
       .sidebar {
-        transition: transform 0.3s;
+        transition: transform 0.25s;
       }
 
       .sidebar-hidden {
@@ -40,24 +36,27 @@
         display: none;
       }
 
-      .immersive {
-        padding-top: 0;
-      }
-
       .page-btn {
         padding: 4px 10px;
         border-radius: 6px;
+        border: 1px solid #ddd;
       }
 
       .page-current {
         background: #2563eb;
         color: white;
       }
+
+      .reader-font {
+        line-height: 1.75;
+        max-width: 850px;
+        margin: auto;
+      }
     </style>
   </head>
 
   <body class="flex flex-col h-screen">
-    <!-- TOOLBAR -->
+    <!-- toolbar -->
 
     <div
       id="toolbar"
@@ -69,29 +68,33 @@
         placeholder="Paste RSS feed or Blogger blog URL"
       />
 
-      <button onclick="loadFeed()" class="material-icons">download</button>
+      <button onclick="Reader.loadFeed()" class="material-icons">
+        download
+      </button>
 
-      <button onclick="toggleSidebar()" class="material-icons">list</button>
+      <button onclick="UI.toggleSidebar()" class="material-icons">list</button>
 
-      <button onclick="toggleSettings()" class="material-icons">
+      <button onclick="UI.toggleSettings()" class="material-icons">
         settings
       </button>
 
-      <button onclick="toggleImmersive()" class="material-icons">
+      <button onclick="UI.toggleImmersive()" class="material-icons">
         fullscreen
       </button>
 
       <input
         id="postSearch"
-        placeholder="search posts..."
+        placeholder="search posts"
         class="border p-1 rounded"
       />
 
-      <button onclick="searchPosts()" class="material-icons">search</button>
+      <button onclick="Reader.searchPosts()" class="material-icons">
+        search
+      </button>
     </div>
 
     <div class="flex flex-1 overflow-hidden">
-      <!-- SIDEBAR -->
+      <!-- sidebar -->
 
       <div
         id="sidebar"
@@ -103,7 +106,8 @@
             placeholder="Search titles"
             class="border p-1 flex-1"
           />
-          <button onclick="filterTitles()" class="material-icons">
+
+          <button onclick="Reader.filterTitles()" class="material-icons">
             search
           </button>
         </div>
@@ -111,16 +115,16 @@
         <ol id="postIndex" class="text-sm p-2 list-decimal"></ol>
       </div>
 
-      <!-- CONTENT -->
+      <!-- content -->
 
-      <div class="flex-1 overflow-y-auto p-6" id="content">
+      <div class="flex-1 overflow-y-auto p-6">
         <div id="posts" class="reader-font"></div>
 
-        <div class="flex justify-center gap-2 mt-6" id="pagination"></div>
+        <div class="flex justify-center gap-2 mt-8" id="pagination"></div>
       </div>
     </div>
 
-    <!-- SETTINGS -->
+    <!-- settings -->
 
     <div
       id="settings"
@@ -128,307 +132,374 @@
     >
       <h2 class="font-bold mb-3">Reader Settings</h2>
 
-      <div class="mb-2">
-        <label>Posts per page</label>
-        <input
-          id="postsPerPage"
-          type="number"
-          value="5"
-          class="border w-full p-1"
-        />
-      </div>
+      <label>Posts per page</label>
+      <input
+        id="postsPerPage"
+        type="number"
+        value="5"
+        class="border w-full p-1 mb-3"
+      />
 
-      <div class="mb-2">
-        <label>Font URL (.woff/.ttf)</label>
-        <input id="fontUrl" class="border w-full p-1" />
-        <button onclick="loadFont()" class="material-icons">
-          font_download
-        </button>
-      </div>
+      <label>Font URL (.woff/.ttf)</label>
+      <input id="fontUrl" class="border w-full p-1" />
+      <button onclick="Reader.loadFont()" class="material-icons mb-3">
+        font_download
+      </button>
 
-      <div class="mb-2">
-        <label>Direction</label>
-        <select id="direction" class="border w-full">
-          <option value="ltr">LTR</option>
-          <option value="rtl">RTL</option>
-        </select>
-      </div>
+      <label>Direction</label>
+      <select id="direction" class="border w-full mb-3">
+        <option value="ltr">LTR</option>
+        <option value="rtl">RTL</option>
+      </select>
 
-      <div class="mb-2">
-        <label>Alignment</label>
-        <select id="alignment" class="border w-full">
-          <option>left</option>
-          <option>right</option>
-          <option>center</option>
-          <option>justify</option>
-        </select>
-      </div>
+      <label>Alignment</label>
+      <select id="alignment" class="border w-full mb-3">
+        <option>left</option>
+        <option>right</option>
+        <option>center</option>
+        <option>justify</option>
+      </select>
 
-      <div class="mb-2 flex items-center gap-2">
-        <button onclick="fontMinus()" class="border px-2">-A</button>
+      <div class="flex gap-2 items-center mb-3">
+        <button onclick="Reader.fontMinus()" class="border px-2">-A</button>
+
         <input id="fontSize" value="18" class="border w-16 text-center" />
-        <button onclick="fontPlus()" class="border px-2">+A</button>
+
+        <button onclick="Reader.fontPlus()" class="border px-2">+A</button>
       </div>
 
-      <div class="mb-2 flex gap-2 items-center">
+      <div class="flex gap-2 items-center mb-3">
         <label>Render HTML</label>
         <input id="renderHtml" type="checkbox" />
       </div>
 
-      <button onclick="applySettings()" class="border p-2 w-full">Apply</button>
+      <button onclick="Reader.applySettings()" class="border p-2 w-full">
+        Apply
+      </button>
     </div>
 
     <script>
-      let posts = [];
-      let currentPage = 1;
-
-      let settings = {
-        postsPerPage: 5,
-        fontSize: 18,
-        renderHtml: false,
-        direction: "ltr",
-        alignment: "left",
+      const State = {
+        posts: [],
+        currentPage: 1,
+        settings: {
+          postsPerPage: 5,
+          fontSize: 18,
+          renderHtml: false,
+          direction: "ltr",
+          alignment: "left",
+        },
       };
 
-      const proxy = ""; //"https://api.allorigins.win/raw?url=";
+      const UI = {
+        toggleSidebar() {
+          document.getElementById("sidebar").classList.toggle("sidebar-hidden");
+        },
 
-      function toggleSidebar() {
-        document.getElementById("sidebar").classList.toggle("sidebar-hidden");
-      }
+        toggleSettings() {
+          document.getElementById("settings").classList.toggle("hidden");
+        },
 
-      function toggleSettings() {
-        document.getElementById("settings").classList.toggle("hidden");
-      }
+        toggleImmersive() {
+          document.body.classList.toggle("immersive");
+        },
+      };
 
-      function toggleImmersive() {
-        document.body.classList.toggle("immersive");
-      }
+      const Reader = {
+        async loadFeed() {
+          const url = document.getElementById("feedUrl").value.trim();
 
-      function fontPlus() {
-        settings.fontSize++;
-        document.getElementById("fontSize").value = settings.fontSize;
-        applySettings();
-      }
+          if (!url) return;
 
-      function fontMinus() {
-        settings.fontSize--;
-        document.getElementById("fontSize").value = settings.fontSize;
-        applySettings();
-      }
+          if (url.includes("blogspot") || url.includes("blogger")) {
+            await this.loadBlogger(url);
+          } else {
+            await this.loadRSS(url);
+          }
 
-      function applySettings() {
-        settings.postsPerPage = parseInt(
-          document.getElementById("postsPerPage").value,
-        );
-        settings.fontSize = parseInt(document.getElementById("fontSize").value);
-        settings.renderHtml = document.getElementById("renderHtml").checked;
-        settings.direction = document.getElementById("direction").value;
-        settings.alignment = document.getElementById("alignment").value;
+          State.currentPage = 1;
 
-        const postsDiv = document.getElementById("posts");
+          this.render();
 
-        postsDiv.style.fontSize = settings.fontSize + "px";
-        postsDiv.style.direction = settings.direction;
-        postsDiv.style.textAlign = settings.alignment;
+          this.buildIndex();
+        },
 
-        renderPage();
-      }
+        /* BLOGGER JSONP */
 
-      function loadFont() {
-        let url = document.getElementById("fontUrl").value;
+        jsonp(url) {
+          return new Promise((resolve) => {
+            const cb = "jsonp_" + Math.random().toString(36).substring(2);
 
-        let fontName = "customReaderFont";
+            window[cb] = (data) => {
+              delete window[cb];
+              script.remove();
+              resolve(data);
+            };
 
-        let style = document.createElement("style");
+            const script = document.createElement("script");
 
-        style.innerHTML = `
-@font-face{
-font-family:${fontName};
-src:url(${url});
-}
-.reader-font{font-family:${fontName},serif;}
-`;
+            script.src = url + "&callback=" + cb;
 
-        document.head.appendChild(style);
-      }
-
-      async function loadFeed() {
-        let url = document.getElementById("feedUrl").value;
-
-        if (url.includes("blogspot")) {
-          fetchBlogger(url);
-          return;
-        }
-
-        // let res = await fetch(proxy + encodeURIComponent(url));
-        let res = await fetch(url);
-        let text = await res.text();
-
-        let parser = new DOMParser();
-        let xml = parser.parseFromString(text, "text/xml");
-
-        let items = [...xml.querySelectorAll("item,entry")];
-
-        posts = items.map((item) => {
-          return {
-            title: item.querySelector("title")?.textContent || "",
-            content:
-              item.querySelector("content")?.textContent ||
-              item.querySelector("description")?.textContent ||
-              "",
-            link: item.querySelector("link")?.textContent || "",
-          };
-        });
-
-        currentPage = 1;
-
-        renderPage();
-
-        buildIndex();
-      }
-
-      async function fetchBlogger(blog) {
-        posts = [];
-
-        let start = 1;
-        let max = 500;
-
-        while (true) {
-          let api =
-            blog.replace(/\/$/, "") +
-            "/feeds/posts/default?alt=json&max-results=" +
-            max +
-            "&start-index=" +
-            start;
-
-          let res = await fetch(api);
-          let data = await res.json();
-
-          let entries = data.feed.entry || [];
-
-          entries.forEach((e) => {
-            posts.push({
-              title: e.title.$t,
-              content: e.content?.$t || "",
-              link: e.link?.find((l) => l.rel == "alternate")?.href || "",
-            });
+            document.body.appendChild(script);
           });
+        },
 
-          if (entries.length < max) break;
+        async loadBlogger(blog) {
+          State.posts = [];
 
-          start += max;
-        }
+          let startIndex = 1;
 
-        currentPage = 1;
-        renderPage();
-        buildIndex();
-      }
+          blog = blog.replace(/\/$/, "");
 
-      function renderPage() {
-        let start = (currentPage - 1) * settings.postsPerPage;
-        let end = start + settings.postsPerPage;
+          while (true) {
+            const url = `${blog}/feeds/posts/default?alt=json-in-script&max-results=500&start-index=${startIndex}`;
 
-        let pagePosts = posts.slice(start, end);
+            const data = await this.jsonp(url);
 
-        let html = "";
+            const entries = data?.feed?.entry || [];
 
-        pagePosts.forEach((p, i) => {
-          let content = settings.renderHtml ? p.content : stripHtml(p.content);
+            console.log("Entries returned:", entries.length);
 
-          html += `
+            if (entries.length === 0) break;
+
+            entries.forEach((e) => {
+              State.posts.push({
+                title: e.title?.$t || "",
+                content: e.content?.$t || "",
+                link: e.link?.find((l) => l.rel === "alternate")?.href || "",
+              });
+            });
+
+            startIndex += entries.length;
+          }
+        },
+
+        /* RSS loader with fallbacks */
+
+        async loadRSS(url) {
+          try {
+            const res = await fetch(url);
+
+            const text = await res.text();
+
+            this.parseRSS(text);
+
+            return;
+          } catch {}
+
+          const services = [
+            `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`,
+
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+          ];
+
+          for (const s of services) {
+            try {
+              const r = await fetch(s);
+
+              const t = await r.text();
+
+              this.parseRSS(t);
+
+              return;
+            } catch {}
+          }
+
+          alert("Failed to load feed");
+        },
+
+        parseRSS(xmlText) {
+          const parser = new DOMParser();
+
+          const xml = parser.parseFromString(xmlText, "text/xml");
+
+          const items = [...xml.querySelectorAll("item,entry")];
+
+          State.posts = items.map((i) => ({
+            title: i.querySelector("title")?.textContent || "",
+
+            content: i.querySelector("content,description")?.textContent || "",
+
+            link: i.querySelector("link")?.textContent || "",
+          }));
+        },
+
+        render() {
+          const start = (State.currentPage - 1) * State.settings.postsPerPage;
+
+          const end = start + State.settings.postsPerPage;
+
+          const posts = State.posts.slice(start, end);
+
+          const container = document.getElementById("posts");
+
+          container.style.fontSize = State.settings.fontSize + "px";
+
+          container.style.direction = State.settings.direction;
+
+          container.style.textAlign = State.settings.alignment;
+
+          let html = "";
+
+          posts.forEach((p, i) => {
+            let content = State.settings.renderHtml
+              ? p.content
+              : this.strip(p.content);
+
+            html += `
 <div class="post">
 <h2 class="font-bold text-xl">${start + i + 1}. ${p.title}</h2>
 <div>${content}</div>
 </div>
 `;
-        });
+          });
 
-        document.getElementById("posts").innerHTML = html;
+          container.innerHTML = html;
 
-        renderPagination();
-      }
+          this.renderPagination();
+        },
 
-      function stripHtml(html) {
-        let div = document.createElement("div");
-        div.innerHTML = html;
-        return div.textContent;
-      }
+        renderPagination() {
+          const total = Math.ceil(
+            State.posts.length / State.settings.postsPerPage,
+          );
 
-      function renderPagination() {
-        let totalPages = Math.ceil(posts.length / settings.postsPerPage);
+          let html = "";
 
-        let container = document.getElementById("pagination");
+          html += `<button class="page-btn" onclick="Reader.gotoPage(1)">First</button>`;
 
-        let html = "";
+          for (let i = 1; i <= total; i++) {
+            html += `<button class="page-btn ${i === State.currentPage ? "page-current" : ""}" onclick="Reader.gotoPage(${i})">${i}</button>`;
+          }
 
-        html += `<button class="page-btn" onclick="gotoPage(1)">First</button>`;
+          html += `<button class="page-btn" onclick="Reader.gotoPage(${total})">Last</button>`;
 
-        for (let i = 1; i <= totalPages; i++) {
-          html += `<button class="page-btn ${i == currentPage ? "page-current" : ""}" onclick="gotoPage(${i})">${i}</button>`;
-        }
+          document.getElementById("pagination").innerHTML = html;
+        },
 
-        html += `<button class="page-btn" onclick="gotoPage(${totalPages})">Last</button>`;
+        gotoPage(p) {
+          State.currentPage = p;
 
-        container.innerHTML = html;
-      }
+          this.render();
+        },
 
-      function gotoPage(p) {
-        currentPage = p;
+        buildIndex() {
+          const list = document.getElementById("postIndex");
 
-        renderPage();
-      }
+          list.innerHTML = "";
 
-      function buildIndex() {
-        let list = document.getElementById("postIndex");
+          State.posts.forEach((p, i) => {
+            const li = document.createElement("li");
 
-        list.innerHTML = "";
+            const a = document.createElement("a");
 
-        posts.forEach((p, i) => {
-          let li = document.createElement("li");
+            a.href = "#";
 
-          let a = document.createElement("a");
+            a.textContent = p.title;
 
-          a.href = "#";
+            a.onclick = () => {
+              State.currentPage =
+                Math.floor(i / State.settings.postsPerPage) + 1;
 
-          a.textContent = p.title;
+              this.render();
+            };
 
-          a.onclick = () => {
-            currentPage = Math.floor(i / settings.postsPerPage) + 1;
-            renderPage();
-          };
+            li.appendChild(a);
 
-          li.appendChild(a);
+            list.appendChild(li);
+          });
+        },
 
-          list.appendChild(li);
-        });
-      }
+        filterTitles() {
+          const q = document.getElementById("titleSearch").value.toLowerCase();
 
-      function filterTitles() {
-        let q = document.getElementById("titleSearch").value.toLowerCase();
+          document.querySelectorAll("#postIndex li").forEach((li) => {
+            li.style.display = li.innerText.toLowerCase().includes(q)
+              ? ""
+              : "none";
+          });
+        },
 
-        let items = [...document.querySelectorAll("#postIndex li")];
+        searchPosts() {
+          const q = document.getElementById("postSearch").value.toLowerCase();
 
-        items.forEach((li) => {
-          li.style.display = li.innerText.toLowerCase().includes(q)
-            ? ""
-            : "none";
-        });
-      }
+          const i = State.posts.findIndex(
+            (p) =>
+              p.title.toLowerCase().includes(q) ||
+              p.content.toLowerCase().includes(q),
+          );
 
-      function searchPosts() {
-        let q = document.getElementById("postSearch").value.toLowerCase();
+          if (i >= 0) {
+            State.currentPage = Math.floor(i / State.settings.postsPerPage) + 1;
 
-        let found = posts.findIndex(
-          (p) =>
-            p.content.toLowerCase().includes(q) ||
-            p.title.toLowerCase().includes(q),
-        );
+            this.render();
+          }
+        },
 
-        if (found != -1) {
-          currentPage = Math.floor(found / settings.postsPerPage) + 1;
-          renderPage();
-        }
-      }
+        strip(html) {
+          const d = document.createElement("div");
+
+          d.innerHTML = html;
+
+          return d.textContent;
+        },
+
+        fontPlus() {
+          State.settings.fontSize++;
+
+          document.getElementById("fontSize").value = State.settings.fontSize;
+
+          this.render();
+        },
+
+        fontMinus() {
+          State.settings.fontSize--;
+
+          document.getElementById("fontSize").value = State.settings.fontSize;
+
+          this.render();
+        },
+
+        applySettings() {
+          State.settings.postsPerPage = parseInt(
+            document.getElementById("postsPerPage").value,
+          );
+
+          State.settings.fontSize = parseInt(
+            document.getElementById("fontSize").value,
+          );
+
+          State.settings.renderHtml =
+            document.getElementById("renderHtml").checked;
+
+          State.settings.direction = document.getElementById("direction").value;
+
+          State.settings.alignment = document.getElementById("alignment").value;
+
+          this.render();
+        },
+
+        loadFont() {
+          const url = document.getElementById("fontUrl").value;
+
+          const name = "readerFont";
+
+          const style = document.createElement("style");
+
+          style.innerHTML = `@font-face{font-family:${name};src:url(${url});}
+.reader-font{font-family:${name},serif;}`;
+
+          document.head.appendChild(style);
+        },
+      };
+
+      /* keyboard navigation */
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") Reader.gotoPage(State.currentPage + 1);
+
+        if (e.key === "ArrowLeft") Reader.gotoPage(State.currentPage - 1);
+      });
     </script>
   </body>
 </html>
