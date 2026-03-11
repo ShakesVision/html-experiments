@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Material Feed Reader</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background: #fafafa;
+      }
+
+      .reader-font {
+        line-height: 1.7;
+      }
+
+      .post {
+        margin-bottom: 40px;
+      }
+
+      .toolbar {
+        backdrop-filter: blur(10px);
+      }
+
+      .sidebar {
+        transition: transform 0.3s;
+      }
+
+      .sidebar-hidden {
+        transform: translateX(-100%);
+      }
+
+      .immersive .toolbar {
+        display: none;
+      }
+
+      .immersive {
+        padding-top: 0;
+      }
+
+      .page-btn {
+        padding: 4px 10px;
+        border-radius: 6px;
+      }
+
+      .page-current {
+        background: #2563eb;
+        color: white;
+      }
+    </style>
+  </head>
+
+  <body class="flex flex-col h-screen">
+    <!-- TOOLBAR -->
+
+    <div
+      id="toolbar"
+      class="toolbar sticky top-0 bg-white shadow p-2 flex gap-2 items-center z-10"
+    >
+      <input
+        id="feedUrl"
+        class="border p-1 flex-1 rounded"
+        placeholder="Paste RSS feed or Blogger blog URL"
+      />
+
+      <button onclick="loadFeed()" class="material-icons">download</button>
+
+      <button onclick="toggleSidebar()" class="material-icons">list</button>
+
+      <button onclick="toggleSettings()" class="material-icons">
+        settings
+      </button>
+
+      <button onclick="toggleImmersive()" class="material-icons">
+        fullscreen
+      </button>
+
+      <input
+        id="postSearch"
+        placeholder="search posts..."
+        class="border p-1 rounded"
+      />
+
+      <button onclick="searchPosts()" class="material-icons">search</button>
+    </div>
+
+    <div class="flex flex-1 overflow-hidden">
+      <!-- SIDEBAR -->
+
+      <div
+        id="sidebar"
+        class="sidebar w-72 bg-white shadow overflow-y-auto sidebar-hidden"
+      >
+        <div class="p-2 border-b flex gap-2">
+          <input
+            id="titleSearch"
+            placeholder="Search titles"
+            class="border p-1 flex-1"
+          />
+          <button onclick="filterTitles()" class="material-icons">
+            search
+          </button>
+        </div>
+
+        <ol id="postIndex" class="text-sm p-2 list-decimal"></ol>
+      </div>
+
+      <!-- CONTENT -->
+
+      <div class="flex-1 overflow-y-auto p-6" id="content">
+        <div id="posts" class="reader-font"></div>
+
+        <div class="flex justify-center gap-2 mt-6" id="pagination"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+
+    <div
+      id="settings"
+      class="fixed right-0 top-0 w-72 h-full bg-white shadow p-4 hidden overflow-y-auto"
+    >
+      <h2 class="font-bold mb-3">Reader Settings</h2>
+
+      <div class="mb-2">
+        <label>Posts per page</label>
+        <input
+          id="postsPerPage"
+          type="number"
+          value="5"
+          class="border w-full p-1"
+        />
+      </div>
+
+      <div class="mb-2">
+        <label>Font URL (.woff/.ttf)</label>
+        <input id="fontUrl" class="border w-full p-1" />
+        <button onclick="loadFont()" class="material-icons">
+          font_download
+        </button>
+      </div>
+
+      <div class="mb-2">
+        <label>Direction</label>
+        <select id="direction" class="border w-full">
+          <option value="ltr">LTR</option>
+          <option value="rtl">RTL</option>
+        </select>
+      </div>
+
+      <div class="mb-2">
+        <label>Alignment</label>
+        <select id="alignment" class="border w-full">
+          <option>left</option>
+          <option>right</option>
+          <option>center</option>
+          <option>justify</option>
+        </select>
+      </div>
+
+      <div class="mb-2 flex items-center gap-2">
+        <button onclick="fontMinus()" class="border px-2">-A</button>
+        <input id="fontSize" value="18" class="border w-16 text-center" />
+        <button onclick="fontPlus()" class="border px-2">+A</button>
+      </div>
+
+      <div class="mb-2 flex gap-2 items-center">
+        <label>Render HTML</label>
+        <input id="renderHtml" type="checkbox" />
+      </div>
+
+      <button onclick="applySettings()" class="border p-2 w-full">Apply</button>
+    </div>
+
+    <script>
+      let posts = [];
+      let currentPage = 1;
+
+      let settings = {
+        postsPerPage: 5,
+        fontSize: 18,
+        renderHtml: false,
+        direction: "ltr",
+        alignment: "left",
+      };
+
+      const proxy = ""; //"https://api.allorigins.win/raw?url=";
+
+      function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("sidebar-hidden");
+      }
+
+      function toggleSettings() {
+        document.getElementById("settings").classList.toggle("hidden");
+      }
+
+      function toggleImmersive() {
+        document.body.classList.toggle("immersive");
+      }
+
+      function fontPlus() {
+        settings.fontSize++;
+        document.getElementById("fontSize").value = settings.fontSize;
+        applySettings();
+      }
+
+      function fontMinus() {
+        settings.fontSize--;
+        document.getElementById("fontSize").value = settings.fontSize;
+        applySettings();
+      }
+
+      function applySettings() {
+        settings.postsPerPage = parseInt(
+          document.getElementById("postsPerPage").value,
+        );
+        settings.fontSize = parseInt(document.getElementById("fontSize").value);
+        settings.renderHtml = document.getElementById("renderHtml").checked;
+        settings.direction = document.getElementById("direction").value;
+        settings.alignment = document.getElementById("alignment").value;
+
+        const postsDiv = document.getElementById("posts");
+
+        postsDiv.style.fontSize = settings.fontSize + "px";
+        postsDiv.style.direction = settings.direction;
+        postsDiv.style.textAlign = settings.alignment;
+
+        renderPage();
+      }
+
+      function loadFont() {
+        let url = document.getElementById("fontUrl").value;
+
+        let fontName = "customReaderFont";
+
+        let style = document.createElement("style");
+
+        style.innerHTML = `
+@font-face{
+font-family:${fontName};
+src:url(${url});
+}
+.reader-font{font-family:${fontName},serif;}
+`;
+
+        document.head.appendChild(style);
+      }
+
+      async function loadFeed() {
+        let url = document.getElementById("feedUrl").value;
+
+        if (url.includes("blogspot")) {
+          fetchBlogger(url);
+          return;
+        }
+
+        // let res = await fetch(proxy + encodeURIComponent(url));
+        let res = await fetch(url);
+        let text = await res.text();
+
+        let parser = new DOMParser();
+        let xml = parser.parseFromString(text, "text/xml");
+
+        let items = [...xml.querySelectorAll("item,entry")];
+
+        posts = items.map((item) => {
+          return {
+            title: item.querySelector("title")?.textContent || "",
+            content:
+              item.querySelector("content")?.textContent ||
+              item.querySelector("description")?.textContent ||
+              "",
+            link: item.querySelector("link")?.textContent || "",
+          };
+        });
+
+        currentPage = 1;
+
+        renderPage();
+
+        buildIndex();
+      }
+
+      async function fetchBlogger(blog) {
+        posts = [];
+
+        let start = 1;
+        let max = 500;
+
+        while (true) {
+          let api =
+            blog.replace(/\/$/, "") +
+            "/feeds/posts/default?alt=json&max-results=" +
+            max +
+            "&start-index=" +
+            start;
+
+          let res = await fetch(api);
+          let data = await res.json();
+
+          let entries = data.feed.entry || [];
+
+          entries.forEach((e) => {
+            posts.push({
+              title: e.title.$t,
+              content: e.content?.$t || "",
+              link: e.link?.find((l) => l.rel == "alternate")?.href || "",
+            });
+          });
+
+          if (entries.length < max) break;
+
+          start += max;
+        }
+
+        currentPage = 1;
+        renderPage();
+        buildIndex();
+      }
+
+      function renderPage() {
+        let start = (currentPage - 1) * settings.postsPerPage;
+        let end = start + settings.postsPerPage;
+
+        let pagePosts = posts.slice(start, end);
+
+        let html = "";
+
+        pagePosts.forEach((p, i) => {
+          let content = settings.renderHtml ? p.content : stripHtml(p.content);
+
+          html += `
+<div class="post">
+<h2 class="font-bold text-xl">${start + i + 1}. ${p.title}</h2>
+<div>${content}</div>
+</div>
+`;
+        });
+
+        document.getElementById("posts").innerHTML = html;
+
+        renderPagination();
+      }
+
+      function stripHtml(html) {
+        let div = document.createElement("div");
+        div.innerHTML = html;
+        return div.textContent;
+      }
+
+      function renderPagination() {
+        let totalPages = Math.ceil(posts.length / settings.postsPerPage);
+
+        let container = document.getElementById("pagination");
+
+        let html = "";
+
+        html += `<button class="page-btn" onclick="gotoPage(1)">First</button>`;
+
+        for (let i = 1; i <= totalPages; i++) {
+          html += `<button class="page-btn ${i == currentPage ? "page-current" : ""}" onclick="gotoPage(${i})">${i}</button>`;
+        }
+
+        html += `<button class="page-btn" onclick="gotoPage(${totalPages})">Last</button>`;
+
+        container.innerHTML = html;
+      }
+
+      function gotoPage(p) {
+        currentPage = p;
+
+        renderPage();
+      }
+
+      function buildIndex() {
+        let list = document.getElementById("postIndex");
+
+        list.innerHTML = "";
+
+        posts.forEach((p, i) => {
+          let li = document.createElement("li");
+
+          let a = document.createElement("a");
+
+          a.href = "#";
+
+          a.textContent = p.title;
+
+          a.onclick = () => {
+            currentPage = Math.floor(i / settings.postsPerPage) + 1;
+            renderPage();
+          };
+
+          li.appendChild(a);
+
+          list.appendChild(li);
+        });
+      }
+
+      function filterTitles() {
+        let q = document.getElementById("titleSearch").value.toLowerCase();
+
+        let items = [...document.querySelectorAll("#postIndex li")];
+
+        items.forEach((li) => {
+          li.style.display = li.innerText.toLowerCase().includes(q)
+            ? ""
+            : "none";
+        });
+      }
+
+      function searchPosts() {
+        let q = document.getElementById("postSearch").value.toLowerCase();
+
+        let found = posts.findIndex(
+          (p) =>
+            p.content.toLowerCase().includes(q) ||
+            p.title.toLowerCase().includes(q),
+        );
+
+        if (found != -1) {
+          currentPage = Math.floor(found / settings.postsPerPage) + 1;
+          renderPage();
+        }
+      }
+    </script>
+  </body>
+</html>
