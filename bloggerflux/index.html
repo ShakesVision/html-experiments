@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+
+    <title>BlogFlux – Blogger Archive Extractor</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <script src="script.js"></script>
+
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+      };
+    </script>
+  </head>
+
+  <body
+    class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen"
+  >
+    <!-- HEADER -->
+
+    <header class="bg-white dark:bg-gray-800 shadow">
+      <div
+        class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between"
+      >
+        <div class="flex items-center space-x-3">
+          <i class="fa-brands fa-blogger text-orange-500 text-2xl"></i>
+
+          <div>
+            <h1 class="text-xl font-semibold">BlogFlux</h1>
+
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Blogger Archive Extractor
+            </p>
+          </div>
+        </div>
+
+        <button id="themeToggle" class="text-lg">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto p-6">
+      <!-- TABS -->
+
+      <div class="flex space-x-6 mb-6">
+        <button
+          id="tabDownload"
+          class="font-semibold border-b-2 border-orange-500 pb-2"
+        >
+          <i class="fa-solid fa-download mr-2"></i>
+          Download
+        </button>
+
+        <button id="tabReader" class="pb-2">
+          <i class="fa-solid fa-book-open mr-2"></i>
+          Reader
+          <span
+            id="readerCount"
+            class="ml-1 bg-orange-500 text-white text-xs px-2 py-1 rounded"
+            >0</span
+          >
+        </button>
+      </div>
+
+      <!-- DOWNLOAD PANEL -->
+
+      <div id="panelDownload">
+        <!-- BLOG INPUT -->
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-6">
+          <h2 class="font-semibold mb-4">
+            <i class="fa-solid fa-link mr-2"></i>
+            Blog Source
+          </h2>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <input
+              id="blogURL"
+              placeholder="https://example.blogspot.com"
+              class="p-3 rounded border dark:bg-gray-900"
+            />
+
+            <input
+              id="blogLabel"
+              placeholder="Optional label filter"
+              class="p-3 rounded border dark:bg-gray-900"
+            />
+          </div>
+          <button id="btnReset" class="bg-gray-200 px-4 py-2 rounded">
+            Reset
+          </button>
+        </div>
+
+        <!-- OPTIONS -->
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-6">
+          <h2 class="font-semibold mb-4">
+            <i class="fa-solid fa-sliders mr-2"></i>
+            Scraper Options
+          </h2>
+
+          <div class="grid md:grid-cols-3 gap-4">
+            <label class="flex items-center space-x-2">
+              <input type="radio" name="outputMode" value="html" checked />
+
+              <span>Raw HTML</span>
+            </label>
+
+            <label class="flex items-center space-x-2">
+              <input type="radio" name="outputMode" value="text" />
+
+              <span>Clean Text</span>
+            </label>
+
+            <label class="flex items-center space-x-2">
+              <input id="downloadImages" type="checkbox" />
+
+              <span>Download Images</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- FIELD SELECTION -->
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-6">
+          <h2 class="font-semibold mb-4">
+            <i class="fa-solid fa-database mr-2"></i>
+            Fields
+          </h2>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <label
+              ><input type="checkbox" checked data-field="title" /> Title</label
+            >
+            <label
+              ><input type="checkbox" checked data-field="date" /> Date</label
+            >
+            <label
+              ><input type="checkbox" checked data-field="text" /> Text</label
+            >
+            <label
+              ><input type="checkbox" checked data-field="image_url" /> Image
+              URL</label
+            >
+
+            <label
+              ><input type="checkbox" data-field="image_local" /> Local
+              Image</label
+            >
+            <label
+              ><input type="checkbox" data-field="post_url" /> Post URL</label
+            >
+            <label><input type="checkbox" data-field="author" /> Author</label>
+            <label><input type="checkbox" data-field="labels" /> Labels</label>
+
+            <label
+              ><input type="checkbox" data-field="summary" /> Summary</label
+            >
+            <label
+              ><input type="checkbox" data-field="content_html" /> HTML
+              Content</label
+            >
+          </div>
+        </div>
+
+        <!-- ACTIONS -->
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-6">
+          <h2 class="font-semibold mb-4">
+            <i class="fa-solid fa-play mr-2"></i>
+            Scraping
+          </h2>
+
+          <div class="flex flex-wrap gap-4">
+            <button
+              id="btnStart"
+              class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded"
+            >
+              Start Scraping
+            </button>
+
+            <button
+              id="btnStop"
+              class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+            >
+              Stop
+            </button>
+          </div>
+        </div>
+
+        <!-- PROGRESS -->
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-6">
+          <h2 class="font-semibold mb-4">
+            <i class="fa-solid fa-chart-line mr-2"></i>
+            Progress
+          </h2>
+
+          <div class="space-y-3 text-sm">
+            <div>
+              Feed Page:
+              <span id="progPage">0</span>
+            </div>
+
+            <div>
+              Posts Processed:
+              <span id="progPosts">0</span>
+            </div>
+
+            <div>
+              Images Downloaded:
+              <span id="progImages">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPORT -->
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+          <h2 class="font-semibold mb-4">
+            <i class="fa-solid fa-file-export mr-2"></i>
+            Export
+          </h2>
+
+          <div class="flex flex-wrap gap-4">
+            <button
+              id="exportJSON"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+            >
+              JSON
+            </button>
+
+            <button
+              id="exportCSV"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+            >
+              CSV
+            </button>
+
+            <button
+              id="exportZIP"
+              class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
+            >
+              ZIP
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- READER PANEL -->
+
+      <div id="panelReader" class="hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-6">
+          <h2 class="font-semibold mb-4">
+            <i class="fa-solid fa-font mr-2"></i>
+            Reader Settings
+          </h2>
+
+          <div class="grid md:grid-cols-3 gap-4">
+            <input
+              id="readerFont"
+              placeholder="Custom font URL (.woff/.ttf)"
+              class="p-2 border rounded dark:bg-gray-900"
+            />
+
+            <select
+              id="readerDirection"
+              class="p-2 border rounded dark:bg-gray-900"
+            >
+              <option value="ltr">LTR</option>
+              <option value="rtl">RTL</option>
+            </select>
+
+            <select
+              id="readerAlign"
+              class="p-2 border rounded dark:bg-gray-900"
+            >
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+              <option value="center">Center</option>
+              <option value="justify">Justify</option>
+            </select>
+            <input
+              type="range"
+              id="readerFontSize"
+              min="12"
+              max="36"
+              value="16"
+              placeholder="Font Size"
+            />
+            <label>
+              <input
+                type="checkbox"
+                id="readerRenderHTML"
+                placeholder="Render HTML"
+              />
+              Render HTML
+            </label>
+          </div>
+        </div>
+
+        <div
+          id="readerList"
+          class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 space-y-6"
+        ></div>
+
+        <!-- Pagination container -->
+        <div
+          id="readerPagination"
+          class="flex space-x-2 justify-center mt-4"
+        ></div>
+        <div class="flex justify-between mt-6">
+          <button
+            id="prevPage"
+            class="px-4 py-2 bg-gray-500 text-white rounded"
+          >
+            Prev
+          </button>
+
+          <button
+            id="nextPage"
+            class="px-4 py-2 bg-gray-500 text-white rounded"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* =========================
+        UI CONNECTION
+        ========================= */
+
+      function updateUI() {
+        document.getElementById("progPage").innerText =
+          AppState.progress.feedPage;
+
+        document.getElementById("progPosts").innerText =
+          AppState.progress.postsProcessed;
+
+        document.getElementById("progImages").innerText =
+          AppState.progress.imagesDownloaded;
+
+        document.getElementById("readerCount").innerText =
+          AppState.dataset.length;
+      }
+
+      setInterval(updateUI, 500);
+
+      /* =========================
+        SCRAPE BUTTON
+        ========================= */
+
+      document.getElementById("btnStart").onclick = () => {
+        AppState.options.downloadImages =
+          document.getElementById("downloadImages").checked;
+
+        AppState.blog.url = document.getElementById("blogURL").value;
+
+        AppState.blog.label = document.getElementById("blogLabel").value;
+
+        AppState.options.downloadImages =
+          document.getElementById("downloadImages").checked;
+
+        document.querySelectorAll("[data-field]").forEach((el) => {
+          AppState.fields[el.dataset.field] = el.checked;
+        });
+
+        const mode = document.querySelector(
+          "input[name=outputMode]:checked",
+        ).value;
+
+        AppState.options.outputMode = mode;
+
+        ScraperEngine.start();
+      };
+
+      /* =========================
+        STOP
+        ========================= */
+
+      document.getElementById("btnStop").onclick = () => {
+        ScraperEngine.stop();
+      };
+
+      /* =========================
+        EXPORT
+        ========================= */
+
+      document.getElementById("exportJSON").onclick = () =>
+        ExportManager.exportJSON();
+
+      document.getElementById("exportCSV").onclick = () =>
+        ExportManager.exportCSV();
+
+      document.getElementById("exportZIP").onclick = () =>
+        ExportManager.exportZIP();
+
+      /* =========================
+        TABS
+        ========================= */
+
+      const downloadTab = document.getElementById("tabDownload");
+      const readerTab = document.getElementById("tabReader");
+
+      const panelDownload = document.getElementById("panelDownload");
+      const panelReader = document.getElementById("panelReader");
+
+      downloadTab.onclick = () => {
+        panelDownload.classList.remove("hidden");
+        panelReader.classList.add("hidden");
+      };
+
+      readerTab.onclick = () => {
+        panelReader.classList.remove("hidden");
+        panelDownload.classList.add("hidden");
+        downloadTab.classList.remove("border-b-2", "border-orange-500");
+        readerTab.classList.add("border-b-2", "border-orange-500");
+        renderReader();
+      };
+
+      /* =========================
+        READER
+        ========================= */
+
+      function renderReader() {
+        const posts = Reader.getPage();
+
+        const list = document.getElementById("readerList");
+
+        list.innerHTML = "";
+
+        posts.forEach((p) => {
+          const div = document.createElement("div");
+          div.className = "border-b pb-4";
+
+          div.innerHTML = `
+        <h3 class="font-semibold mb-2">${p.title || ""}</h3>
+        <div class="reader-content text-sm whitespace-pre-line">
+        ${
+          document.getElementById("readerRenderHTML").checked
+            ? p.content_html || p.text || ""
+            : p.text || p.content_html || ""
+        }
+        </div>
+    `;
+          list.appendChild(div);
+        });
+        renderPagination();
+      }
+
+      /* pagination */
+
+      document.getElementById("nextPage").onclick = () => {
+        Reader.next();
+        renderReader();
+      };
+
+      document.getElementById("prevPage").onclick = () => {
+        Reader.prev();
+        renderReader();
+      };
+
+      /* =========================
+        THEME
+        ========================= */
+
+      document.getElementById("themeToggle").onclick = () => {
+        document.documentElement.classList.toggle("dark");
+      };
+
+      document.getElementById("readerFont").addEventListener("change", (e) => {
+        const url = e.target.value;
+        if (url) {
+          const style =
+            document.getElementById("readerFontStyle") ||
+            document.createElement("style");
+          style.id = "readerFontStyle";
+          style.innerHTML = `
+        .reader-content {
+            font-family: customReaderFont !important;
+        }
+        @font-face {
+            font-family: customReaderFont;
+            src: url('${url}');
+        }
+        `;
+          document.head.appendChild(style);
+        }
+      });
+
+      document
+        .getElementById("readerDirection")
+        .addEventListener("change", (e) => {
+          document.querySelectorAll(".reader-content").forEach((el) => {
+            el.style.direction = e.target.value;
+          });
+        });
+
+      document.getElementById("readerAlign").addEventListener("change", (e) => {
+        document.querySelectorAll(".reader-content").forEach((el) => {
+          el.style.textAlign = e.target.value;
+        });
+      });
+      document
+        .getElementById("readerFontSize")
+        .addEventListener("input", (e) => {
+          const size = e.target.value + "px";
+          document.querySelectorAll(".reader-content").forEach((el) => {
+            el.style.fontSize = size;
+          });
+        });
+      function renderPagination() {
+        const pagination = document.getElementById("readerPagination");
+        pagination.innerHTML = "";
+
+        const totalPages = Math.ceil(AppState.dataset.length / Reader.pageSize);
+
+        for (let i = 1; i <= totalPages; i++) {
+          const btn = document.createElement("button");
+          btn.textContent = i;
+          btn.className = `px-2 py-1 rounded ${Reader.currentPage === i ? "bg-orange-500 text-white" : "bg-gray-300"}`;
+          btn.onclick = () => {
+            Reader.currentPage = i;
+            renderReader();
+          };
+          pagination.appendChild(btn);
+        }
+      }
+      const htmlCheckbox = document.getElementById("readerRenderHTML");
+
+      htmlCheckbox.addEventListener("change", () => {
+        // Re-render the current page with new setting
+        renderReader();
+      });
+
+      function resetAppState() {
+        AppState.dataset = [];
+        AppState.progress = {
+          feedPage: 0,
+          postsProcessed: 0,
+          imagesDownloaded: 0,
+          done: false,
+        };
+        Reader.currentPage = 1;
+        Reader.pageSize = 10;
+      }
+      function resetUI() {
+        document.getElementById("progressFeedPage").textContent = 0;
+        document.getElementById("progressPostsProcessed").textContent = 0;
+        document.getElementById("progressImagesDownloaded").textContent = 0;
+        document.getElementById("doneBadge").classList.add("hidden");
+        document.getElementById("readerList").innerHTML = "";
+        renderPagination(); // rebuild empty pagination
+      }
+      document.getElementById("btnReset").addEventListener("click", () => {
+        resetAppState();
+        localStorage.removeItem("blogflux_session");
+        resetUI();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Theme Studio | Pitch Deck</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .svg-container svg {
+            width: 100%;
+            height: 100%;
+            max-height: 200px;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen p-8 font-sans">
+
+    <header class="max-w-6xl mx-auto mb-12 text-center">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent mb-4">
+            SVG Theme Studio
+        </h1>
+        <p class="text-slate-400 mb-8">Upload your brand mark to generate instant pitch-ready variations.</p>
+        
+        <div class="flex flex-wrap justify-center gap-4 items-center">
+            <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-full transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20">
+                <i data-lucide="upload"></i> Upload SVG
+                <input type="file" id="svgInput" accept=".svg" class="hidden">
+            </label>
+            <div class="flex items-center gap-2 bg-slate-900 p-2 rounded-full border border-slate-800">
+                <span class="text-xs uppercase tracking-widest px-3 text-slate-500">Custom Accent:</span>
+                <input type="color" id="customColor" value="#6366f1" class="w-10 h-10 rounded-full bg-transparent border-none cursor-pointer">
+            </div>
+            <button onclick="processSVG()" class="text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="refresh-cw"></i>
+            </button>
+        </div>
+    </header>
+
+    <main id="deck" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 opacity-0 transition-opacity duration-1000">
+        
+        <div class="bg-white rounded-3xl p-8 flex flex-col items-center shadow-2xl">
+            <div id="origPreview" class="svg-container w-full aspect-square flex items-center justify-center mb-6"></div>
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-widest">Original Mark</span>
+            <h3 class="text-slate-900 text-xl font-semibold mt-1">Source</h3>
+        </div>
+
+        <div class="bg-slate-900 rounded-3xl p-8 flex flex-col items-center border border-slate-800 shadow-2xl">
+            <div id="darkPreview" class="svg-container w-full aspect-square flex items-center justify-center mb-6"></div>
+            <span class="text-slate-500 text-xs font-bold uppercase tracking-widest">Midnight Edition</span>
+            <h3 class="text-white text-xl font-semibold mt-1">Dark Mode</h3>
+        </div>
+
+        <div class="bg-indigo-50 rounded-3xl p-8 flex flex-col items-center shadow-2xl border border-indigo-100">
+            <div id="swapPreview" class="svg-container w-full aspect-square flex items-center justify-center mb-6"></div>
+            <span class="text-indigo-400 text-xs font-bold uppercase tracking-widest">Dynamic Duo</span>
+            <h3 class="text-indigo-900 text-xl font-semibold mt-1">Brand Swap</h3>
+        </div>
+
+        <div id="customCard" class="rounded-3xl p-8 flex flex-col items-center shadow-2xl transition-all duration-500" style="background-color: #6366f1;">
+            <div id="customPreview" class="svg-container w-full aspect-square flex items-center justify-center mb-6"></div>
+            <span class="text-white/60 text-xs font-bold uppercase tracking-widest">Signature Look</span>
+            <h3 class="text-white text-xl font-semibold mt-1">Custom Brand</h3>
+        </div>
+
+    </main>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        const svgInput = document.getElementById('svgInput');
+        let currentSVGString = "";
+
+        svgInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                currentSVGString = event.target.result;
+                processSVG();
+                document.getElementById('deck').classList.remove('opacity-0');
+            };
+            reader.readAsText(file);
+        });
+
+        document.getElementById('customColor').addEventListener('input', processSVG);
+
+        function applyStyles(svgText, primary, secondary) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(svgText, 'image/svg+xml');
+            const svgElement = doc.querySelector('svg');
+            
+            // Function to recursively recolor elements
+            const recolor = (el) => {
+                if (el.hasAttribute('fill') && el.getAttribute('fill') !== 'none') {
+                    el.setAttribute('fill', primary);
+                }
+                if (el.hasAttribute('stroke') && el.getAttribute('stroke') !== 'none') {
+                    el.setAttribute('stroke', primary);
+                }
+                // Handle elements without explicit fill/stroke (defaulting to black)
+                if (!el.hasAttribute('fill') && !el.hasAttribute('stroke')) {
+                    el.setAttribute('fill', primary);
+                }
+
+                // If a secondary color is provided and we find multiple paths, swap logic can go here
+                // For simplicity, this app themes the whole mark consistently
+                Array.from(el.children).forEach(recolor);
+            };
+
+            recolor(svgElement);
+            return svgElement.outerHTML;
+        }
+
+        function processSVG() {
+            if (!currentSVGString) return;
+
+            const customCol = document.getElementById('customColor').value;
+
+            // 1. Original
+            document.getElementById('origPreview').innerHTML = currentSVGString;
+
+            // 2. Dark Theme (White SVG on Dark Card)
+            document.getElementById('darkPreview').innerHTML = applyStyles(currentSVGString, '#ffffff');
+
+            // 3. Random Swap (Generate two contrasting colors)
+            const randomColor = `#${Math.floor(Math.random()*16777215).toString(16)}`;
+            document.getElementById('swapPreview').innerHTML = applyStyles(currentSVGString, randomColor);
+
+            // 4. Custom Theme
+            document.getElementById('customPreview').innerHTML = applyStyles(currentSVGString, '#ffffff');
+            document.getElementById('customCard').style.backgroundColor = customCol;
+        }
+    </script>
+</body>
+</html>
