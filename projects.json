@@ -94,7 +94,7 @@
     "id": 14,
     "title": "Material RSS Reader",
     "desc": "Minimal Material-style feed reader with Blogger JSONP support, pagination, reader settings, and immersive reading mode.",
-    "img": "rss-reader/rss-reader-icon.png",
+    "img": "rss-reader/icon.png",
     "link": "rss-reader/index.html"
   }
 ]
