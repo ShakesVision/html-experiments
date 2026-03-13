@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="ur">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Urdu Book Editor</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+
+    <style>
+      @font-face {
+        font-family: "Mehr";
+        src: url("https://cdn.jsdelivr.net/gh/shakesvision/MehrNastaleeq/MehrNastaliqWeb.woff")
+          format("woff");
+      }
+
+      @import url("https://fonts.googleapis.com/css2?family=Amiri&display=swap");
+
+      body {
+        background: #e5e5e5;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .page {
+        background: white;
+        border: 1px solid #cfcfcf;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header,
+      .footer {
+        font-size: 12px;
+        padding: 6px 14px;
+      }
+
+      .header {
+        border-bottom: 1px solid #ddd;
+      }
+
+      .footer {
+        border-top: 1px solid #ddd;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+
+      .content {
+        outline: none;
+        height: calc(100% - 70px);
+        overflow: hidden;
+        padding: 25px;
+      }
+
+      .page-break-marker {
+        border-top: 2px dashed #999;
+        margin: 20px 0;
+      }
+
+      .toolbar button {
+        padding: 4px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- TOOLBAR -->
+
+    <div class="toolbar bg-white shadow p-2 flex flex-wrap gap-2 items-center">
+      <input
+        id="novelTitle"
+        placeholder="Novel Title"
+        class="border px-2 py-1 text-sm"
+      />
+
+      <select id="fontSelect" class="border px-2 py-1 text-sm">
+        <option value="Mehr">Mehr Nastaliq</option>
+        <option value="Amiri">Amiri</option>
+        <option value="'Noto Nastaliq Urdu'">Noto Nastaliq</option>
+      </select>
+
+      <input
+        id="fontSize"
+        type="number"
+        value="22"
+        class="border w-16 px-1 py-1 text-sm"
+      />
+
+      <button onclick="cmd('bold')" class="material-icons">format_bold</button>
+      <button onclick="cmd('italic')" class="material-icons">
+        format_italic
+      </button>
+      <button onclick="cmd('underline')" class="material-icons">
+        format_underlined
+      </button>
+
+      <button onclick="cmd('superscript')" class="material-icons">
+        superscript
+      </button>
+      <button onclick="cmd('subscript')" class="material-icons">
+        subscript
+      </button>
+
+      <button onclick="cmd('insertUnorderedList')" class="material-icons">
+        format_list_bulleted
+      </button>
+      <button onclick="cmd('insertOrderedList')" class="material-icons">
+        format_list_numbered
+      </button>
+
+      <button onclick="setRTL()" class="material-icons">
+        format_textdirection_r_to_l
+      </button>
+      <button onclick="setLTR()" class="material-icons">
+        format_textdirection_l_to_r
+      </button>
+
+      <input type="color" id="colorPicker" />
+
+      <button onclick="insertPageBreak()" class="material-icons">
+        horizontal_rule
+      </button>
+
+      <button onclick="addFont()" class="material-icons">font_download</button>
+
+      <button onclick="exportHTML()" class="material-icons">download</button>
+
+      <button onclick="window.print()" class="material-icons">print</button>
+    </div>
+
+    <!-- HEADER / FOOTER CONFIG -->
+
+    <div class="bg-gray-100 text-sm p-2 flex gap-4 flex-wrap">
+      <label>
+        Header
+        <input
+          id="headerTemplate"
+          class="border px-1"
+          value="<chapter> | <page-number> | <title>"
+        />
+      </label>
+
+      <label>
+        Footer
+        <input id="footerTemplate" class="border px-1" value="" />
+      </label>
+
+      <label>
+        Page Size
+        <select id="pageSize" class="border px-1">
+          <option value="A5">A5</option>
+          <option value="A4">A4</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
+
+      <input id="customWidth" placeholder="width px" class="border w-24 px-1" />
+
+      <input
+        id="customHeight"
+        placeholder="height px"
+        class="border w-24 px-1"
+      />
+    </div>
+
+    <!-- BOOK VIEW -->
+
+    <div class="flex-1 flex items-center justify-center">
+      <div id="book" class="flex gap-10"></div>
+    </div>
+
+    <!-- NAVIGATION -->
+
+    <div class="bg-white p-2 flex justify-center gap-4 items-center">
+      <button onclick="prevPage()" class="material-icons">chevron_left</button>
+
+      <input
+        id="pageInput"
+        type="number"
+        value="1"
+        class="border w-16 text-center"
+      />
+
+      <span id="pageCount"></span>
+
+      <button onclick="nextPage()" class="material-icons">chevron_right</button>
+    </div>
+
+    <script>
+      let buffer =
+        localStorage.getItem("urduBookBuffer") ||
+        `
+<h1>باب اول</h1>
+<p>یہ اردو ناول لکھنے کا ایڈیٹر ہے۔ یہاں سے لکھنا شروع کریں۔</p>
+`;
+
+      let pages = [];
+      let currentPage = 0;
+      let pageWidth = 420;
+      let pageHeight = 600;
+
+      const colorPicker = document.getElementById("colorPicker");
+
+      colorPicker.addEventListener("change", (e) => {
+        document.execCommand("foreColor", false, e.target.value);
+        saveBuffer();
+      });
+
+      function cmd(c) {
+        document.execCommand(c, false, null);
+        saveBuffer();
+      }
+
+      function setRTL() {
+        document.execCommand("justifyRight");
+        document.activeElement.dir = "rtl";
+      }
+
+      function setLTR() {
+        document.execCommand("justifyLeft");
+        document.activeElement.dir = "ltr";
+      }
+
+      function insertPageBreak() {
+        document.execCommand("insertHTML", false, "<page-break></page-break>");
+
+        saveBuffer();
+      }
+
+      function saveBuffer() {
+        let el = document.querySelector(".content");
+        if (!el) return;
+
+        buffer = el.innerHTML;
+
+        localStorage.setItem("urduBookBuffer", buffer);
+
+        paginate();
+      }
+
+      function paginate() {
+        let temp = document.createElement("div");
+        temp.innerHTML = buffer;
+
+        pages = [];
+        let current = "";
+
+        Array.from(temp.childNodes).forEach((n) => {
+          if (n.outerHTML?.includes("<page-break")) {
+            pages.push(current);
+            current = "";
+            return;
+          }
+
+          current += n.outerHTML || n.textContent;
+        });
+
+        pages.push(current);
+
+        render();
+      }
+
+      function render() {
+        let book = document.getElementById("book");
+        book.innerHTML = "";
+
+        let spread = window.innerWidth > 900 ? 2 : 1;
+
+        for (let i = 0; i < spread; i++) {
+          let index = currentPage + i;
+          if (!pages[index]) break;
+
+          let page = document.createElement("div");
+          page.className = "page";
+
+          page.style.width = pageWidth + "px";
+          page.style.height = pageHeight + "px";
+
+          let header = parseTemplate(
+            document.getElementById("headerTemplate").value,
+            index,
+          );
+
+          let footer = parseTemplate(
+            document.getElementById("footerTemplate").value,
+            index,
+          );
+
+          page.innerHTML = `
+
+<div class="header">${header}</div>
+
+<div class="content"
+contenteditable="true"
+dir="rtl"
+style="font-family:${fontSelect.value}; font-size:${fontSize.value}px">
+${pages[index]}
+</div>
+
+<div class="footer">${footer}</div>
+
+`;
+
+          book.appendChild(page);
+        }
+
+        document.getElementById("pageCount").innerText = " / " + pages.length;
+
+        attachEditorEvents();
+      }
+
+      function attachEditorEvents() {
+        document.querySelectorAll(".content").forEach((el) => {
+          el.addEventListener("keyup", saveBuffer);
+        });
+      }
+
+      function parseTemplate(t, i) {
+        let chapter = getChapter(i);
+        let title = document.getElementById("novelTitle").value;
+        let page = i + 1;
+
+        t = t.replaceAll("<chapter>", chapter);
+        t = t.replaceAll("<title>", title);
+        t = t.replaceAll("<page-number>", page);
+
+        let parts = t.split("|");
+
+        if (parts.length == 1) {
+          return `<div class="text-center">${parts[0]}</div>`;
+        }
+
+        if (parts.length == 2) {
+          return `
+<div class="flex justify-between w-full">
+<div>${parts[0]}</div>
+<div>${parts[1]}</div>
+</div>
+`;
+        }
+
+        return `
+<div class="grid grid-cols-3 w-full">
+<div class="text-left">${parts[0]}</div>
+<div class="text-center">${parts[1]}</div>
+<div class="text-right">${parts[2]}</div>
+</div>
+`;
+      }
+
+      function getChapter(pageIndex) {
+        let temp = document.createElement("div");
+
+        temp.innerHTML = pages.slice(0, pageIndex + 1).join("");
+
+        let h1 = temp.querySelectorAll("h1");
+
+        if (!h1.length) return "";
+
+        return h1[h1.length - 1].innerText;
+      }
+
+      function nextPage() {
+        if (currentPage < pages.length - 1) {
+          currentPage++;
+
+          render();
+        }
+      }
+
+      function prevPage() {
+        if (currentPage > 0) {
+          currentPage--;
+
+          render();
+        }
+      }
+
+      function exportHTML() {
+        let html = `
+<html>
+<head>
+<meta charset="utf-8">
+<title>${document.getElementById("novelTitle").value}</title>
+</head>
+<body dir="rtl">
+${buffer}
+</body>
+</html>
+`;
+
+        let blob = new Blob([html], { type: "text/html" });
+
+        let a = document.createElement("a");
+
+        a.href = URL.createObjectURL(blob);
+
+        a.download = "novel.html";
+
+        a.click();
+      }
+
+      function addFont() {
+        let name = prompt("Font name");
+
+        let url = prompt("Font URL (.woff/.woff2/.ttf)");
+
+        if (!name || !url) return;
+
+        let style = document.createElement("style");
+
+        style.innerHTML = `
+@font-face{
+font-family:'${name}';
+src:url('${url}');
+}
+`;
+
+        document.head.appendChild(style);
+
+        let opt = document.createElement("option");
+
+        opt.value = name;
+        opt.innerText = name;
+
+        fontSelect.appendChild(opt);
+      }
+
+      document.getElementById("pageSize").addEventListener("change", () => {
+        let val = pageSize.value;
+
+        if (val === "A5") {
+          pageWidth = 420;
+          pageHeight = 600;
+        }
+
+        if (val === "A4") {
+          pageWidth = 595;
+          pageHeight = 842;
+        }
+
+        if (val === "custom") {
+          pageWidth = parseInt(customWidth.value) || 420;
+          pageHeight = parseInt(customHeight.value) || 600;
+        }
+
+        render();
+      });
+
+      paginate();
+    </script>
+  </body>
+</html>

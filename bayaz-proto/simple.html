@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="ur" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>بیاض - سادہ کتاب ایڈیٹر</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        background: #f5f5f5;
+        font-family:
+          "Payami Nastaleeq", "Noto Nastaliq Urdu", "Amiri",
+          "Jameel Noori Nastaleeq", serif;
+        font-size: 18px;
+        direction: rtl;
+      }
+
+      .book-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .page {
+        width: 420px;
+        height: 600px;
+        background: white;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+
+      .header {
+        padding: 10px 15px;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+        color: #666;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .content {
+        flex: 1;
+        padding: 20px;
+        outline: none;
+        overflow-y: auto;
+        text-align: justify;
+      }
+
+      .footer {
+        padding: 10px 15px;
+        border-top: 1px solid #eee;
+        font-size: 12px;
+        color: #999;
+        text-align: center;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+        padding: 10px;
+        background: white;
+        border-radius: 8px;
+      }
+
+      button {
+        padding: 8px 16px;
+        border: 1px solid #ddd;
+        background: white;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      button:hover {
+        background: #f0f0f0;
+      }
+
+      @media (max-width: 768px) {
+        .book-container {
+          flex-direction: column;
+          align-items: center;
+        }
+        .page {
+          width: 100%;
+          max-width: 420px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="controls">
+      <label
+        >صفحہ کا سائز:
+        <select id="pageSize" onchange="changePageSize()">
+          <option value="A4">A4 (Default)</option>
+          <option value="A5">A5</option>
+          <option value="Custom">Custom</option>
+        </select>
+      </label>
+      <label
+        >چوڑائی:
+        <input type="number" id="customWidth" value="595" style="width: 80px" />
+      </label>
+      <label
+        >اونچائی:
+        <input
+          type="number"
+          id="customHeight"
+          value="842"
+          style="width: 80px"
+        />
+      </label>
+    </div>
+
+    <div class="book-container" id="book">
+      <!-- Pages will be injected here -->
+    </div>
+
+    <div class="controls">
+      <label
+        >سرخی:
+        <input type="text" id="headerText" value="باب 1" style="width: 150px" />
+      </label>
+      <label
+        >عنوان:
+        <input
+          type="text"
+          id="titleText"
+          value="میرا ناول"
+          style="width: 150px"
+        />
+      </label>
+      <button onclick="prevPages()">گذشتہ</button>
+      <span id="pageInfo">1-2</span>
+      <button onclick="nextPages()">اگلا</button>
+    </div>
+
+    <script>
+      // State
+      let buffer =
+        localStorage.getItem("simpleBookBuffer") ||
+        "<p>یہاں لکھنا شروع کریں...</p>";
+      let pages = [];
+      let currentPagePair = 0; // Shows pages 0-1, then 2-3, etc.
+
+      // Elements
+      const book = document.getElementById("book");
+      const pageInfo = document.getElementById("pageInfo");
+
+      // Initialize
+      loadState();
+      paginate();
+      render();
+
+      // Core Logic
+      function paginate() {
+        // Improved pagination: measure actual computed font and size
+        const temp = document.createElement("div");
+        temp.innerHTML = buffer;
+
+        // Get computed styles from body to ensure we match the actual font
+        const computedStyle = getComputedStyle(document.body);
+        temp.style.fontFamily = computedStyle.fontFamily;
+        temp.style.fontSize = computedStyle.fontSize;
+        temp.style.lineHeight = computedStyle.lineHeight || "1.6";
+        temp.style.textAlign = "justify";
+
+        // Calculate page dimensions based on current settings
+        const pageWidth = getPageWidth() - 40; // Subtract padding
+        const pageHeight = getPageHeight() - 60; // Subtract header/footer
+
+        temp.style.width = pageWidth + "px";
+        temp.style.position = "absolute";
+        temp.style.visibility = "hidden";
+        temp.style.whiteSpace = "normal";
+        temp.style.wordWrap = "break-word";
+        document.body.appendChild(temp);
+
+        const sections = [];
+        let currentSection = "";
+        let currentHeight = 0;
+
+        // Process each child element
+        Array.from(temp.children).forEach((node) => {
+          const clone = node.cloneNode(true);
+          temp.appendChild(clone);
+          const height = clone.offsetHeight;
+          clone.remove();
+
+          // If adding this element would exceed page height, start new page
+          if (currentHeight + height > pageHeight && currentSection) {
+            sections.push(currentSection);
+            currentSection = node.outerHTML;
+            currentHeight = height;
+          } else {
+            currentSection += node.outerHTML;
+            currentHeight += height;
+          }
+        });
+
+        if (currentSection) sections.push(currentSection);
+        temp.remove();
+
+        pages = sections;
+        render();
+      }
+
+      function render() {
+        book.innerHTML = "";
+        const start = currentPagePair * 2;
+        const end = start + 2;
+
+        for (let i = start; i < end; i++) {
+          if (pages[i]) {
+            const page = createPage(i + 1, pages[i]);
+            book.appendChild(page);
+          }
+        }
+
+        pageInfo.textContent = `${start + 1}-${Math.min(end, pages.length)}`;
+      }
+
+      function createPage(num, content) {
+        const page = document.createElement("div");
+        page.className = "page";
+        page.style.width = getPageWidth() + "px";
+        page.style.height = getPageHeight() + "px";
+
+        const headerText = document.getElementById("headerText").value;
+        const titleText = document.getElementById("titleText").value;
+
+        page.innerHTML = `
+                <div class="header">
+                    <span contenteditable="true" oninput="updateHeaderFooter()">${headerText}</span>
+                    <span contenteditable="true" oninput="updateHeaderFooter()">${titleText}</span>
+                </div>
+                <div class="content" contenteditable="true" oninput="updateBuffer()">
+                    ${content}
+                </div>
+                <div class="footer">
+                    <span contenteditable="true" oninput="updateHeaderFooter()">صفحہ ${num}</span>
+                </div>
+            `;
+
+        return page;
+      }
+
+      function getPageWidth() {
+        const size = document.getElementById("pageSize").value;
+        if (size === "A4") return 595;
+        if (size === "A5") return 420;
+        return parseInt(document.getElementById("customWidth").value) || 595;
+      }
+
+      function getPageHeight() {
+        const size = document.getElementById("pageSize").value;
+        if (size === "A4") return 842;
+        if (size === "A5") return 600;
+        return parseInt(document.getElementById("customHeight").value) || 842;
+      }
+
+      function changePageSize() {
+        const size = document.getElementById("pageSize").value;
+        if (size === "A4") {
+          document.getElementById("customWidth").value = 595;
+          document.getElementById("customHeight").value = 842;
+        } else if (size === "A5") {
+          document.getElementById("customWidth").value = 420;
+          document.getElementById("customHeight").value = 600;
+        }
+        paginate();
+      }
+
+      function updateHeaderFooter() {
+        // Re-render to update header/footer text
+        render();
+      }
+
+      function updateBuffer() {
+        const contents = Array.from(document.querySelectorAll(".content"))
+          .map((el) => el.innerHTML)
+          .join("");
+        buffer = contents;
+        localStorage.setItem("simpleBookBuffer", buffer);
+        paginate();
+      }
+
+      function nextPages() {
+        if ((currentPagePair + 1) * 2 < pages.length) {
+          currentPagePair++;
+          render();
+        }
+      }
+
+      function prevPages() {
+        if (currentPagePair > 0) {
+          currentPagePair--;
+          render();
+        }
+      }
+
+      function loadState() {
+        const saved = localStorage.getItem("simpleBookState");
+        if (saved) {
+          const data = JSON.parse(saved);
+          currentPagePair = data.currentPagePair || 0;
+        }
+      }
+
+      // Save state on unload
+      window.addEventListener("beforeunload", () => {
+        localStorage.setItem(
+          "simpleBookState",
+          JSON.stringify({
+            currentPagePair: currentPagePair,
+          }),
+        );
+      });
+    </script>
+  </body>
+</html>
