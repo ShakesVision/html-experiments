@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="ur" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>بیاض - Continuous Editor</title>
+    <style>
+      :root {
+        --bg-color: #f5f5f5;
+        --editor-bg: #ffffff;
+        --border-color: #ddd;
+        --text-color: #333;
+        --accent-color: #3b82f6;
+        --sidebar-width: 300px;
+      }
+
+      body {
+        margin: 0;
+        padding: 20px;
+        background: var(--bg-color);
+        font-family:
+          "Payami Nastaleeq", "Noto Nastaliq Urdu", "Amiri",
+          "Jameel Noori Nastaleeq", serif;
+        font-size: 18px;
+        direction: rtl;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Header */
+      .header {
+        background: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid var(--border-color);
+      }
+
+      .title {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--text-color);
+      }
+
+      /* Toolbar */
+      .toolbar {
+        background: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        border: 1px solid var(--border-color);
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border: 1px solid var(--border-color);
+        background: white;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      .btn:hover {
+        background: #f0f0f0;
+      }
+
+      .btn.active {
+        background: var(--accent-color);
+        color: white;
+        border-color: var(--accent-color);
+      }
+
+      .spacer {
+        flex: 1;
+      }
+
+      /* Main Layout */
+      .main-container {
+        display: flex;
+        flex: 1;
+        gap: 20px;
+        height: calc(100vh - 200px);
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: var(--sidebar-width);
+        background: white;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        overflow-y: auto;
+      }
+
+      .sidebar-section {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+      }
+
+      .sidebar-section h3 {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+        color: #666;
+      }
+
+      .sidebar-input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: inherit;
+      }
+
+      /* Editor Area */
+      .editor-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+      }
+
+      .editor-header {
+        padding: 10px 15px;
+        background: #f8f9fa;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 14px;
+        color: #666;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .editor-content {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        outline: none;
+        text-align: justify;
+        line-height: 1.8;
+      }
+
+      .editor-content[contenteditable="true"] {
+        cursor: text;
+      }
+
+      /* Page Break Styling */
+      .page-break {
+        border-top: 2px dashed #999;
+        border-bottom: 2px dashed #999;
+        margin: 30px 0;
+        padding: 15px 0;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        background: #f8f9fa;
+        position: relative;
+      }
+
+      .page-break::before {
+        content: "صفحہ کی حد";
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      /* Preview Mode Styles */
+      .preview-mode {
+        display: none;
+      }
+
+      .preview-page {
+        width: 595px;
+        height: 842px;
+        background: white;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin: 20px auto;
+        padding: 40px;
+        box-sizing: border-box;
+        position: relative;
+        page-break-after: always;
+      }
+
+      .preview-header {
+        position: absolute;
+        top: 20px;
+        left: 40px;
+        right: 40px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        color: #666;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+      }
+
+      .preview-footer {
+        position: absolute;
+        bottom: 20px;
+        left: 40px;
+        right: 40px;
+        text-align: center;
+        font-size: 12px;
+        color: #999;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+      }
+
+      .preview-content {
+        margin-top: 40px;
+        margin-bottom: 40px;
+        line-height: 1.8;
+      }
+
+      /* Responsive */
+      @media (max-width: 1000px) {
+        .main-container {
+          flex-direction: column;
+        }
+        .sidebar {
+          width: 100%;
+          order: 2;
+        }
+        .editor-container {
+          order: 1;
+        }
+      }
+
+      @media print {
+        body {
+          background: white;
+          padding: 0;
+        }
+        .header,
+        .toolbar,
+        .sidebar,
+        .editor-header {
+          display: none !important;
+        }
+        .editor-container,
+        .preview-mode {
+          border: none;
+          box-shadow: none;
+          background: white;
+        }
+        .editor-content {
+          padding: 0;
+          overflow: visible;
+        }
+        .page-break {
+          page-break-after: always;
+          border: none;
+          background: transparent;
+        }
+        .preview-page {
+          box-shadow: none;
+          border: none;
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          height: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div class="title">بیاض - Continuous Editor</div>
+      <div style="font-size: 14px; color: #666">
+        دستی صفحہ شکست کے ساتھ جاری ایڈیٹر
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <button class="btn" onclick="toggleMode()">پری ویو/ایڈیٹر</button>
+      <button class="btn" onclick="insertPageBreak()">
+        صفحہ کی حد شامل کریں
+      </button>
+      <button class="btn" onclick="insertHeading()">سرخی شامل کریں</button>
+      <button class="btn" onclick="insertBold()">Bold</button>
+      <button class="btn" onclick="insertItalic()">Italic</button>
+      <div class="spacer"></div>
+      <button class="btn" onclick="saveContent()">محفوظ کریں</button>
+      <button class="btn" onclick="printContent()">پرنٹ کریں</button>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-section">
+          <h3>صفحہ کی ترتیبات</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <label
+              >صفحہ کا سائز:
+              <select
+                id="pageSize"
+                class="sidebar-input"
+                onchange="updatePreview()"
+              >
+                <option value="A4">A4 (842px)</option>
+                <option value="A5">A5 (600px)</option>
+              </select>
+            </label>
+            <label
+              >چوڑائی:
+              <input
+                type="number"
+                id="pageWidth"
+                class="sidebar-input"
+                value="595"
+                onchange="updatePreview()"
+              />
+            </label>
+            <label
+              >اونچائی:
+              <input
+                type="number"
+                id="pageHeight"
+                class="sidebar-input"
+                value="842"
+                onchange="updatePreview()"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3>سرخیاں</h3>
+          <div id="chapters-list" style="font-size: 14px; color: #666">
+            <!-- Chapters will be listed here -->
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3>صفحہ کی معلومات</h3>
+          <div id="page-info" style="font-size: 14px; color: #666">
+            کل صفحات: <span id="total-pages">0</span><br />
+            موجودہ صفحہ: <span id="current-page">1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editor Container -->
+      <div class="editor-container">
+        <div class="editor-header">
+          <span>جاری ایڈیٹر - صفحہ کی حدود دستی طور پر شامل کی جاتی ہیں</span>
+          <span id="content-stats">الفاظ: 0 | حروف: 0</span>
+        </div>
+        <div id="editor-content" class="editor-content" contenteditable="true">
+          <h1>یہاں اپنا ناول لکھنا شروع کریں</h1>
+          <p>یہ ایک جاری ایڈیٹر ہے۔ جب آپ چاہیں صفحہ کی حد شامل کر سکتے ہیں۔</p>
+          <div class="page-break" contenteditable="false">صفحہ کی حد</div>
+          <p>نیا صفحہ یہاں سے شروع ہوتا ہے۔</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Mode -->
+    <div id="preview-mode" class="preview-mode">
+      <!-- Preview pages will be generated here -->
+    </div>
+
+    <script>
+      // State
+      let currentMode = "editor"; // 'editor' or 'preview'
+      let content =
+        localStorage.getItem("continuousContent") ||
+        '<h1>یہاں اپنا ناول لکھنا شروع کریں</h1><p>یہ ایک جاری ایڈیٹر ہے۔ جب آپ چاہیں صفحہ کی حد شامل کر سکتے ہیں۔</p><div class="page-break" contenteditable="false">صفحہ کی حد</div><p>نیا صفحہ یہاں سے شروع ہوتا ہے۔</p>';
+
+      // Elements
+      const editorContent = document.getElementById("editor-content");
+      const previewMode = document.getElementById("preview-mode");
+      const totalPagesSpan = document.getElementById("total-pages");
+      const currentPageSpan = document.getElementById("current-page");
+      const contentStats = document.getElementById("content-stats");
+      const chaptersList = document.getElementById("chapters-list");
+
+      // Initialize
+      loadContent();
+      updateStats();
+      updateChapters();
+
+      // Event Listeners
+      editorContent.addEventListener("input", () => {
+        updateStats();
+        updateChapters();
+        if (currentMode === "preview") {
+          updatePreview();
+        }
+      });
+
+      // Core Functions
+      function toggleMode() {
+        currentMode = currentMode === "editor" ? "preview" : "editor";
+
+        if (currentMode === "editor") {
+          document.querySelector(".editor-container").style.display = "flex";
+          previewMode.style.display = "none";
+          document.querySelector('.btn[onclick="toggleMode()"]').textContent =
+            "پری ویو";
+        } else {
+          document.querySelector(".editor-container").style.display = "none";
+          previewMode.style.display = "block";
+          document.querySelector('.btn[onclick="toggleMode()"]').textContent =
+            "ایڈیٹر";
+          updatePreview();
+        }
+      }
+
+      function insertPageBreak() {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const breakDiv = document.createElement("div");
+          breakDiv.className = "page-break";
+          breakDiv.contentEditable = "false";
+          breakDiv.innerHTML = "صفحہ کی حد";
+          range.insertNode(breakDiv);
+          range.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        } else {
+          const breakDiv = document.createElement("div");
+          breakDiv.className = "page-break";
+          breakDiv.contentEditable = "false";
+          breakDiv.innerHTML = "صفحہ کی حد";
+          editorContent.appendChild(breakDiv);
+        }
+        updateStats();
+        updateChapters();
+      }
+
+      function insertHeading() {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const h1 = document.createElement("h1");
+          h1.textContent = "نئی سرخی";
+          range.insertNode(h1);
+          range.selectNodeContents(h1);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+        updateStats();
+        updateChapters();
+      }
+
+      function insertBold() {
+        document.execCommand("bold", false, null);
+        updateStats();
+      }
+
+      function insertItalic() {
+        document.execCommand("italic", false, null);
+        updateStats();
+      }
+
+      function saveContent() {
+        const content = editorContent.innerHTML;
+        localStorage.setItem("continuousContent", content);
+        alert("مواد محفوظ ہو گیا!");
+      }
+
+      function loadContent() {
+        editorContent.innerHTML = content;
+      }
+
+      function updateStats() {
+        const text = editorContent.innerText;
+        const words = text.split(/\s+/).filter((w) => w.length > 0).length;
+        const chars = text.length;
+        contentStats.textContent = `الفاظ: ${words} | حروف: ${chars}`;
+      }
+
+      function updateChapters() {
+        const h1Elements = editorContent.querySelectorAll("h1");
+        chaptersList.innerHTML = "";
+
+        if (h1Elements.length === 0) {
+          chaptersList.innerHTML = "<p>کوئی سرخی نہیں ملی</p>";
+          return;
+        }
+
+        h1Elements.forEach((h1, index) => {
+          const div = document.createElement("div");
+          div.style.padding = "5px 0";
+          div.style.borderBottom = "1px solid #eee";
+          div.innerHTML = `<strong>باب ${index + 1}:</strong> ${h1.textContent}`;
+          chaptersList.appendChild(div);
+        });
+      }
+
+      function updatePreview() {
+        const content = editorContent.innerHTML;
+        const sections = content.split('<div class="page-break"');
+
+        previewMode.innerHTML = "";
+        let pageNumber = 1;
+
+        sections.forEach((section, index) => {
+          if (index === 0) {
+            // First section
+            const page = createPreviewPage(section, pageNumber++);
+            previewMode.appendChild(page);
+          } else {
+            // Add the page break part back
+            const pageBreakContent =
+              '<div class="page-break"' + section.split(">").slice(1).join(">");
+            const page = createPreviewPage(pageBreakContent, pageNumber++);
+            previewMode.appendChild(page);
+          }
+        });
+
+        totalPagesSpan.textContent = pageNumber - 1;
+        currentPageSpan.textContent = "1";
+      }
+
+      function createPreviewPage(content, pageNumber) {
+        const page = document.createElement("div");
+        page.className = "preview-page";
+        page.style.width = document.getElementById("pageWidth").value + "px";
+        page.style.height = document.getElementById("pageHeight").value + "px";
+
+        const header = document.createElement("div");
+        header.className = "preview-header";
+        header.innerHTML = `
+                <span>باب: ${getChapterTitle(pageNumber)}</span>
+                <span>میرا ناول</span>
+            `;
+
+        const footer = document.createElement("div");
+        footer.className = "preview-footer";
+        footer.innerHTML = `صفحہ ${pageNumber}`;
+
+        const previewContent = document.createElement("div");
+        previewContent.className = "preview-content";
+        previewContent.innerHTML = content;
+
+        page.appendChild(header);
+        page.appendChild(previewContent);
+        page.appendChild(footer);
+
+        return page;
+      }
+
+      function getChapterTitle(pageNumber) {
+        const h1Elements = editorContent.querySelectorAll("h1");
+        if (h1Elements.length === 0) return "---";
+
+        // Find the most recent chapter before this page
+        const pageBreaks = editorContent.querySelectorAll(".page-break");
+        let chapterIndex = 0;
+
+        // Simple logic: just return the first chapter for now
+        // In a full implementation, we'd track which chapter each page belongs to
+        return h1Elements[0].textContent;
+      }
+
+      function printContent() {
+        window.print();
+      }
+
+      // Auto-save
+      setInterval(() => {
+        const content = editorContent.innerHTML;
+        localStorage.setItem("continuousContent", content);
+      }, 5000);
+    </script>
+  </body>
+</html>
