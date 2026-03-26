@@ -171,8 +171,11 @@
         });
 
       function applyFont() {
-        const area = document.getElementById("print-area");
-        area.style.fontFamily = currentFont;
+        const preview = document.getElementById("print-area");
+        const input = document.getElementById("inputText");
+
+        preview.style.fontFamily = currentFont;
+        input.style.fontFamily = currentFont;
       }
 
       // LOAD CUSTOM FONT
@@ -223,34 +226,82 @@
       }
 
       function generateGhazal() {
-        const text = document.getElementById("inputText").value.trim();
-        const lines = text.split("\n").filter((l) => l.trim() !== "");
-
+        const input = document.getElementById("inputText").value;
         const container = document.getElementById("print-area");
 
-        // Clear previous
         container.innerHTML = "";
 
-        // Create wrapper
-        const wrapper = document.createElement("div");
+        const lines = input.split("\n");
 
-        if (currentPattern) {
-          wrapper.className = currentPattern;
-        } else {
-          const pattern = document.getElementById("customPattern").value;
-          wrapper.setAttribute("data-pattern", pattern);
+        let inPoetry = false;
+        let poetryLines = [];
+        let poetryWrapper = null;
+
+        function renderPoetryBlock() {
+          if (poetryLines.length === 0) return;
+
+          const wrapper = document.createElement("div");
+
+          if (currentPattern) {
+            wrapper.className = currentPattern;
+          } else {
+            const pattern = document.getElementById("customPattern").value;
+            wrapper.setAttribute("data-pattern", pattern);
+          }
+
+          poetryLines.forEach((line) => {
+            const div = document.createElement("div");
+            div.textContent = line;
+            wrapper.appendChild(div);
+          });
+
+          container.appendChild(wrapper);
+
+          poetryLines = [];
         }
 
-        // Add lines
         lines.forEach((line) => {
-          const div = document.createElement("div");
-          div.textContent = line;
-          wrapper.appendChild(div);
+          line = line.trim();
+
+          // START poetry
+          if (line.toLowerCase() === "[sj]") {
+            inPoetry = true;
+            poetryWrapper = [];
+            return;
+          }
+
+          // END poetry
+          if (line.toLowerCase() === "[/sj]") {
+            inPoetry = false;
+            renderPoetryBlock();
+            return;
+          }
+
+          if (inPoetry) {
+            if (line) poetryLines.push(line);
+            return;
+          }
+
+          // HEADINGS
+          if (line.startsWith("## ")) {
+            const el = document.createElement("h2");
+            el.textContent = line.replace("## ", "");
+            el.className = "text-2xl font-bold my-3";
+            container.appendChild(el);
+          } else if (line.startsWith("# ")) {
+            const el = document.createElement("h1");
+            el.textContent = line.replace("# ", "");
+            el.className = "text-3xl font-bold my-4";
+            container.appendChild(el);
+          } else if (line !== "") {
+            const el = document.createElement("p");
+            el.textContent = line;
+            el.className = "my-2";
+            container.appendChild(el);
+          }
         });
 
-        container.appendChild(wrapper);
-
-        // Apply Shakeeb Justify
+        // Apply justification after render
         ShakeebJustify.apply();
       }
 
@@ -277,6 +328,7 @@
       }
 
       // Initial render
+      applyFont();
       generateGhazal();
     </script>
   </body>
