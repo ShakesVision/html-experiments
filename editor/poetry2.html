@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="ur">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Poetry Formatter</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- shakeeb-justify -->
+    <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@1.0.9/dist/shakeeb-justify.min.js"></script>
+
+    <!-- html2canvas for image download -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  </head>
+
+  <body class="bg-gray-100 p-6">
+    <!-- CONTROLS -->
+    <div class="max-w-5xl mx-auto space-y-4">
+      <!-- TEXT INPUT -->
+      <textarea
+        id="inputText"
+        rows="6"
+        class="w-full p-4 rounded-lg border text-lg text-right"
+        placeholder="ہر مصرع ایک لائن میں لکھیں..."
+      ></textarea>
+
+      <!-- PATTERN BUTTONS -->
+      <div class="flex flex-wrap gap-2 justify-center">
+        <button onclick="setPattern('sher')" class="btn">Sher</button>
+        <button onclick="setPattern('sher2')" class="btn">Sher 2-col</button>
+        <button onclick="setPattern('mukhammas')" class="btn">Mukhammas</button>
+        <button onclick="setPattern('mukhammas-3-2')" class="btn">3+2</button>
+        <button onclick="setPattern('mukhammas-mixed')" class="btn">
+          Mixed 4+1
+        </button>
+        <button onclick="setPattern('musaddas')" class="btn">Musaddas</button>
+        <button onclick="setPattern('musaddas-6')" class="btn">6 Lines</button>
+        <button onclick="setPattern('musaddas-mixed')" class="btn">
+          Mixed 4+2
+        </button>
+      </div>
+
+      <!-- CUSTOM PATTERN -->
+      <div class="flex gap-2 justify-center">
+        <input
+          id="customPattern"
+          placeholder="Custom pattern (e.g. 4 or 3+2)"
+          class="border p-2 rounded w-48"
+        />
+        <button
+          onclick="applyCustomPattern()"
+          class="btn bg-purple-600 text-white"
+        >
+          Apply Pattern
+        </button>
+      </div>
+
+      <!-- STYLE CONTROLS -->
+      <div class="flex flex-wrap gap-3 justify-center">
+        <input
+          id="bgInput"
+          placeholder="Background (e.g. #000 or gradient)"
+          class="border p-2 rounded w-64"
+        />
+
+        <input
+          id="colorInput"
+          placeholder="Text Color"
+          class="border p-2 rounded w-40"
+        />
+
+        <button onclick="applyStyles()" class="btn bg-indigo-600 text-white">
+          Apply Style
+        </button>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="flex gap-3 justify-center">
+        <button onclick="downloadImage()" class="btn bg-green-600 text-white">
+          Download Image
+        </button>
+
+        <button onclick="window.print()" class="btn bg-gray-700 text-white">
+          Print
+        </button>
+      </div>
+    </div>
+    <!-- FONT CONTROLS -->
+    <div class="flex flex-wrap gap-3 justify-center">
+      <select id="fontSelector" class="border p-2 rounded">
+        <option value="Mehr">Mehr Nastaliq</option>
+        <option value="Payami">Payami Nastaleeq</option>
+        <option value="Emaad">Emaad Nastaleeq</option>
+      </select>
+
+      <input
+        id="fontUrlInput"
+        placeholder="Paste .woff/.ttf font URL"
+        class="border p-2 rounded w-72"
+      />
+
+      <button onclick="loadCustomFont()" class="btn bg-pink-600 text-white">
+        Load Font
+      </button>
+    </div>
+
+    <!-- RESULT -->
+    <div class="flex justify-center mt-8">
+      <div
+        id="print-area"
+        class="bg-white rounded-xl shadow-lg px-16 py-12 text-center text-xl leading-loose min-h-[200px]"
+      ></div>
+    </div>
+
+    <!-- STYLES -->
+    <style>
+      .btn {
+        padding: 0.5rem 1rem;
+        background-color: #2563eb;
+        color: white;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        border: none;
+        transition: 0.2s;
+      }
+
+      .btn:hover {
+        background-color: #1d4ed8;
+      }
+      @font-face {
+        font-family: "Mehr";
+        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/MehrNastaleeq@master/MehrNastaliqWeb.woff")
+          format("woff");
+      }
+
+      @font-face {
+        font-family: "Payami";
+        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/PayamiTest@master/Payami%20Nastaleeq_Fixed.woff2")
+          format("woff2");
+      }
+
+      @font-face {
+        font-family: "Emaad";
+        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/EmaadNastaleeq@master/urduemadnastaleeqregular1.woff")
+          format("woff");
+      }
+
+      @font-face {
+        font-family: "Nafees";
+        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/SaadNastaleeq@master/NafeesNastaleeqv102.woff")
+          format("woff");
+      }
+
+      /* Default font */
+      #print-area {
+        font-family: "Mehr", serif;
+      }
+    </style>
+
+    <!-- SCRIPT -->
+    <script>
+      let currentFont = "Mehr";
+
+      // FONT SWITCHER
+      document
+        .getElementById("fontSelector")
+        .addEventListener("change", function () {
+          currentFont = this.value;
+          applyFont();
+        });
+
+      function applyFont() {
+        const area = document.getElementById("print-area");
+        area.style.fontFamily = currentFont;
+      }
+
+      // LOAD CUSTOM FONT
+      function loadCustomFont() {
+        const url = document.getElementById("fontUrlInput").value.trim();
+
+        if (!url) return alert("Enter font URL");
+
+        const fontName = "CustomFont_" + Date.now();
+
+        const style = document.createElement("style");
+        style.innerHTML = `
+        @font-face {
+            font-family: '${fontName}';
+            src: url('${url}');
+        }
+    `;
+
+        document.head.appendChild(style);
+
+        // Add to dropdown
+        const option = document.createElement("option");
+        option.value = fontName;
+        option.textContent = "Custom Font";
+        document.getElementById("fontSelector").appendChild(option);
+
+        // Auto select it
+        document.getElementById("fontSelector").value = fontName;
+        currentFont = fontName;
+
+        applyFont();
+      }
+      let currentPattern = "sher";
+
+      // Auto update
+      document
+        .getElementById("inputText")
+        .addEventListener("input", generateGhazal);
+
+      function setPattern(pattern) {
+        currentPattern = pattern;
+        generateGhazal();
+      }
+
+      function applyCustomPattern() {
+        currentPattern = null;
+        generateGhazal();
+      }
+
+      function generateGhazal() {
+        const text = document.getElementById("inputText").value.trim();
+        const lines = text.split("\n").filter((l) => l.trim() !== "");
+
+        const container = document.getElementById("print-area");
+
+        // Clear previous
+        container.innerHTML = "";
+
+        // Create wrapper
+        const wrapper = document.createElement("div");
+
+        if (currentPattern) {
+          wrapper.className = currentPattern;
+        } else {
+          const pattern = document.getElementById("customPattern").value;
+          wrapper.setAttribute("data-pattern", pattern);
+        }
+
+        // Add lines
+        lines.forEach((line) => {
+          const div = document.createElement("div");
+          div.textContent = line;
+          wrapper.appendChild(div);
+        });
+
+        container.appendChild(wrapper);
+
+        // Apply Shakeeb Justify
+        ShakeebJustify.apply();
+      }
+
+      function applyStyles() {
+        const bg = document.getElementById("bgInput").value;
+        const color = document.getElementById("colorInput").value;
+
+        const area = document.getElementById("print-area");
+
+        if (bg) area.style.background = bg;
+        if (color) area.style.color = color;
+      }
+
+      // DOWNLOAD IMAGE
+      function downloadImage() {
+        const area = document.getElementById("print-area");
+
+        html2canvas(area).then((canvas) => {
+          const link = document.createElement("a");
+          link.download = "poetry.png";
+          link.href = canvas.toDataURL();
+          link.click();
+        });
+      }
+
+      // Initial render
+      generateGhazal();
+    </script>
+  </body>
+</html>

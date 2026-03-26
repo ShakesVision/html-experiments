@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Docs Clone</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Quill -->
+    <link
+      href="https://cdn.quilljs.com/1.3.6/quill.snow.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+    <!-- Icons (FIXED) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+
+    <!-- Urdu -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-size: 14px;
+      }
+
+      #editor {
+        height: calc(100vh - 50px);
+        background: white;
+      }
+
+      .ql-toolbar {
+        padding: 4px !important;
+      }
+
+      [dir="rtl"] {
+        direction: rtl;
+        text-align: right;
+      }
+
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        #editor,
+        #editor * {
+          visibility: visible;
+        }
+        #editor {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-100">
+    <!-- Custom Quill Toolbar (integrated into editor) -->
+    <div id="toolbar" class="ql-toolbar ql-snow">
+      <!-- Text formatting -->
+      <button class="ql-bold" title="Bold"></button>
+      <button class="ql-italic" title="Italic"></button>
+      <button class="ql-underline" title="Underline"></button>
+      <button class="ql-strike" title="Strikethrough"></button>
+
+      <span class="ql-formats"></span>
+
+      <!-- Heading -->
+      <select class="ql-header" title="Heading">
+        <option value="1">Heading 1</option>
+        <option value="2">Heading 2</option>
+        <option value="3">Heading 3</option>
+        <option selected>Normal</option>
+      </select>
+
+      <span class="ql-formats"></span>
+
+      <!-- Font -->
+      <select class="ql-font" title="Font">
+        <option selected></option>
+        <option value="serif">Serif</option>
+        <option value="monospace">Monospace</option>
+        <option value="urdu">Urdu</option>
+      </select>
+
+      <!-- Font size -->
+      <select class="ql-size" title="Size">
+        <option value="small"></option>
+        <option selected></option>
+        <option value="large"></option>
+        <option value="huge"></option>
+      </select>
+
+      <span class="ql-formats"></span>
+
+      <!-- Color & background -->
+      <select class="ql-color" title="Text Color"></select>
+      <select class="ql-background" title="Background Color"></select>
+
+      <span class="ql-formats"></span>
+
+      <!-- Alignment -->
+      <select class="ql-align" title="Alignment">
+        <option selected></option>
+        <option value="center">Center</option>
+        <option value="right">Right</option>
+        <option value="justify">Justify</option>
+      </select>
+
+      <!-- RTL (per paragraph!) -->
+      <button class="ql-direction" value="rtl" title="Right to Left"></button>
+
+      <span class="ql-formats"></span>
+
+      <!-- Lists -->
+      <button class="ql-list" value="ordered" title="Numbered List"></button>
+      <button class="ql-list" value="bullet" title="Bullet List"></button>
+
+      <!-- Indent -->
+      <button class="ql-indent" value="-1" title="Decrease Indent"></button>
+      <button class="ql-indent" value="+1" title="Increase Indent"></button>
+
+      <span class="ql-formats"></span>
+
+      <!-- Code -->
+      <button class="ql-code-block" title="Code Block"></button>
+      <button class="ql-blockquote" title="Blockquote"></button>
+
+      <span class="ql-formats"></span>
+
+      <!-- Links & media -->
+      <button class="ql-link" title="Insert Link"></button>
+      <button class="ql-image" title="Insert Image"></button>
+      <button class="ql-video" title="Insert Video"></button>
+
+      <span class="ql-formats"></span>
+
+      <!-- Clear formatting -->
+      <button class="ql-clean" title="Clear Formatting"></button>
+
+      <span class="ql-formats"></span>
+
+      <!-- Custom buttons -->
+      <button
+        onclick="saveDoc()"
+        title="Save"
+        style="
+          background: #f0f0f0;
+          border: 1px solid #ccc;
+          padding: 4px 8px;
+          border-radius: 2px;
+          cursor: pointer;
+        "
+      >
+        <span
+          class="material-symbols-outlined"
+          style="font-size: 18px; vertical-align: middle"
+          >save</span
+        >
+      </button>
+      <button
+        onclick="window.print()"
+        title="Print"
+        style="
+          background: #f0f0f0;
+          border: 1px solid #ccc;
+          padding: 4px 8px;
+          border-radius: 2px;
+          cursor: pointer;
+        "
+      >
+        <span
+          class="material-symbols-outlined"
+          style="font-size: 18px; vertical-align: middle"
+          >print</span
+        >
+      </button>
+    </div>
+
+    <!-- Editor -->
+    <div id="editor"></div>
+
+    <script>
+      // Register custom font
+      const Font = Quill.import("formats/font");
+      Font.whitelist = ["serif", "monospace", "urdu"];
+      Quill.register(Font, true);
+
+      // Register direction format
+      const Direction = Quill.import("formats/direction");
+      Quill.register(Direction, true);
+
+      // Register alignment format
+      const Align = Quill.import("formats/align");
+      Align.whitelist = ["", "center", "right", "justify"];
+      Quill.register(Align, true);
+
+      // Initialize Quill with custom toolbar
+      const quill = new Quill("#editor", {
+        theme: "snow",
+        modules: {
+          toolbar: "#toolbar",
+        },
+      });
+
+      // Custom CSS for fonts
+      const style = document.createElement("style");
+      style.innerHTML = `
+        .ql-font-urdu {
+          font-family: 'Noto Nastaliq Urdu', serif;
+        }
+        .ql-font-serif {
+          font-family: Georgia, serif;
+        }
+        .ql-font-monospace {
+          font-family: 'Courier New', monospace;
+        }
+        
+        /* RTL styling */
+        [dir="rtl"] {
+          direction: rtl;
+          text-align: right;
+        }
+        
+        /* Toolbar styling */
+        #toolbar {
+          padding: 8px !important;
+          border-bottom: 1px solid #ddd !important;
+          flex-wrap: wrap;
+          gap: 4px;
+        }
+        
+        #toolbar .ql-formats {
+          margin-right: 8px;
+        }
+        
+        #toolbar button, #toolbar select {
+          margin-right: 4px !important;
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Save to localStorage
+      function saveDoc() {
+        localStorage.setItem("doc", quill.root.innerHTML);
+        alert("✓ Document saved!");
+      }
+
+      // Load from localStorage
+      const saved = localStorage.getItem("doc");
+      if (saved) {
+        quill.root.innerHTML = saved;
+      }
+
+      // Auto-save every 30 seconds
+      setInterval(() => {
+        localStorage.setItem("doc", quill.root.innerHTML);
+      }, 30000);
+    </script>
+  </body>
+</html>
