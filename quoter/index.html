@@ -11,6 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap"
       rel="stylesheet"
     />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
       :root {
         --bg-page: #f5f2eb;
@@ -193,6 +194,14 @@
 
       .public-note-content {
         line-height: 1.65;
+      }
+
+      #previewQuote p {
+        margin: 0 0 0.7em 0;
+      }
+
+      #previewQuote p:last-child {
+        margin-bottom: 0;
       }
 
       .public-note-content a {
@@ -727,6 +736,15 @@
         return `https://${raw}`;
       }
 
+      function renderMarkdownOrText(input) {
+        const text = input || "";
+        if (!text) return "";
+        if (window.marked && typeof window.marked.parse === "function") {
+          return window.marked.parse(text, { gfm: true, breaks: true });
+        }
+        return escapeHtml(text).replace(/\n/g, "<br>");
+      }
+
       function execNoteCommand(command, value = null) {
         els.noteEditor.focus();
         document.execCommand(command, false, value);
@@ -903,10 +921,10 @@
         }
 
         if (hasQuote) {
-          els.previewQuote.textContent = quote;
+          els.previewQuote.innerHTML = renderMarkdownOrText(quote);
           els.previewQuote.classList.remove("hidden");
         } else {
-          els.previewQuote.textContent = "";
+          els.previewQuote.innerHTML = "";
           els.previewQuote.classList.add("hidden");
         }
 
