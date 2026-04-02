@@ -1,0 +1,558 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quoter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-page: #f5f2eb;
+        --bg-panel: #fcfaf6;
+        --ink-main: #1f2937;
+        --ink-soft: #6b7280;
+        --line: #d6d3ce;
+        --accent: #8b5e3c;
+        --quote-bg: #fffdf8;
+        --quote-line: #d8cbbd;
+        --quote-mark: #b69478;
+        --font-sans: "Segoe UI", "Inter", Roboto, Arial, sans-serif;
+        --font-serif: Georgia, Cambria, "Times New Roman", serif;
+        --font-urdu:
+          "Payami Nastaleeq", "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq",
+          serif;
+        --font-urdu-alt: "Noto Nastaliq Urdu", "Noto Naskh Arabic", serif;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background: radial-gradient(
+          circle at top left,
+          #fff9ef 0%,
+          var(--bg-page) 56%,
+          #efe7da 100%
+        );
+        color: var(--ink-main);
+      }
+
+      .ur {
+        font-family: var(--font-urdu);
+        line-height: 1.95;
+      }
+
+      .en {
+        font-family: var(--font-serif);
+        line-height: 1.6;
+      }
+
+      .ur-input {
+        font-family: var(--font-urdu);
+        line-height: 1.9;
+      }
+
+      .quote-card {
+        border: 1px solid var(--quote-line);
+        background: linear-gradient(
+          165deg,
+          #fffefc 0%,
+          var(--quote-bg) 70%,
+          #faf4ec 100%
+        );
+        box-shadow: 0 18px 36px -30px rgba(0, 0, 0, 0.5);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .quote-card::before,
+      .quote-card::after {
+        position: absolute;
+        color: var(--quote-mark);
+        opacity: 0.3;
+        font-family: var(--font-serif);
+        line-height: 1;
+        pointer-events: none;
+        transition: all 140ms ease;
+      }
+
+      .quote-card::before {
+        content: "\201C";
+        top: 0.45rem;
+        left: 0.9rem;
+        font-size: 4.3rem;
+      }
+
+      .quote-card::after {
+        content: "\201D";
+        bottom: -0.65rem;
+        right: 0.9rem;
+        font-size: 4.3rem;
+      }
+
+      .quote-card.ur-quotes::before {
+        content: "\201D";
+        top: 0.45rem;
+        right: 0.9rem;
+        left: auto;
+      }
+
+      .quote-card.ur-quotes::after {
+        content: "\201C";
+        bottom: -0.65rem;
+        left: 0.9rem;
+        right: auto;
+      }
+
+      .quote-separator {
+        height: 1px;
+        background: linear-gradient(
+          to right,
+          transparent,
+          #b48b6b,
+          transparent
+        );
+      }
+
+      .present .workspace {
+        display: block;
+        padding: 0;
+      }
+
+      .present #controlsPanel {
+        display: none;
+      }
+
+      .present #previewPanel {
+        width: 100%;
+        max-width: none;
+        min-height: 100vh;
+        border: 0;
+        border-radius: 0;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+      }
+
+      .present #previewCard {
+        min-height: 100vh;
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+        box-shadow: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem 1rem;
+      }
+
+      .present #previewInner {
+        width: min(1020px, 92vw);
+      }
+
+      #presentExitBtn {
+        display: none;
+      }
+
+      .present #presentExitBtn {
+        display: inline-flex;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <button
+      id="presentExitBtn"
+      type="button"
+      class="fixed right-4 top-4 z-50 rounded-lg border border-gray-300 bg-white/95 px-3 py-2 text-xs font-medium text-gray-700 shadow backdrop-blur hover:bg-white"
+    >
+      Exit Present
+    </button>
+
+    <main id="app" class="workspace min-h-screen p-3 md:p-4">
+      <div
+        class="mx-auto grid max-w-[1500px] gap-3 md:gap-4 lg:grid-cols-[minmax(360px,0.95fr)_minmax(560px,1.4fr)]"
+      >
+        <section
+          id="controlsPanel"
+          class="rounded-xl border border-[var(--line)] bg-[var(--bg-panel)] p-3 md:p-4 shadow-sm"
+        >
+          <div class="mb-3 flex items-center justify-between gap-2">
+            <h1 class="text-base font-semibold tracking-tight">Quoter</h1>
+            <button
+              id="presentBtn"
+              type="button"
+              class="rounded-md border border-[var(--line)] bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+            >
+              Present
+            </button>
+          </div>
+
+          <div class="space-y-2.5">
+            <div class="grid grid-cols-2 gap-2">
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Language</span
+                >
+                <select
+                  id="languageSelect"
+                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs outline-none focus:border-[var(--accent)]"
+                >
+                  <option value="ur" selected>Urdu</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Quote Source</span
+                >
+                <span
+                  class="inline-flex w-full items-center justify-between rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs"
+                >
+                  <span class="text-gray-700">Selected Text</span>
+                  <input
+                    id="selectionToggle"
+                    type="checkbox"
+                    class="h-4 w-4 accent-[var(--accent)]"
+                    checked
+                  />
+                </span>
+              </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Quote Font</span
+                >
+                <select
+                  id="fontSelect"
+                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs outline-none focus:border-[var(--accent)]"
+                >
+                  <option value="auto" selected>Auto (By Language)</option>
+                  <option value="urdu-main">Urdu Payami</option>
+                  <option value="urdu-alt">Urdu Noto</option>
+                  <option value="english-serif">English Serif</option>
+                  <option value="english-sans">English Sans</option>
+                </select>
+              </label>
+
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Font Size</span
+                >
+                <input
+                  id="fontSizeInput"
+                  type="range"
+                  min="18"
+                  max="56"
+                  step="1"
+                  value="30"
+                  class="w-full accent-[var(--accent)]"
+                />
+              </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Line Height</span
+                >
+                <input
+                  id="lineHeightInput"
+                  type="range"
+                  min="1.2"
+                  max="2.4"
+                  step="0.05"
+                  value="1.95"
+                  class="w-full accent-[var(--accent)]"
+                />
+              </label>
+
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Load .txt</span
+                >
+                <input
+                  id="fileInput"
+                  type="file"
+                  accept=".txt,text/plain"
+                  class="block w-full text-[11px] text-gray-700 file:mr-2 file:rounded-md file:border file:border-[var(--line)] file:bg-white file:px-2 file:py-1 file:text-[11px] file:font-medium file:text-gray-700 hover:file:bg-gray-50"
+                />
+              </label>
+            </div>
+
+            <div class="grid grid-cols-1 gap-2">
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Heading (optional)</span
+                >
+                <input
+                  id="headingInput"
+                  type="text"
+                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs outline-none focus:border-[var(--accent)]"
+                />
+              </label>
+
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Reference (optional)</span
+                >
+                <input
+                  id="referenceInput"
+                  type="text"
+                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs outline-none focus:border-[var(--accent)]"
+                />
+              </label>
+
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Typing Fix Box (not shown in quote)</span
+                >
+                <input
+                  id="searchInput"
+                  type="text"
+                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs outline-none focus:border-[var(--accent)]"
+                />
+              </label>
+            </div>
+
+            <label class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700"
+                >Source Text (paste or upload)</span
+              >
+              <textarea
+                id="sourceText"
+                rows="9"
+                class="w-full resize-y rounded-lg border border-[var(--line)] bg-white p-2 text-xs leading-5 outline-none focus:border-[var(--accent)]"
+                placeholder="Paste text here. Select any part to show in quote when Selected Text is ON."
+              ></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section
+          id="previewPanel"
+          class="rounded-xl border border-[var(--line)] bg-[var(--bg-panel)] p-2 md:p-3"
+        >
+          <article
+            id="previewCard"
+            class="quote-card relative rounded-xl p-5 md:p-8 lg:p-10"
+          >
+            <div id="previewInner" class="mx-auto max-w-4xl">
+              <div id="previewHeadingWrap" class="hidden">
+                <h2
+                  id="previewHeading"
+                  class="text-base font-semibold text-[var(--accent)] md:text-lg"
+                ></h2>
+                <div class="quote-separator my-2.5 md:my-3"></div>
+              </div>
+
+              <blockquote
+                id="previewQuote"
+                class="hidden whitespace-pre-wrap break-words text-xl leading-[1.9] text-[var(--ink-main)] md:text-2xl"
+                style="text-align: justify"
+              ></blockquote>
+
+              <div
+                id="quoteRefSeparator"
+                class="quote-separator my-3 md:my-4 hidden"
+              ></div>
+              <p
+                id="previewReference"
+                class="hidden text-left text-xs text-[var(--ink-soft)] md:text-sm"
+              ></p>
+            </div>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const els = {
+        languageSelect: document.getElementById("languageSelect"),
+        selectionToggle: document.getElementById("selectionToggle"),
+        fontSelect: document.getElementById("fontSelect"),
+        fontSizeInput: document.getElementById("fontSizeInput"),
+        lineHeightInput: document.getElementById("lineHeightInput"),
+        headingInput: document.getElementById("headingInput"),
+        sourceText: document.getElementById("sourceText"),
+        referenceInput: document.getElementById("referenceInput"),
+        searchInput: document.getElementById("searchInput"),
+        fileInput: document.getElementById("fileInput"),
+        presentBtn: document.getElementById("presentBtn"),
+        presentExitBtn: document.getElementById("presentExitBtn"),
+        previewCard: document.getElementById("previewCard"),
+        previewInner: document.getElementById("previewInner"),
+        previewHeadingWrap: document.getElementById("previewHeadingWrap"),
+        previewHeading: document.getElementById("previewHeading"),
+        previewQuote: document.getElementById("previewQuote"),
+        quoteRefSeparator: document.getElementById("quoteRefSeparator"),
+        previewReference: document.getElementById("previewReference"),
+      };
+
+      const state = {
+        presentMode: false,
+      };
+
+      function safeTrim(value) {
+        return (value || "").trim();
+      }
+
+      function getSelectedText() {
+        const start = els.sourceText.selectionStart;
+        const end = els.sourceText.selectionEnd;
+        if (
+          typeof start !== "number" ||
+          typeof end !== "number" ||
+          start === end
+        ) {
+          return "";
+        }
+        return els.sourceText.value.slice(start, end);
+      }
+
+      function getQuoteText() {
+        if (els.selectionToggle.checked) {
+          return safeTrim(getSelectedText());
+        }
+        return safeTrim(els.sourceText.value);
+      }
+
+      function getQuoteFontFamily(isUrdu) {
+        const choice = els.fontSelect.value;
+        if (choice === "urdu-main") return "var(--font-urdu)";
+        if (choice === "urdu-alt") return "var(--font-urdu-alt)";
+        if (choice === "english-serif") return "var(--font-serif)";
+        if (choice === "english-sans") return "var(--font-sans)";
+        return isUrdu ? "var(--font-urdu)" : "var(--font-serif)";
+      }
+
+      function updateLanguageStyles() {
+        const lang = els.languageSelect.value;
+        const isUrdu = lang === "ur";
+
+        els.previewInner.classList.toggle("ur", isUrdu);
+        els.previewInner.classList.toggle("en", !isUrdu);
+        els.previewInner.dir = isUrdu ? "rtl" : "ltr";
+        els.previewInner.lang = lang;
+        els.previewCard.classList.toggle("ur-quotes", isUrdu);
+
+        els.sourceText.dir = isUrdu ? "rtl" : "ltr";
+        els.headingInput.dir = isUrdu ? "rtl" : "ltr";
+        els.referenceInput.dir = isUrdu ? "rtl" : "ltr";
+        els.searchInput.dir = "ltr";
+
+        els.sourceText.classList.toggle("ur-input", isUrdu);
+        els.headingInput.classList.toggle("ur-input", isUrdu);
+        els.referenceInput.classList.toggle("ur-input", isUrdu);
+
+        const fontFamily = getQuoteFontFamily(isUrdu);
+        els.previewQuote.style.fontFamily = fontFamily;
+        els.previewHeading.style.fontFamily = fontFamily;
+        els.previewReference.style.fontFamily = fontFamily;
+
+        const fontSize = Number(els.fontSizeInput.value) || 30;
+        const lineHeight =
+          Number(els.lineHeightInput.value) || (isUrdu ? 1.95 : 1.6);
+        els.previewQuote.style.fontSize = `${fontSize}px`;
+        els.previewQuote.style.lineHeight = String(lineHeight);
+      }
+
+      function renderPreview() {
+        updateLanguageStyles();
+
+        const heading = safeTrim(els.headingInput.value);
+        const quote = getQuoteText();
+        const reference = safeTrim(els.referenceInput.value);
+
+        const hasQuote = quote.length > 0;
+        const hasHeading = hasQuote && heading.length > 0;
+        const hasReference = hasQuote && reference.length > 0;
+
+        if (hasHeading) {
+          els.previewHeading.textContent = heading;
+          els.previewHeadingWrap.classList.remove("hidden");
+        } else {
+          els.previewHeading.textContent = "";
+          els.previewHeadingWrap.classList.add("hidden");
+        }
+
+        if (hasQuote) {
+          els.previewQuote.textContent = quote;
+          els.previewQuote.classList.remove("hidden");
+        } else {
+          els.previewQuote.textContent = "";
+          els.previewQuote.classList.add("hidden");
+        }
+
+        if (hasReference) {
+          els.previewReference.textContent = reference;
+          els.previewReference.classList.remove("hidden");
+          els.quoteRefSeparator.classList.remove("hidden");
+        } else {
+          els.previewReference.textContent = "";
+          els.previewReference.classList.add("hidden");
+          els.quoteRefSeparator.classList.add("hidden");
+        }
+      }
+
+      function setPresentMode(on) {
+        state.presentMode = on;
+        document.body.classList.toggle("present", on);
+        els.presentBtn.textContent = on ? "Exit" : "Present";
+      }
+
+      function handleFileUpload(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          els.sourceText.value = String(reader.result || "");
+          els.sourceText.setSelectionRange(0, 0);
+          renderPreview();
+        };
+        reader.readAsText(file, "utf-8");
+      }
+
+      function bindEvents() {
+        els.languageSelect.addEventListener("change", renderPreview);
+        els.selectionToggle.addEventListener("change", renderPreview);
+        els.fontSelect.addEventListener("change", renderPreview);
+        els.fontSizeInput.addEventListener("input", renderPreview);
+        els.lineHeightInput.addEventListener("input", renderPreview);
+        els.headingInput.addEventListener("input", renderPreview);
+        els.referenceInput.addEventListener("input", renderPreview);
+
+        els.sourceText.addEventListener("input", renderPreview);
+        els.sourceText.addEventListener("mouseup", renderPreview);
+        els.sourceText.addEventListener("keyup", renderPreview);
+        els.sourceText.addEventListener("select", renderPreview);
+
+        els.fileInput.addEventListener("change", handleFileUpload);
+
+        els.presentBtn.addEventListener("click", () =>
+          setPresentMode(!state.presentMode),
+        );
+        els.presentExitBtn.addEventListener("click", () =>
+          setPresentMode(false),
+        );
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && state.presentMode) {
+            setPresentMode(false);
+          }
+        });
+      }
+
+      bindEvents();
+      renderPreview();
+      setPresentMode(false);
+    </script>
+  </body>
+</html>
