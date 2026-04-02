@@ -161,6 +161,18 @@
       .present #presentExitBtn {
         display: inline-flex;
       }
+
+      .curator-dropdown {
+        max-height: 220px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+      }
+
+      .curator-list {
+        max-height: 240px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+      }
     </style>
   </head>
   <body class="min-h-screen">
@@ -172,26 +184,35 @@
       Exit Present
     </button>
 
-    <main id="app" class="workspace min-h-screen p-3 md:p-4">
+    <main class="workspace min-h-screen p-2.5 md:p-3">
       <div
-        class="mx-auto grid max-w-[1500px] gap-3 md:gap-4 lg:grid-cols-[minmax(360px,0.95fr)_minmax(560px,1.4fr)]"
+        class="mx-auto grid max-w-[1500px] gap-3 lg:grid-cols-[minmax(370px,1fr)_minmax(560px,1.45fr)]"
       >
         <section
           id="controlsPanel"
-          class="rounded-xl border border-[var(--line)] bg-[var(--bg-panel)] p-3 md:p-4 shadow-sm"
+          class="rounded-xl border border-[var(--line)] bg-[var(--bg-panel)] p-2.5 md:p-3 shadow-sm"
         >
-          <div class="mb-3 flex items-center justify-between gap-2">
-            <h1 class="text-base font-semibold tracking-tight">Quoter</h1>
-            <button
-              id="presentBtn"
-              type="button"
-              class="rounded-md border border-[var(--line)] bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              Present
-            </button>
+          <div class="mb-2.5 flex items-center justify-between gap-2">
+            <h1 class="text-sm font-semibold tracking-tight">Quoter Curator</h1>
+            <div class="flex items-center gap-1.5">
+              <button
+                id="saveQuoteBtn"
+                type="button"
+                class="rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Save
+              </button>
+              <button
+                id="presentBtn"
+                type="button"
+                class="rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Present
+              </button>
+            </div>
           </div>
 
-          <div class="space-y-2.5">
+          <div class="space-y-2">
             <div class="grid grid-cols-2 gap-2">
               <label class="space-y-1">
                 <span class="text-[11px] font-medium text-gray-700"
@@ -199,7 +220,7 @@
                 >
                 <select
                   id="languageSelect"
-                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs outline-none focus:border-[var(--accent)]"
+                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
                 >
                   <option value="ur" selected>Urdu</option>
                   <option value="en">English</option>
@@ -211,7 +232,7 @@
                   >Quote Source</span
                 >
                 <span
-                  class="inline-flex w-full items-center justify-between rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs"
+                  class="inline-flex w-full items-center justify-between rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px]"
                 >
                   <span class="text-gray-700">Selected Text</span>
                   <input
@@ -224,55 +245,51 @@
               </label>
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-3 gap-2">
               <label class="space-y-1">
                 <span class="text-[11px] font-medium text-gray-700"
                   >Quote Font</span
                 >
                 <select
                   id="fontSelect"
-                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs outline-none focus:border-[var(--accent)]"
+                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
                 >
-                  <option value="auto" selected>Auto (By Language)</option>
+                  <option value="auto" selected>Auto</option>
                   <option value="urdu-main">Urdu Payami</option>
                   <option value="urdu-alt">Urdu Noto</option>
-                  <option value="english-serif">English Serif</option>
-                  <option value="english-sans">English Sans</option>
+                  <option value="english-serif">Eng Serif</option>
+                  <option value="english-sans">Eng Sans</option>
                 </select>
               </label>
 
               <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700"
-                  >Font Size</span
-                >
+                <span class="text-[11px] font-medium text-gray-700">Size</span>
                 <input
                   id="fontSizeInput"
                   type="range"
-                  min="18"
-                  max="56"
+                  min="16"
+                  max="54"
                   step="1"
-                  value="30"
+                  value="28"
+                  class="w-full accent-[var(--accent)]"
+                />
+              </label>
+
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700">Line</span>
+                <input
+                  id="lineHeightInput"
+                  type="range"
+                  min="1.2"
+                  max="2.5"
+                  step="0.05"
+                  value="1.95"
                   class="w-full accent-[var(--accent)]"
                 />
               </label>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
-              <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700"
-                  >Line Height</span
-                >
-                <input
-                  id="lineHeightInput"
-                  type="range"
-                  min="1.2"
-                  max="2.4"
-                  step="0.05"
-                  value="1.95"
-                  class="w-full accent-[var(--accent)]"
-                />
-              </label>
-
               <label class="space-y-1">
                 <span class="text-[11px] font-medium text-gray-700"
                   >Load .txt</span
@@ -281,45 +298,75 @@
                   id="fileInput"
                   type="file"
                   accept=".txt,text/plain"
-                  class="block w-full text-[11px] text-gray-700 file:mr-2 file:rounded-md file:border file:border-[var(--line)] file:bg-white file:px-2 file:py-1 file:text-[11px] file:font-medium file:text-gray-700 hover:file:bg-gray-50"
+                  class="block w-full text-[11px] text-gray-700 file:mr-1.5 file:rounded-md file:border file:border-[var(--line)] file:bg-white file:px-2 file:py-1 file:text-[11px] file:font-medium file:text-gray-700 hover:file:bg-gray-50"
                 />
               </label>
+
+              <div class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Transfer</span
+                >
+                <div class="flex gap-1.5">
+                  <button
+                    id="exportBtn"
+                    type="button"
+                    class="flex-1 rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Export
+                  </button>
+                  <button
+                    id="importBtn"
+                    type="button"
+                    class="flex-1 rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Import
+                  </button>
+                </div>
+                <label
+                  class="flex items-center gap-1 text-[10px] text-gray-600"
+                >
+                  <input
+                    id="replaceOnImport"
+                    type="checkbox"
+                    class="h-3.5 w-3.5 accent-[var(--accent)]"
+                  />
+                  Replace on import
+                </label>
+              </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-2">
-              <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700"
-                  >Heading (optional)</span
-                >
-                <input
-                  id="headingInput"
-                  type="text"
-                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs outline-none focus:border-[var(--accent)]"
-                />
-              </label>
+            <label class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700"
+                >Heading (optional)</span
+              >
+              <input
+                id="headingInput"
+                type="text"
+                class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+              />
+            </label>
 
-              <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700"
-                  >Reference (optional)</span
-                >
-                <input
-                  id="referenceInput"
-                  type="text"
-                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs outline-none focus:border-[var(--accent)]"
-                />
-              </label>
+            <label class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700"
+                >Reference (optional)</span
+              >
+              <input
+                id="referenceInput"
+                type="text"
+                class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+              />
+            </label>
 
-              <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700"
-                  >Typing Fix Box (not shown in quote)</span
-                >
-                <input
-                  id="searchInput"
-                  type="text"
-                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1.5 text-xs outline-none focus:border-[var(--accent)]"
-                />
-              </label>
-            </div>
+            <label class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700"
+                >Typing Fix Box (not shown in quote)</span
+              >
+              <input
+                id="searchInput"
+                type="text"
+                class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+              />
+            </label>
 
             <label class="space-y-1">
               <span class="text-[11px] font-medium text-gray-700"
@@ -327,11 +374,37 @@
               >
               <textarea
                 id="sourceText"
-                rows="9"
-                class="w-full resize-y rounded-lg border border-[var(--line)] bg-white p-2 text-xs leading-5 outline-none focus:border-[var(--accent)]"
+                rows="7"
+                class="w-full resize-y rounded-md border border-[var(--line)] bg-white p-2 text-[11px] leading-5 outline-none focus:border-[var(--accent)]"
                 placeholder="Paste text here. Select any part to show in quote when Selected Text is ON."
               ></textarea>
             </label>
+
+            <div class="rounded-md border border-[var(--line)] bg-white p-2">
+              <div class="relative">
+                <input
+                  id="curatorSearch"
+                  type="text"
+                  placeholder="Find saved quotes by heading, quote, reference..."
+                  class="w-full rounded-md border border-[var(--line)] px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+                />
+                <div
+                  id="curatorDropdown"
+                  class="curator-dropdown absolute left-0 right-0 top-full z-20 mt-1 hidden rounded-md border border-[var(--line)] bg-white p-1 shadow"
+                ></div>
+              </div>
+
+              <div
+                class="mt-2 flex items-center justify-between text-[10px] text-gray-600"
+              >
+                <p id="curatorCount">0 quotes</p>
+                <p id="curatorHint">Ctrl+S to save current quote</p>
+              </div>
+
+              <div id="curatorList" class="curator-list mt-1.5 space-y-1"></div>
+            </div>
+
+            <p id="statusText" class="min-h-4 text-[10px] text-gray-500"></p>
           </div>
         </section>
 
@@ -372,7 +445,18 @@
       </div>
     </main>
 
+    <input
+      id="importFileInput"
+      type="file"
+      accept=".json,application/json"
+      class="hidden"
+    />
+
     <script>
+      const DB_NAME = "quoter-curator-db";
+      const DB_VERSION = 1;
+      const STORE_QUOTES = "quotes";
+
       const els = {
         languageSelect: document.getElementById("languageSelect"),
         selectionToggle: document.getElementById("selectionToggle"),
@@ -393,14 +477,37 @@
         previewQuote: document.getElementById("previewQuote"),
         quoteRefSeparator: document.getElementById("quoteRefSeparator"),
         previewReference: document.getElementById("previewReference"),
+        saveQuoteBtn: document.getElementById("saveQuoteBtn"),
+        exportBtn: document.getElementById("exportBtn"),
+        importBtn: document.getElementById("importBtn"),
+        replaceOnImport: document.getElementById("replaceOnImport"),
+        importFileInput: document.getElementById("importFileInput"),
+        curatorSearch: document.getElementById("curatorSearch"),
+        curatorDropdown: document.getElementById("curatorDropdown"),
+        curatorList: document.getElementById("curatorList"),
+        curatorCount: document.getElementById("curatorCount"),
+        statusText: document.getElementById("statusText"),
       };
 
       const state = {
         presentMode: false,
+        db: null,
+        quotes: [],
+        dropdownMatches: [],
       };
+
+      function nowIso() {
+        return new Date().toISOString();
+      }
 
       function safeTrim(value) {
         return (value || "").trim();
+      }
+
+      function showStatus(message, isError = false) {
+        els.statusText.textContent = message;
+        els.statusText.classList.toggle("text-red-600", isError);
+        els.statusText.classList.toggle("text-gray-500", !isError);
       }
 
       function getSelectedText() {
@@ -456,7 +563,7 @@
         els.previewHeading.style.fontFamily = fontFamily;
         els.previewReference.style.fontFamily = fontFamily;
 
-        const fontSize = Number(els.fontSizeInput.value) || 30;
+        const fontSize = Number(els.fontSizeInput.value) || 28;
         const lineHeight =
           Number(els.lineHeightInput.value) || (isUrdu ? 1.95 : 1.6);
         els.previewQuote.style.fontSize = `${fontSize}px`;
@@ -507,6 +614,262 @@
         els.presentBtn.textContent = on ? "Exit" : "Present";
       }
 
+      function getSnapshotForSave() {
+        const quote = getQuoteText();
+        if (!quote) return null;
+
+        return {
+          id: crypto.randomUUID
+            ? crypto.randomUUID()
+            : `q-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          heading: safeTrim(els.headingInput.value),
+          quote,
+          reference: safeTrim(els.referenceInput.value),
+          language: els.languageSelect.value,
+          fontChoice: els.fontSelect.value,
+          fontSize: Number(els.fontSizeInput.value) || 28,
+          lineHeight: Number(els.lineHeightInput.value) || 1.95,
+          pinned: false,
+          createdAt: nowIso(),
+          updatedAt: nowIso(),
+        };
+      }
+
+      function openDb() {
+        return new Promise((resolve, reject) => {
+          if (!window.indexedDB) {
+            reject(new Error("IndexedDB is not supported in this browser."));
+            return;
+          }
+
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(STORE_QUOTES)) {
+              db.createObjectStore(STORE_QUOTES, { keyPath: "id" });
+            }
+          };
+
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () =>
+            reject(request.error || new Error("Failed to open IndexedDB."));
+        });
+      }
+
+      function dbTx(mode) {
+        const tx = state.db.transaction(STORE_QUOTES, mode);
+        return tx.objectStore(STORE_QUOTES);
+      }
+
+      function dbGetAllQuotes() {
+        return new Promise((resolve, reject) => {
+          const req = dbTx("readonly").getAll();
+          req.onsuccess = () =>
+            resolve(Array.isArray(req.result) ? req.result : []);
+          req.onerror = () =>
+            reject(req.error || new Error("Failed to read quotes."));
+        });
+      }
+
+      function dbPutQuote(quote) {
+        return new Promise((resolve, reject) => {
+          const req = dbTx("readwrite").put(quote);
+          req.onsuccess = () => resolve();
+          req.onerror = () =>
+            reject(req.error || new Error("Failed to save quote."));
+        });
+      }
+
+      function dbDeleteQuote(id) {
+        return new Promise((resolve, reject) => {
+          const req = dbTx("readwrite").delete(id);
+          req.onsuccess = () => resolve();
+          req.onerror = () =>
+            reject(req.error || new Error("Failed to delete quote."));
+        });
+      }
+
+      function dbClearQuotes() {
+        return new Promise((resolve, reject) => {
+          const req = dbTx("readwrite").clear();
+          req.onsuccess = () => resolve();
+          req.onerror = () =>
+            reject(req.error || new Error("Failed to clear quotes."));
+        });
+      }
+
+      function sortQuotes(quotes) {
+        return [...quotes].sort((a, b) => {
+          if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+          return String(b.updatedAt || "").localeCompare(
+            String(a.updatedAt || ""),
+          );
+        });
+      }
+
+      function shortText(value, limit = 95) {
+        const clean = safeTrim(value).replace(/\s+/g, " ");
+        if (clean.length <= limit) return clean;
+        return `${clean.slice(0, limit)}...`;
+      }
+
+      function setCuratorCount() {
+        const total = state.quotes.length;
+        const pinned = state.quotes.filter((q) => q.pinned).length;
+        els.curatorCount.textContent = `${total} quotes (${pinned} pinned)`;
+      }
+
+      function renderCuratorList() {
+        setCuratorCount();
+        els.curatorList.innerHTML = "";
+
+        if (state.quotes.length === 0) {
+          const empty = document.createElement("p");
+          empty.className =
+            "rounded-md border border-dashed border-[var(--line)] px-2 py-2 text-[10px] text-gray-500";
+          empty.textContent = "No saved quotes yet.";
+          els.curatorList.appendChild(empty);
+          return;
+        }
+
+        for (const item of state.quotes.slice(0, 120)) {
+          const row = document.createElement("div");
+          row.className =
+            "flex items-start gap-1.5 rounded-md border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-1";
+
+          const pinBtn = document.createElement("button");
+          pinBtn.type = "button";
+          pinBtn.className = `mt-0.5 rounded px-1 text-[11px] ${item.pinned ? "text-amber-700" : "text-gray-400 hover:text-amber-600"}`;
+          pinBtn.textContent = item.pinned ? "★" : "☆";
+          pinBtn.title = item.pinned ? "Unpin" : "Pin";
+          pinBtn.addEventListener("click", () => togglePin(item.id));
+
+          const loadBtn = document.createElement("button");
+          loadBtn.type = "button";
+          loadBtn.className = "min-w-0 flex-1 text-left";
+          loadBtn.title = "Load this quote";
+          loadBtn.innerHTML = `<p class="text-[10px] font-semibold text-gray-700">${item.heading ? shortText(item.heading, 42) : "(No heading)"}</p><p class="text-[10px] text-gray-600">${shortText(item.quote, 72)}</p>`;
+          loadBtn.addEventListener("click", () => loadSavedQuote(item));
+
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.className =
+            "rounded px-1 text-[11px] text-gray-400 hover:text-red-600";
+          delBtn.textContent = "✕";
+          delBtn.title = "Delete";
+          delBtn.addEventListener("click", () => deleteSavedQuote(item.id));
+
+          row.append(pinBtn, loadBtn, delBtn);
+          els.curatorList.appendChild(row);
+        }
+      }
+
+      function getSearchMatches(query) {
+        const q = safeTrim(query).toLowerCase();
+        if (!q) return [];
+        return state.quotes
+          .filter((item) => {
+            const hay =
+              `${item.heading || ""} ${item.quote || ""} ${item.reference || ""}`.toLowerCase();
+            return hay.includes(q);
+          })
+          .slice(0, 25);
+      }
+
+      function renderDropdown(matches) {
+        state.dropdownMatches = matches;
+        els.curatorDropdown.innerHTML = "";
+
+        if (matches.length === 0) {
+          els.curatorDropdown.classList.add("hidden");
+          return;
+        }
+
+        for (const item of matches) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className =
+            "block w-full rounded px-1.5 py-1 text-left hover:bg-gray-50";
+          btn.innerHTML = `<p class="text-[10px] font-semibold text-gray-700">${item.pinned ? "★ " : ""}${item.heading ? shortText(item.heading, 55) : "(No heading)"}</p><p class="text-[10px] text-gray-600">${shortText(item.quote, 85)}</p>`;
+          btn.addEventListener("click", () => {
+            loadSavedQuote(item);
+            els.curatorDropdown.classList.add("hidden");
+            els.curatorSearch.select();
+          });
+          els.curatorDropdown.appendChild(btn);
+        }
+
+        els.curatorDropdown.classList.remove("hidden");
+      }
+
+      async function refreshQuotes() {
+        const all = await dbGetAllQuotes();
+        state.quotes = sortQuotes(all);
+        renderCuratorList();
+        renderDropdown(getSearchMatches(els.curatorSearch.value));
+      }
+
+      function loadSavedQuote(item) {
+        els.languageSelect.value = item.language === "en" ? "en" : "ur";
+        els.fontSelect.value = item.fontChoice || "auto";
+        els.fontSizeInput.value = String(item.fontSize || 28);
+        els.lineHeightInput.value = String(item.lineHeight || 1.95);
+
+        els.headingInput.value = item.heading || "";
+        els.referenceInput.value = item.reference || "";
+
+        els.selectionToggle.checked = false;
+        els.sourceText.value = item.quote || "";
+        els.sourceText.setSelectionRange(0, 0);
+
+        renderPreview();
+        showStatus("Loaded saved quote.");
+      }
+
+      async function saveCurrentQuote() {
+        try {
+          const snapshot = getSnapshotForSave();
+          if (!snapshot) {
+            showStatus("Nothing to save. Add/select a quote first.", true);
+            return;
+          }
+
+          await dbPutQuote(snapshot);
+          await refreshQuotes();
+          showStatus("Quote saved.");
+        } catch (error) {
+          showStatus(error.message || "Save failed.", true);
+        }
+      }
+
+      async function togglePin(id) {
+        try {
+          const current = state.quotes.find((q) => q.id === id);
+          if (!current) return;
+          const updated = {
+            ...current,
+            pinned: !current.pinned,
+            updatedAt: nowIso(),
+          };
+          await dbPutQuote(updated);
+          await refreshQuotes();
+          showStatus(updated.pinned ? "Quote pinned." : "Quote unpinned.");
+        } catch (error) {
+          showStatus(error.message || "Pin action failed.", true);
+        }
+      }
+
+      async function deleteSavedQuote(id) {
+        try {
+          await dbDeleteQuote(id);
+          await refreshQuotes();
+          showStatus("Quote deleted.");
+        } catch (error) {
+          showStatus(error.message || "Delete failed.", true);
+        }
+      }
+
       function handleFileUpload(event) {
         const file = event.target.files && event.target.files[0];
         if (!file) return;
@@ -516,8 +879,91 @@
           els.sourceText.value = String(reader.result || "");
           els.sourceText.setSelectionRange(0, 0);
           renderPreview();
+          showStatus("Text loaded from file.");
         };
+        reader.onerror = () => showStatus("Could not read file.", true);
         reader.readAsText(file, "utf-8");
+      }
+
+      function exportQuotes() {
+        try {
+          const payload = {
+            format: "quoter-curator-v1",
+            exportedAt: nowIso(),
+            quotes: state.quotes,
+          };
+
+          const blob = new Blob([JSON.stringify(payload, null, 2)], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+          link.href = url;
+          link.download = `quoter-curator-${stamp}.json`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+          showStatus("Export complete.");
+        } catch (error) {
+          showStatus(error.message || "Export failed.", true);
+        }
+      }
+
+      async function importQuotesFromFile(event) {
+        try {
+          const file = event.target.files && event.target.files[0];
+          if (!file) return;
+
+          const text = await file.text();
+          const parsed = JSON.parse(text);
+          const incoming = Array.isArray(parsed)
+            ? parsed
+            : Array.isArray(parsed.quotes)
+              ? parsed.quotes
+              : [];
+
+          if (incoming.length === 0) {
+            showStatus("Import file has no quotes.", true);
+            return;
+          }
+
+          if (els.replaceOnImport.checked) {
+            await dbClearQuotes();
+          }
+
+          for (const raw of incoming) {
+            const quote = safeTrim(raw.quote);
+            if (!quote) continue;
+
+            const clean = {
+              id:
+                raw.id ||
+                (crypto.randomUUID
+                  ? crypto.randomUUID()
+                  : `q-${Date.now()}-${Math.random().toString(16).slice(2)}`),
+              heading: safeTrim(raw.heading),
+              quote,
+              reference: safeTrim(raw.reference),
+              language: raw.language === "en" ? "en" : "ur",
+              fontChoice: raw.fontChoice || "auto",
+              fontSize: Number(raw.fontSize) || 28,
+              lineHeight: Number(raw.lineHeight) || 1.95,
+              pinned: !!raw.pinned,
+              createdAt: raw.createdAt || nowIso(),
+              updatedAt: raw.updatedAt || nowIso(),
+            };
+            await dbPutQuote(clean);
+          }
+
+          await refreshQuotes();
+          showStatus("Import complete.");
+        } catch (error) {
+          showStatus(error.message || "Import failed.", true);
+        } finally {
+          els.importFileInput.value = "";
+        }
       }
 
       function bindEvents() {
@@ -535,6 +981,30 @@
         els.sourceText.addEventListener("select", renderPreview);
 
         els.fileInput.addEventListener("change", handleFileUpload);
+        els.saveQuoteBtn.addEventListener("click", saveCurrentQuote);
+
+        els.exportBtn.addEventListener("click", exportQuotes);
+        els.importBtn.addEventListener("click", () =>
+          els.importFileInput.click(),
+        );
+        els.importFileInput.addEventListener("change", importQuotesFromFile);
+
+        els.curatorSearch.addEventListener("input", () => {
+          renderDropdown(getSearchMatches(els.curatorSearch.value));
+        });
+
+        els.curatorSearch.addEventListener("focus", () => {
+          renderDropdown(getSearchMatches(els.curatorSearch.value));
+        });
+
+        document.addEventListener("click", (event) => {
+          if (
+            !els.curatorDropdown.contains(event.target) &&
+            event.target !== els.curatorSearch
+          ) {
+            els.curatorDropdown.classList.add("hidden");
+          }
+        });
 
         els.presentBtn.addEventListener("click", () =>
           setPresentMode(!state.presentMode),
@@ -547,12 +1017,34 @@
           if (event.key === "Escape" && state.presentMode) {
             setPresentMode(false);
           }
+
+          if (
+            (event.ctrlKey || event.metaKey) &&
+            event.key.toLowerCase() === "s"
+          ) {
+            event.preventDefault();
+            saveCurrentQuote();
+          }
         });
       }
 
-      bindEvents();
-      renderPreview();
-      setPresentMode(false);
+      async function init() {
+        try {
+          state.db = await openDb();
+          bindEvents();
+          renderPreview();
+          setPresentMode(false);
+          await refreshQuotes();
+          showStatus("Ready.");
+        } catch (error) {
+          bindEvents();
+          renderPreview();
+          setPresentMode(false);
+          showStatus(error.message || "Startup failed.", true);
+        }
+      }
+
+      init();
     </script>
   </body>
 </html>
