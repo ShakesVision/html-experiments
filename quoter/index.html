@@ -173,6 +173,47 @@
         overflow-y: auto;
         scrollbar-width: thin;
       }
+
+      .note-editor {
+        min-height: 92px;
+        max-height: 180px;
+        overflow-y: auto;
+      }
+
+      .note-editor:focus {
+        outline: none;
+      }
+
+      .private-chip {
+        background: #f6e7b7;
+        border: 1px dashed #d4a72c;
+        border-radius: 4px;
+        padding: 0 2px;
+      }
+
+      .public-note-content {
+        line-height: 1.65;
+      }
+
+      .public-note-content a {
+        color: #1d4ed8;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .tab-btn.active {
+        background: #ffffff;
+        border-color: #c7bcb1;
+        color: #1f2937;
+      }
+
+      .tab-pane {
+        display: none;
+      }
+
+      .tab-pane.active {
+        display: block;
+      }
     </style>
   </head>
   <body class="min-h-screen">
@@ -192,9 +233,16 @@
           id="controlsPanel"
           class="rounded-xl border border-[var(--line)] bg-[var(--bg-panel)] p-2.5 md:p-3 shadow-sm"
         >
-          <div class="mb-2.5 flex items-center justify-between gap-2">
+          <div class="mb-2 flex items-center justify-between gap-2">
             <h1 class="text-sm font-semibold tracking-tight">Quoter Curator</h1>
             <div class="flex items-center gap-1.5">
+              <button
+                id="newQuoteBtn"
+                type="button"
+                class="rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+              >
+                New
+              </button>
               <button
                 id="saveQuoteBtn"
                 type="button"
@@ -212,44 +260,168 @@
             </div>
           </div>
 
-          <div class="space-y-2">
-            <div class="grid grid-cols-2 gap-2">
-              <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700"
-                  >Language</span
-                >
-                <select
-                  id="languageSelect"
-                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
-                >
-                  <option value="ur" selected>Urdu</option>
-                  <option value="en">English</option>
-                </select>
-              </label>
+          <div class="mb-2 flex items-center justify-between gap-2 rounded-md border border-[var(--line)] bg-white px-2 py-1.5">
+            <p id="editingState" class="truncate text-[11px] font-medium text-gray-700">Creating new quote</p>
+            <p class="text-[10px] text-gray-500">Ctrl+S save/update</p>
+          </div>
 
-              <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700"
-                  >Quote Source</span
+          <div class="mb-2 grid grid-cols-2 gap-2">
+            <label class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700">Language</span>
+              <select
+                id="languageSelect"
+                class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+              >
+                <option value="ur" selected>Urdu</option>
+                <option value="en">English</option>
+              </select>
+            </label>
+
+            <label class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700">Quote Source</span>
+              <span
+                class="inline-flex w-full items-center justify-between rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px]"
+              >
+                <span class="text-gray-700">Selected Text</span>
+                <input
+                  id="selectionToggle"
+                  type="checkbox"
+                  class="h-4 w-4 accent-[var(--accent)]"
+                  checked
+                />
+              </span>
+            </label>
+          </div>
+
+          <div class="mb-2 flex gap-1.5 rounded-md border border-[var(--line)] bg-[var(--bg-panel)] p-1">
+            <button id="tabQuoteBtn" class="tab-btn active flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600" data-tab="quote" type="button">Quote</button>
+            <button id="tabCuratorBtn" class="tab-btn flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600" data-tab="curator" type="button">Curator</button>
+            <button id="tabNotesBtn" class="tab-btn flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600" data-tab="notes" type="button">Notes</button>
+            <button id="tabStyleBtn" class="tab-btn flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600" data-tab="style" type="button">Style</button>
+          </div>
+
+          <div id="tabQuote" class="tab-pane active space-y-2">
+            <label class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700">Heading (optional)</span>
+              <input
+                id="headingInput"
+                type="text"
+                class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+              />
+            </label>
+
+            <label class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700">Reference (optional)</span>
+              <input
+                id="referenceInput"
+                type="text"
+                class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+              />
+            </label>
+
+            <label class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700">Typing Fix Box (not shown in quote)</span>
+              <input
+                id="searchInput"
+                type="text"
+                class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+              />
+            </label>
+
+            <label class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700">Load .txt</span>
+              <input
+                id="fileInput"
+                type="file"
+                accept=".txt,text/plain"
+                class="block w-full text-[11px] text-gray-700 file:mr-1.5 file:rounded-md file:border file:border-[var(--line)] file:bg-white file:px-2 file:py-1 file:text-[11px] file:font-medium file:text-gray-700 hover:file:bg-gray-50"
+              />
+            </label>
+
+            <label class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700">Source Text (paste or upload)</span>
+              <textarea
+                id="sourceText"
+                rows="8"
+                class="w-full resize-y rounded-md border border-[var(--line)] bg-white p-2 text-[11px] leading-5 outline-none focus:border-[var(--accent)]"
+                placeholder="Paste text here. Select any part to show in quote when Selected Text is ON."
+              ></textarea>
+            </label>
+          </div>
+
+          <div id="tabCurator" class="tab-pane space-y-2">
+            <div class="space-y-1">
+              <span class="text-[11px] font-medium text-gray-700">Transfer</span>
+              <div class="flex gap-1.5">
+                <button
+                  id="exportBtn"
+                  type="button"
+                  class="flex-1 rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
                 >
-                <span
-                  class="inline-flex w-full items-center justify-between rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px]"
+                  Export
+                </button>
+                <button
+                  id="importBtn"
+                  type="button"
+                  class="flex-1 rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
                 >
-                  <span class="text-gray-700">Selected Text</span>
-                  <input
-                    id="selectionToggle"
-                    type="checkbox"
-                    class="h-4 w-4 accent-[var(--accent)]"
-                    checked
-                  />
-                </span>
+                  Import
+                </button>
+              </div>
+              <label class="flex items-center gap-1 text-[10px] text-gray-600">
+                <input
+                  id="replaceOnImport"
+                  type="checkbox"
+                  class="h-3.5 w-3.5 accent-[var(--accent)]"
+                />
+                Replace on import
               </label>
             </div>
 
+            <div class="rounded-md border border-[var(--line)] bg-white p-2">
+              <div class="relative">
+                <input
+                  id="curatorSearch"
+                  type="text"
+                  placeholder="Find by heading / quote / reference / notes"
+                  class="w-full rounded-md border border-[var(--line)] px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+                />
+                <div
+                  id="curatorDropdown"
+                  class="curator-dropdown absolute left-0 right-0 top-full z-20 mt-1 hidden rounded-md border border-[var(--line)] bg-white p-1 shadow"
+                ></div>
+              </div>
+
+              <div class="mt-2 flex items-center justify-between text-[10px] text-gray-600">
+                <p id="curatorCount">0 quotes</p>
+                <p id="curatorHint">Pinned stay on top</p>
+              </div>
+
+              <div id="curatorList" class="curator-list mt-1.5 space-y-1"></div>
+            </div>
+          </div>
+
+          <div id="tabNotes" class="tab-pane space-y-2">
+            <div class="space-y-1 rounded-md border border-[var(--line)] bg-white p-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-medium text-gray-700">Notes (saved with quote)</span>
+                <div class="flex flex-wrap items-center gap-1 text-[10px]">
+                  <button id="noteBoldBtn" type="button" class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5 font-semibold">B</button>
+                  <button id="noteItalicBtn" type="button" class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5 italic">I</button>
+                  <button id="noteLinkBtn" type="button" class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5">Link</button>
+                  <button id="notePrivateBtn" type="button" class="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-amber-800">Private</button>
+                  <button id="noteClearBtn" type="button" class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5">Clear</button>
+                </div>
+              </div>
+              <div id="noteEditor" contenteditable="true" class="note-editor rounded-md border border-[var(--line)] p-2 text-[11px]"></div>
+              <p class="text-[10px] text-gray-500">Private text is saved but hidden in right-side output.</p>
+            </div>
+          </div>
+
+          <div id="tabStyle" class="tab-pane space-y-2">
             <div class="grid grid-cols-3 gap-2">
               <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700"
-                  >Quote Font</span
-                >
+                <span class="text-[11px] font-medium text-gray-700">Quote Font</span>
                 <select
                   id="fontSelect"
                   class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
@@ -261,151 +433,50 @@
                   <option value="english-sans">Eng Sans</option>
                 </select>
               </label>
-
               <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700">Size</span>
-                <input
-                  id="fontSizeInput"
-                  type="range"
-                  min="16"
-                  max="54"
-                  step="1"
-                  value="28"
-                  class="w-full accent-[var(--accent)]"
-                />
+                <span class="text-[11px] font-medium text-gray-700">Quote Size</span>
+                <input id="fontSizeInput" type="range" min="16" max="54" step="1" value="28" class="w-full accent-[var(--accent)]" />
               </label>
-
               <label class="space-y-1">
                 <span class="text-[11px] font-medium text-gray-700">Line</span>
-                <input
-                  id="lineHeightInput"
-                  type="range"
-                  min="1.2"
-                  max="2.5"
-                  step="0.05"
-                  value="1.95"
-                  class="w-full accent-[var(--accent)]"
-                />
+                <input id="lineHeightInput" type="range" min="1.2" max="2.5" step="0.05" value="1.95" class="w-full accent-[var(--accent)]" />
               </label>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
               <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700"
-                  >Load .txt</span
-                >
-                <input
-                  id="fileInput"
-                  type="file"
-                  accept=".txt,text/plain"
-                  class="block w-full text-[11px] text-gray-700 file:mr-1.5 file:rounded-md file:border file:border-[var(--line)] file:bg-white file:px-2 file:py-1 file:text-[11px] file:font-medium file:text-gray-700 hover:file:bg-gray-50"
-                />
+                <span class="text-[11px] font-medium text-gray-700">Heading Size</span>
+                <input id="headingSizeInput" type="range" min="12" max="42" step="1" value="20" class="w-full accent-[var(--accent)]" />
               </label>
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700">Reference Size</span>
+                <input id="referenceSizeInput" type="range" min="10" max="28" step="1" value="14" class="w-full accent-[var(--accent)]" />
+              </label>
+            </div>
 
-              <div class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700"
-                  >Transfer</span
-                >
-                <div class="flex gap-1.5">
-                  <button
-                    id="exportBtn"
-                    type="button"
-                    class="flex-1 rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    Export
-                  </button>
-                  <button
-                    id="importBtn"
-                    type="button"
-                    class="flex-1 rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    Import
-                  </button>
-                </div>
-                <label
-                  class="flex items-center gap-1 text-[10px] text-gray-600"
-                >
-                  <input
-                    id="replaceOnImport"
-                    type="checkbox"
-                    class="h-3.5 w-3.5 accent-[var(--accent)]"
-                  />
-                  Replace on import
-                </label>
-              </div>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700">Theme</span>
+                <select id="themeSelect" class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]">
+                  <option value="parchment" selected>Parchment</option>
+                  <option value="night">Night</option>
+                  <option value="emerald">Emerald</option>
+                  <option value="rosewood">Rosewood</option>
+                </select>
+              </label>
+              <label class="space-y-1">
+                <span class="text-[11px] font-medium text-gray-700">Custom Text Color</span>
+                <input id="customTextColorInput" type="text" placeholder="#1f2937 / rgb(...) / hsl(...)" class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]" />
+              </label>
             </div>
 
             <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700"
-                >Heading (optional)</span
-              >
-              <input
-                id="headingInput"
-                type="text"
-                class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
-              />
+              <span class="text-[11px] font-medium text-gray-700">Custom Background (full CSS background)</span>
+              <input id="customBackgroundInput" type="text" placeholder="#fff, linear-gradient(...), url(...) center/cover no-repeat" class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]" />
             </label>
-
-            <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700"
-                >Reference (optional)</span
-              >
-              <input
-                id="referenceInput"
-                type="text"
-                class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
-              />
-            </label>
-
-            <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700"
-                >Typing Fix Box (not shown in quote)</span
-              >
-              <input
-                id="searchInput"
-                type="text"
-                class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
-              />
-            </label>
-
-            <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700"
-                >Source Text (paste or upload)</span
-              >
-              <textarea
-                id="sourceText"
-                rows="7"
-                class="w-full resize-y rounded-md border border-[var(--line)] bg-white p-2 text-[11px] leading-5 outline-none focus:border-[var(--accent)]"
-                placeholder="Paste text here. Select any part to show in quote when Selected Text is ON."
-              ></textarea>
-            </label>
-
-            <div class="rounded-md border border-[var(--line)] bg-white p-2">
-              <div class="relative">
-                <input
-                  id="curatorSearch"
-                  type="text"
-                  placeholder="Find saved quotes by heading, quote, reference..."
-                  class="w-full rounded-md border border-[var(--line)] px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
-                />
-                <div
-                  id="curatorDropdown"
-                  class="curator-dropdown absolute left-0 right-0 top-full z-20 mt-1 hidden rounded-md border border-[var(--line)] bg-white p-1 shadow"
-                ></div>
-              </div>
-
-              <div
-                class="mt-2 flex items-center justify-between text-[10px] text-gray-600"
-              >
-                <p id="curatorCount">0 quotes</p>
-                <p id="curatorHint">Ctrl+S to save current quote</p>
-              </div>
-
-              <div id="curatorList" class="curator-list mt-1.5 space-y-1"></div>
-            </div>
-
-            <p id="statusText" class="min-h-4 text-[10px] text-gray-500"></p>
           </div>
+
+          <p id="statusText" class="mt-2 min-h-4 text-[10px] text-gray-500"></p>
         </section>
 
         <section
@@ -441,6 +512,12 @@
               ></p>
             </div>
           </article>
+
+          <article id="notesPublicCard" class="mt-2.5 hidden rounded-xl border border-[var(--line)] bg-white/85 p-3">
+            <h3 class="text-xs font-semibold text-gray-700">Notes & Links</h3>
+            <div id="notesPublicContent" class="public-note-content mt-1.5 text-xs text-gray-700"></div>
+            <div id="notesLinksList" class="mt-2 space-y-1"></div>
+          </article>
         </section>
       </div>
     </main>
@@ -456,17 +533,72 @@
       const DB_NAME = "quoter-curator-db";
       const DB_VERSION = 1;
       const STORE_QUOTES = "quotes";
+      const THEMES = {
+        parchment: {
+          cardBg: "linear-gradient(165deg,#fffefc 0%,#fffdf8 70%,#faf4ec 100%)",
+          quoteColor: "#1f2937",
+          headingColor: "#8b5e3c",
+          referenceColor: "#6b7280",
+          borderColor: "#d8cbbd",
+          markColor: "#b69478"
+        },
+        night: {
+          cardBg: "linear-gradient(170deg,#0f172a 0%,#111827 100%)",
+          quoteColor: "#e5e7eb",
+          headingColor: "#f3f4f6",
+          referenceColor: "#9ca3af",
+          borderColor: "#374151",
+          markColor: "#9ca3af"
+        },
+        emerald: {
+          cardBg: "linear-gradient(160deg,#f0fdf4 0%,#dcfce7 100%)",
+          quoteColor: "#065f46",
+          headingColor: "#047857",
+          referenceColor: "#065f46",
+          borderColor: "#86efac",
+          markColor: "#059669"
+        },
+        rosewood: {
+          cardBg: "linear-gradient(160deg,#fff1f2 0%,#ffe4e6 100%)",
+          quoteColor: "#4c0519",
+          headingColor: "#9f1239",
+          referenceColor: "#6b7280",
+          borderColor: "#fecdd3",
+          markColor: "#be123c"
+        }
+      };
 
       const els = {
         languageSelect: document.getElementById("languageSelect"),
         selectionToggle: document.getElementById("selectionToggle"),
+        newQuoteBtn: document.getElementById("newQuoteBtn"),
+        editingState: document.getElementById("editingState"),
+        tabQuoteBtn: document.getElementById("tabQuoteBtn"),
+        tabCuratorBtn: document.getElementById("tabCuratorBtn"),
+        tabNotesBtn: document.getElementById("tabNotesBtn"),
+        tabStyleBtn: document.getElementById("tabStyleBtn"),
+        tabQuote: document.getElementById("tabQuote"),
+        tabCurator: document.getElementById("tabCurator"),
+        tabNotes: document.getElementById("tabNotes"),
+        tabStyle: document.getElementById("tabStyle"),
         fontSelect: document.getElementById("fontSelect"),
         fontSizeInput: document.getElementById("fontSizeInput"),
         lineHeightInput: document.getElementById("lineHeightInput"),
+        headingSizeInput: document.getElementById("headingSizeInput"),
+        referenceSizeInput: document.getElementById("referenceSizeInput"),
+        themeSelect: document.getElementById("themeSelect"),
+        customTextColorInput: document.getElementById("customTextColorInput"),
+        customBackgroundInput: document.getElementById("customBackgroundInput"),
         headingInput: document.getElementById("headingInput"),
         sourceText: document.getElementById("sourceText"),
         referenceInput: document.getElementById("referenceInput"),
         searchInput: document.getElementById("searchInput"),
+        noteEditor: document.getElementById("noteEditor"),
+        noteBoldBtn: document.getElementById("noteBoldBtn"),
+        noteItalicBtn: document.getElementById("noteItalicBtn"),
+        noteLinkBtn: document.getElementById("noteLinkBtn"),
+        notePrivateBtn: document.getElementById("notePrivateBtn"),
+        noteClearBtn: document.getElementById("noteClearBtn"),
         fileInput: document.getElementById("fileInput"),
         presentBtn: document.getElementById("presentBtn"),
         presentExitBtn: document.getElementById("presentExitBtn"),
@@ -477,6 +609,9 @@
         previewQuote: document.getElementById("previewQuote"),
         quoteRefSeparator: document.getElementById("quoteRefSeparator"),
         previewReference: document.getElementById("previewReference"),
+        notesPublicCard: document.getElementById("notesPublicCard"),
+        notesPublicContent: document.getElementById("notesPublicContent"),
+        notesLinksList: document.getElementById("notesLinksList"),
         saveQuoteBtn: document.getElementById("saveQuoteBtn"),
         exportBtn: document.getElementById("exportBtn"),
         importBtn: document.getElementById("importBtn"),
@@ -494,6 +629,8 @@
         db: null,
         quotes: [],
         dropdownMatches: [],
+        editingId: null,
+        activeTab: "quote",
       };
 
       function nowIso() {
@@ -504,10 +641,53 @@
         return (value || "").trim();
       }
 
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
       function showStatus(message, isError = false) {
         els.statusText.textContent = message;
         els.statusText.classList.toggle("text-red-600", isError);
         els.statusText.classList.toggle("text-gray-500", !isError);
+      }
+
+      function activateTab(tabName) {
+        state.activeTab = tabName;
+        const tabs = ["quote", "curator", "notes", "style"];
+        for (const name of tabs) {
+          const btn = document.getElementById(`tab${name[0].toUpperCase()}${name.slice(1)}Btn`);
+          const pane = document.getElementById(`tab${name[0].toUpperCase()}${name.slice(1)}`);
+          btn.classList.toggle("active", name === tabName);
+          pane.classList.toggle("active", name === tabName);
+        }
+      }
+
+      function setEditingState(id, heading = "") {
+        state.editingId = id;
+        if (id) {
+          els.editingState.textContent = `Editing: ${heading ? heading : "(No heading)"}`;
+          els.saveQuoteBtn.textContent = "Update";
+        } else {
+          els.editingState.textContent = "Creating new quote";
+          els.saveQuoteBtn.textContent = "Save";
+        }
+      }
+
+      function clearComposerForNewQuote() {
+        els.headingInput.value = "";
+        els.referenceInput.value = "";
+        els.sourceText.value = "";
+        els.noteEditor.innerHTML = "";
+        els.searchInput.value = "";
+        els.selectionToggle.checked = true;
+        setEditingState(null);
+        renderPreview();
+        activateTab("quote");
       }
 
       function getSelectedText() {
@@ -539,6 +719,120 @@
         return isUrdu ? "var(--font-urdu)" : "var(--font-serif)";
       }
 
+      function normalizeUrl(input) {
+        const raw = safeTrim(input);
+        if (!raw) return "";
+        if (/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(raw)) return raw;
+        if (raw.startsWith("//")) return `https:${raw}`;
+        return `https://${raw}`;
+      }
+
+      function execNoteCommand(command, value = null) {
+        els.noteEditor.focus();
+        document.execCommand(command, false, value);
+      }
+
+      function insertNoteLink(inputUrl) {
+        const raw = safeTrim(inputUrl);
+        if (!raw) return;
+        const href = normalizeUrl(raw);
+        const html = `<a href="${escapeHtml(href)}" data-raw-url="${escapeHtml(raw)}" target="_blank" rel="noopener noreferrer">${escapeHtml(raw)}</a>`;
+        execNoteCommand("insertHTML", html);
+      }
+
+      function getNoteHtml() {
+        const html = els.noteEditor.innerHTML || "";
+        return html.replace(/^(<br>|\s|&nbsp;)*$/i, "");
+      }
+
+      function getPublicNoteHtml() {
+        const source = getNoteHtml();
+        if (!source) return "";
+        const temp = document.createElement("div");
+        temp.innerHTML = source;
+
+        temp.querySelectorAll("[data-private='1']").forEach((node) => {
+          node.remove();
+        });
+
+        temp.querySelectorAll("script,style,iframe,object").forEach((node) => node.remove());
+        temp.querySelectorAll("*").forEach((el) => {
+          [...el.attributes].forEach((attr) => {
+            if (attr.name.startsWith("on")) el.removeAttribute(attr.name);
+          });
+        });
+
+        return temp.innerHTML.trim();
+      }
+
+      function renderNotesPublic() {
+        const publicHtml = getPublicNoteHtml();
+        els.notesPublicContent.innerHTML = "";
+        els.notesLinksList.innerHTML = "";
+
+        if (!publicHtml) {
+          els.notesPublicCard.classList.add("hidden");
+          return;
+        }
+
+        const temp = document.createElement("div");
+        temp.innerHTML = publicHtml;
+        const seen = new Set();
+        const links = [];
+
+        temp.querySelectorAll("a[href]").forEach((a) => {
+          const rawAttr = safeTrim(a.getAttribute("data-raw-url") || "");
+          const text = safeTrim(a.textContent || "");
+          let href = safeTrim(a.getAttribute("href") || "");
+          if (!/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(href)) href = normalizeUrl(href);
+
+          let raw = rawAttr || text || href;
+          if (!/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(raw) && raw.includes(".")) raw = normalizeUrl(raw);
+          if (!/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(raw)) raw = href;
+
+          const key = `${href}__${raw}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            links.push({ href, raw });
+          }
+
+          a.replaceWith(document.createTextNode(rawAttr || text || href));
+        });
+
+        els.notesPublicContent.innerHTML = temp.innerHTML;
+
+        for (const linkInfo of links) {
+          const row = document.createElement("div");
+          row.className = "flex items-center gap-1.5 rounded-md border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-1";
+
+          const open = document.createElement("a");
+          open.href = linkInfo.href;
+          open.target = "_blank";
+          open.rel = "noopener noreferrer";
+          open.className = "min-w-0 flex-1 truncate text-[10px] text-blue-700 underline";
+          open.textContent = linkInfo.raw;
+          open.title = linkInfo.raw;
+
+          const copyBtn = document.createElement("button");
+          copyBtn.type = "button";
+          copyBtn.className = "rounded border border-[var(--line)] bg-white px-1.5 py-0.5 text-[10px] text-gray-700 hover:bg-gray-50";
+          copyBtn.textContent = "Copy";
+          copyBtn.addEventListener("click", async () => {
+            try {
+              await navigator.clipboard.writeText(linkInfo.raw);
+              showStatus("Link copied.");
+            } catch (error) {
+              showStatus("Copy failed for this link.", true);
+            }
+          });
+
+          row.append(open, copyBtn);
+          els.notesLinksList.appendChild(row);
+        }
+
+        els.notesPublicCard.classList.remove("hidden");
+      }
+
       function updateLanguageStyles() {
         const lang = els.languageSelect.value;
         const isUrdu = lang === "ur";
@@ -552,13 +846,23 @@
         els.sourceText.dir = isUrdu ? "rtl" : "ltr";
         els.headingInput.dir = isUrdu ? "rtl" : "ltr";
         els.referenceInput.dir = isUrdu ? "rtl" : "ltr";
+        els.noteEditor.dir = isUrdu ? "rtl" : "ltr";
         els.searchInput.dir = "ltr";
 
         els.sourceText.classList.toggle("ur-input", isUrdu);
         els.headingInput.classList.toggle("ur-input", isUrdu);
         els.referenceInput.classList.toggle("ur-input", isUrdu);
+        els.noteEditor.classList.toggle("ur-input", isUrdu);
 
+        const theme = THEMES[els.themeSelect.value] || THEMES.parchment;
         const fontFamily = getQuoteFontFamily(isUrdu);
+        const customText = safeTrim(els.customTextColorInput.value);
+        const customBackground = safeTrim(els.customBackgroundInput.value);
+
+        els.previewCard.style.background = customBackground || theme.cardBg;
+        els.previewCard.style.borderColor = theme.borderColor;
+        els.previewCard.style.setProperty("--quote-mark", theme.markColor);
+
         els.previewQuote.style.fontFamily = fontFamily;
         els.previewHeading.style.fontFamily = fontFamily;
         els.previewReference.style.fontFamily = fontFamily;
@@ -566,8 +870,17 @@
         const fontSize = Number(els.fontSizeInput.value) || 28;
         const lineHeight =
           Number(els.lineHeightInput.value) || (isUrdu ? 1.95 : 1.6);
+        const headingSize = Number(els.headingSizeInput.value) || 20;
+        const referenceSize = Number(els.referenceSizeInput.value) || 14;
         els.previewQuote.style.fontSize = `${fontSize}px`;
         els.previewQuote.style.lineHeight = String(lineHeight);
+        els.previewHeading.style.fontSize = `${headingSize}px`;
+        els.previewReference.style.fontSize = `${referenceSize}px`;
+
+        const finalTextColor = customText || theme.quoteColor;
+        els.previewQuote.style.color = finalTextColor;
+        els.previewHeading.style.color = customText || theme.headingColor;
+        els.previewReference.style.color = customText || theme.referenceColor;
       }
 
       function renderPreview() {
@@ -606,6 +919,8 @@
           els.previewReference.classList.add("hidden");
           els.quoteRefSeparator.classList.add("hidden");
         }
+
+        renderNotesPublic();
       }
 
       function setPresentMode(on) {
@@ -617,20 +932,32 @@
       function getSnapshotForSave() {
         const quote = getQuoteText();
         if (!quote) return null;
+        const existing = state.editingId
+          ? state.quotes.find((q) => q.id === state.editingId)
+          : null;
+        const id =
+          existing?.id ||
+          (crypto.randomUUID
+            ? crypto.randomUUID()
+            : `q-${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
         return {
-          id: crypto.randomUUID
-            ? crypto.randomUUID()
-            : `q-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          id,
           heading: safeTrim(els.headingInput.value),
           quote,
+          noteHtml: getNoteHtml(),
           reference: safeTrim(els.referenceInput.value),
           language: els.languageSelect.value,
           fontChoice: els.fontSelect.value,
           fontSize: Number(els.fontSizeInput.value) || 28,
           lineHeight: Number(els.lineHeightInput.value) || 1.95,
-          pinned: false,
-          createdAt: nowIso(),
+          headingSize: Number(els.headingSizeInput.value) || 20,
+          referenceSize: Number(els.referenceSizeInput.value) || 14,
+          theme: els.themeSelect.value,
+          customTextColor: safeTrim(els.customTextColorInput.value),
+          customBackground: safeTrim(els.customBackgroundInput.value),
+          pinned: existing ? !!existing.pinned : false,
+          createdAt: existing?.createdAt || nowIso(),
           updatedAt: nowIso(),
         };
       }
@@ -714,6 +1041,13 @@
         return `${clean.slice(0, limit)}...`;
       }
 
+      function htmlToText(html) {
+        if (!html) return "";
+        const temp = document.createElement("div");
+        temp.innerHTML = html;
+        return safeTrim(temp.textContent || "");
+      }
+
       function setCuratorCount() {
         const total = state.quotes.length;
         const pinned = state.quotes.filter((q) => q.pinned).length;
@@ -771,7 +1105,7 @@
         return state.quotes
           .filter((item) => {
             const hay =
-              `${item.heading || ""} ${item.quote || ""} ${item.reference || ""}`.toLowerCase();
+              `${item.heading || ""} ${item.quote || ""} ${item.reference || ""} ${htmlToText(item.noteHtml || "")}`.toLowerCase();
             return hay.includes(q);
           })
           .slice(0, 25);
@@ -815,20 +1149,29 @@
         els.fontSelect.value = item.fontChoice || "auto";
         els.fontSizeInput.value = String(item.fontSize || 28);
         els.lineHeightInput.value = String(item.lineHeight || 1.95);
+        els.headingSizeInput.value = String(item.headingSize || 20);
+        els.referenceSizeInput.value = String(item.referenceSize || 14);
+        els.themeSelect.value = item.theme && THEMES[item.theme] ? item.theme : "parchment";
+        els.customTextColorInput.value = item.customTextColor || "";
+        els.customBackgroundInput.value = item.customBackground || "";
 
         els.headingInput.value = item.heading || "";
         els.referenceInput.value = item.reference || "";
+        els.noteEditor.innerHTML = item.noteHtml || "";
 
         els.selectionToggle.checked = false;
         els.sourceText.value = item.quote || "";
         els.sourceText.setSelectionRange(0, 0);
 
+        setEditingState(item.id, item.heading || "");
         renderPreview();
-        showStatus("Loaded saved quote.");
+        activateTab("quote");
+        showStatus("Loaded saved quote in edit mode.");
       }
 
       async function saveCurrentQuote() {
         try {
+          const wasEditing = !!state.editingId;
           const snapshot = getSnapshotForSave();
           if (!snapshot) {
             showStatus("Nothing to save. Add/select a quote first.", true);
@@ -837,7 +1180,8 @@
 
           await dbPutQuote(snapshot);
           await refreshQuotes();
-          showStatus("Quote saved.");
+          setEditingState(snapshot.id, snapshot.heading || "");
+          showStatus(wasEditing ? "Quote updated." : "Quote saved.");
         } catch (error) {
           showStatus(error.message || "Save failed.", true);
         }
@@ -863,6 +1207,9 @@
       async function deleteSavedQuote(id) {
         try {
           await dbDeleteQuote(id);
+          if (state.editingId === id) {
+            clearComposerForNewQuote();
+          }
           await refreshQuotes();
           showStatus("Quote deleted.");
         } catch (error) {
@@ -945,11 +1292,17 @@
                   : `q-${Date.now()}-${Math.random().toString(16).slice(2)}`),
               heading: safeTrim(raw.heading),
               quote,
+              noteHtml: typeof raw.noteHtml === "string" ? raw.noteHtml : "",
               reference: safeTrim(raw.reference),
               language: raw.language === "en" ? "en" : "ur",
               fontChoice: raw.fontChoice || "auto",
               fontSize: Number(raw.fontSize) || 28,
               lineHeight: Number(raw.lineHeight) || 1.95,
+              headingSize: Number(raw.headingSize) || 20,
+              referenceSize: Number(raw.referenceSize) || 14,
+              theme: raw.theme && THEMES[raw.theme] ? raw.theme : "parchment",
+              customTextColor: safeTrim(raw.customTextColor),
+              customBackground: safeTrim(raw.customBackground),
               pinned: !!raw.pinned,
               createdAt: raw.createdAt || nowIso(),
               updatedAt: raw.updatedAt || nowIso(),
@@ -967,13 +1320,23 @@
       }
 
       function bindEvents() {
+        document.querySelectorAll(".tab-btn").forEach((btn) => {
+          btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+        });
+
         els.languageSelect.addEventListener("change", renderPreview);
         els.selectionToggle.addEventListener("change", renderPreview);
         els.fontSelect.addEventListener("change", renderPreview);
         els.fontSizeInput.addEventListener("input", renderPreview);
         els.lineHeightInput.addEventListener("input", renderPreview);
+        els.headingSizeInput.addEventListener("input", renderPreview);
+        els.referenceSizeInput.addEventListener("input", renderPreview);
+        els.themeSelect.addEventListener("change", renderPreview);
+        els.customTextColorInput.addEventListener("input", renderPreview);
+        els.customBackgroundInput.addEventListener("input", renderPreview);
         els.headingInput.addEventListener("input", renderPreview);
         els.referenceInput.addEventListener("input", renderPreview);
+        els.noteEditor.addEventListener("input", renderPreview);
 
         els.sourceText.addEventListener("input", renderPreview);
         els.sourceText.addEventListener("mouseup", renderPreview);
@@ -981,7 +1344,43 @@
         els.sourceText.addEventListener("select", renderPreview);
 
         els.fileInput.addEventListener("change", handleFileUpload);
+        els.newQuoteBtn.addEventListener("click", () => {
+          clearComposerForNewQuote();
+          showStatus("Ready for a new quote.");
+        });
         els.saveQuoteBtn.addEventListener("click", saveCurrentQuote);
+
+        els.noteBoldBtn.addEventListener("click", () => execNoteCommand("bold"));
+        els.noteItalicBtn.addEventListener("click", () => execNoteCommand("italic"));
+        els.noteLinkBtn.addEventListener("click", () => {
+          const url = window.prompt("Enter URL");
+          if (!url) return;
+          insertNoteLink(url);
+          renderPreview();
+        });
+        els.notePrivateBtn.addEventListener("click", () => {
+          const selection = window.getSelection();
+          if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+            showStatus("Select note text first, then click Private.", true);
+            return;
+          }
+          const span = document.createElement("span");
+          span.setAttribute("data-private", "1");
+          span.className = "private-chip";
+          try {
+            const range = selection.getRangeAt(0);
+            range.surroundContents(span);
+            selection.removeAllRanges();
+            renderPreview();
+            showStatus("Marked selected note text as private.");
+          } catch (error) {
+            showStatus("Could not mark this selection. Try a simpler selection.", true);
+          }
+        });
+        els.noteClearBtn.addEventListener("click", () => {
+          els.noteEditor.innerHTML = "";
+          renderPreview();
+        });
 
         els.exportBtn.addEventListener("click", exportQuotes);
         els.importBtn.addEventListener("click", () =>
@@ -1032,12 +1431,16 @@
         try {
           state.db = await openDb();
           bindEvents();
+          setEditingState(null);
+          activateTab("quote");
           renderPreview();
           setPresentMode(false);
           await refreshQuotes();
           showStatus("Ready.");
         } catch (error) {
           bindEvents();
+          setEditingState(null);
+          activateTab("quote");
           renderPreview();
           setPresentMode(false);
           showStatus(error.message || "Startup failed.", true);
