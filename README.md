@@ -45,3 +45,7 @@ https://www.shakeeb.in
 - [urdu-dashboard](https://shakesvision.github.io/html-experiments/urdu-dashboard/index.html)
 - [wp-dp-dw](https://shakesvision.github.io/html-experiments/wp-dp-dw/index.html)
 - [zip-editor](https://shakesvision.github.io/html-experiments/zip-editor/index.html)
+- [gedcom](https://shakesvision.github.io/html-experiments/gedcom/index.html)
+- [json-ui](https://shakesvision.github.io/html-experiments/json-ui/index.html)
+- [news](https://shakesvision.github.io/html-experiments/news/index.html)
+- [quoter](https://shakesvision.github.io/html-experiments/quoter/index.html)

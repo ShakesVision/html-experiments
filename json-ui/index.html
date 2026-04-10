@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>json-ui</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      defer
+      src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+
+    <!-- JSON TREE -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/jsoneditor@9.10.0/dist/jsoneditor.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/jsoneditor@9.10.0/dist/jsoneditor.min.js"></script>
+
+    <!-- Nunjucks -->
+    <script src="https://cdn.jsdelivr.net/npm/nunjucks@3.2.4/browser/nunjucks.min.js"></script>
+
+    <style>
+      textarea {
+        font-family: monospace;
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-100">
+    <div x-data="app()" x-init="init()" class="h-screen flex flex-col">
+      <!-- HEADER -->
+      <div class="bg-black text-white p-2 flex justify-between">
+        <div>⚡ json-ui</div>
+        <div class="text-sm">by shakeeb ahmad</div>
+      </div>
+
+      <div class="flex flex-1 overflow-hidden">
+        <!-- LEFT: JSON -->
+        <div class="w-1/3 p-2 bg-white border-r flex flex-col">
+          <textarea
+            x-model="jsonText"
+            class="h-32 border p-1 text-xs"
+          ></textarea>
+
+          <button
+            @click="loadJSON()"
+            class="bg-blue-500 text-white mt-1 text-xs p-1"
+          >
+            Load JSON
+          </button>
+
+          <div id="tree" class="flex-1 mt-2 border"></div>
+        </div>
+
+        <!-- MIDDLE: TEMPLATE -->
+        <div class="w-1/3 p-2 border-r flex flex-col">
+          <h3 class="text-sm font-bold">Template (Shorthand)</h3>
+
+          <textarea
+            x-ref="editor"
+            x-model="template"
+            class="flex-1 border p-2 text-xs"
+          ></textarea>
+
+          <h3 class="text-sm font-bold mt-2">CSS</h3>
+
+          <textarea x-model="css" class="h-32 border p-2 text-xs"></textarea>
+        </div>
+
+        <!-- RIGHT: OUTPUT -->
+        <div class="w-1/3 p-2 overflow-auto">
+          <style x-text="css"></style>
+
+          <div class="bg-white p-3 border min-h-full" x-html="render()"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function app() {
+        return {
+          jsonText: `{
+  "posts":[
+    {"title":"Hello","url":"#1"},
+    {"title":"World","url":"#2"}
+  ]
+}`,
+
+          jsonData: {},
+
+          template: `div.wrapper
+  h1.title My Posts
+
+  each posts[]
+    div.post
+      a.link[href="{{url}}"] {{title}}`,
+
+          css: `.title{font-size:20px;font-weight:bold;}
+.post{margin:10px 0;}`,
+
+          tree: null,
+
+          init() {
+            this.loadJSON();
+
+            // JSON TREE
+            const container = document.getElementById("tree");
+
+            this.tree = new JSONEditor(container, {
+              mode: "tree",
+              onEvent: (node, event) => {
+                if (event.type === "click" && node.path) {
+                  let path = node.path.join(".");
+                  this.insertAtCursor(path);
+                }
+              },
+            });
+
+            this.tree.set(this.jsonData);
+
+            // nunjucks config
+            nunjucks.configure({ autoescape: false });
+          },
+
+          loadJSON() {
+            try {
+              this.jsonData = JSON.parse(this.jsonText);
+              if (this.tree) this.tree.set(this.jsonData);
+            } catch (e) {
+              alert("Invalid JSON");
+            }
+          },
+
+          // INSERT AT CURSOR
+          insertAtCursor(path) {
+            let el = this.$refs.editor;
+            let start = el.selectionStart;
+
+            let text = `{{${path}}}`;
+
+            this.template =
+              this.template.slice(0, start) + text + this.template.slice(start);
+
+            this.$nextTick(() => {
+              el.focus();
+              el.selectionStart = el.selectionEnd = start + text.length;
+            });
+          },
+
+          // ---------- PARSER ----------
+          parseTemplate(template) {
+            const lines = template.split("\n");
+            const root = { children: [] };
+            const stack = [{ indent: -1, node: root }];
+
+            lines.forEach((line) => {
+              if (!line.trim()) return;
+
+              const indent = line.match(/^\s*/)[0].length;
+              const content = line.trim();
+
+              const node = { content, children: [] };
+
+              while (stack.length && stack[stack.length - 1].indent >= indent) {
+                stack.pop();
+              }
+
+              stack[stack.length - 1].node.children.push(node);
+              stack.push({ indent, node });
+            });
+
+            return root.children;
+          },
+
+          // ---------- CONVERT TO NUNJUCKS ----------
+          toNunjucks(nodes) {
+            let html = "";
+
+            nodes.forEach((n) => {
+              // LOOP
+              if (n.content.startsWith("each ")) {
+                let path = n.content
+                  .replace("each ", "")
+                  .replace("[]", "")
+                  .trim();
+                let varName = "item";
+
+                html += `{% for ${varName} in ${path} %}`;
+                html += this.toNunjucks(n.children);
+                html += `{% endfor %}`;
+                return;
+              }
+
+              let match = n.content.match(
+                /^([a-z0-9]+)(\.[^\s\[]+)?(\[.*?\])?\s?(.*)$/i,
+              );
+
+              if (!match) return;
+
+              let tag = match[1];
+              let classes = match[2]?.replaceAll(".", " ") || "";
+              let attrsRaw = match[3] || "";
+              let text = match[4] || "";
+
+              // attributes
+              let attrs = attrsRaw.replace(/\[(.*?)\]/g, (m, p) => {
+                return p;
+              });
+
+              let inner = this.toNunjucks(n.children);
+
+              html += `<${tag} class="${classes}" ${attrs}>${text}${inner}</${tag}>`;
+            });
+
+            return html;
+          },
+
+          render() {
+            try {
+              let tree = this.parseTemplate(this.template);
+              let nunjucksTpl = this.toNunjucks(tree);
+
+              return nunjucks.renderString(nunjucksTpl, this.jsonData);
+            } catch (e) {
+              return `<pre style="color:red">${e.message}</pre>`;
+            }
+          },
+        };
+      }
+    </script>
+  </body>
+</html>
