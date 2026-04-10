@@ -269,14 +269,23 @@
             </div>
           </div>
 
-          <div class="mb-2 flex items-center justify-between gap-2 rounded-md border border-[var(--line)] bg-white px-2 py-1.5">
-            <p id="editingState" class="truncate text-[11px] font-medium text-gray-700">Creating new quote</p>
+          <div
+            class="mb-2 flex items-center justify-between gap-2 rounded-md border border-[var(--line)] bg-white px-2 py-1.5"
+          >
+            <p
+              id="editingState"
+              class="truncate text-[11px] font-medium text-gray-700"
+            >
+              Creating new quote
+            </p>
             <p class="text-[10px] text-gray-500">Ctrl+S save/update</p>
           </div>
 
           <div class="mb-2 grid grid-cols-2 gap-2">
             <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700">Language</span>
+              <span class="text-[11px] font-medium text-gray-700"
+                >Language</span
+              >
               <select
                 id="languageSelect"
                 class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
@@ -287,7 +296,9 @@
             </label>
 
             <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700">Quote Source</span>
+              <span class="text-[11px] font-medium text-gray-700"
+                >Quote Source</span
+              >
               <span
                 class="inline-flex w-full items-center justify-between rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px]"
               >
@@ -302,16 +313,48 @@
             </label>
           </div>
 
-          <div class="mb-2 flex gap-1.5 rounded-md border border-[var(--line)] bg-[var(--bg-panel)] p-1">
-            <button id="tabQuoteBtn" class="tab-btn active flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600" data-tab="quote" type="button">Quote</button>
-            <button id="tabCuratorBtn" class="tab-btn flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600" data-tab="curator" type="button">Curator</button>
-            <button id="tabNotesBtn" class="tab-btn flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600" data-tab="notes" type="button">Notes</button>
-            <button id="tabStyleBtn" class="tab-btn flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600" data-tab="style" type="button">Style</button>
+          <div
+            class="mb-2 flex gap-1.5 rounded-md border border-[var(--line)] bg-[var(--bg-panel)] p-1"
+          >
+            <button
+              id="tabQuoteBtn"
+              class="tab-btn active flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600"
+              data-tab="quote"
+              type="button"
+            >
+              Quote
+            </button>
+            <button
+              id="tabCuratorBtn"
+              class="tab-btn flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600"
+              data-tab="curator"
+              type="button"
+            >
+              Curator
+            </button>
+            <button
+              id="tabNotesBtn"
+              class="tab-btn flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600"
+              data-tab="notes"
+              type="button"
+            >
+              Notes
+            </button>
+            <button
+              id="tabStyleBtn"
+              class="tab-btn flex-1 rounded border border-transparent px-2 py-1 text-[11px] font-medium text-gray-600"
+              data-tab="style"
+              type="button"
+            >
+              Style
+            </button>
           </div>
 
           <div id="tabQuote" class="tab-pane active space-y-2">
             <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700">Heading (optional)</span>
+              <span class="text-[11px] font-medium text-gray-700"
+                >Heading (optional)</span
+              >
               <input
                 id="headingInput"
                 type="text"
@@ -320,7 +363,9 @@
             </label>
 
             <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700">Reference (optional)</span>
+              <span class="text-[11px] font-medium text-gray-700"
+                >Reference (optional)</span
+              >
               <input
                 id="referenceInput"
                 type="text"
@@ -329,7 +374,9 @@
             </label>
 
             <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700">Typing Fix Box (not shown in quote)</span>
+              <span class="text-[11px] font-medium text-gray-700"
+                >Typing Fix Box (not shown in quote)</span
+              >
               <input
                 id="searchInput"
                 type="text"
@@ -338,7 +385,9 @@
             </label>
 
             <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700">Load .txt</span>
+              <span class="text-[11px] font-medium text-gray-700"
+                >Load .txt</span
+              >
               <input
                 id="fileInput"
                 type="file"
@@ -348,7 +397,9 @@
             </label>
 
             <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700">Source Text (paste or upload)</span>
+              <span class="text-[11px] font-medium text-gray-700"
+                >Source Text (paste or upload)</span
+              >
               <textarea
                 id="sourceText"
                 rows="8"
@@ -360,7 +411,9 @@
 
           <div id="tabCurator" class="tab-pane space-y-2">
             <div class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700">Transfer</span>
+              <span class="text-[11px] font-medium text-gray-700"
+                >Transfer</span
+              >
               <div class="flex gap-1.5">
                 <button
                   id="exportBtn"
@@ -401,7 +454,9 @@
                 ></div>
               </div>
 
-              <div class="mt-2 flex items-center justify-between text-[10px] text-gray-600">
+              <div
+                class="mt-2 flex items-center justify-between text-[10px] text-gray-600"
+              >
                 <p id="curatorCount">0 quotes</p>
                 <p id="curatorHint">Pinned stay on top</p>
               </div>
@@ -411,26 +466,68 @@
           </div>
 
           <div id="tabNotes" class="tab-pane space-y-2">
-            <div class="space-y-1 rounded-md border border-[var(--line)] bg-white p-1.5">
+            <div
+              class="space-y-1 rounded-md border border-[var(--line)] bg-white p-1.5"
+            >
               <div class="flex items-center justify-between gap-2">
-                <span class="text-[11px] font-medium text-gray-700">Notes (saved with quote)</span>
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Notes (saved with quote)</span
+                >
                 <div class="flex flex-wrap items-center gap-1 text-[10px]">
-                  <button id="noteBoldBtn" type="button" class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5 font-semibold">B</button>
-                  <button id="noteItalicBtn" type="button" class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5 italic">I</button>
-                  <button id="noteLinkBtn" type="button" class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5">Link</button>
-                  <button id="notePrivateBtn" type="button" class="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-amber-800">Private</button>
-                  <button id="noteClearBtn" type="button" class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5">Clear</button>
+                  <button
+                    id="noteBoldBtn"
+                    type="button"
+                    class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5 font-semibold"
+                  >
+                    B
+                  </button>
+                  <button
+                    id="noteItalicBtn"
+                    type="button"
+                    class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5 italic"
+                  >
+                    I
+                  </button>
+                  <button
+                    id="noteLinkBtn"
+                    type="button"
+                    class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5"
+                  >
+                    Link
+                  </button>
+                  <button
+                    id="notePrivateBtn"
+                    type="button"
+                    class="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-amber-800"
+                  >
+                    Private
+                  </button>
+                  <button
+                    id="noteClearBtn"
+                    type="button"
+                    class="rounded border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-0.5"
+                  >
+                    Clear
+                  </button>
                 </div>
               </div>
-              <div id="noteEditor" contenteditable="true" class="note-editor rounded-md border border-[var(--line)] p-2 text-[11px]"></div>
-              <p class="text-[10px] text-gray-500">Private text is saved but hidden in right-side output.</p>
+              <div
+                id="noteEditor"
+                contenteditable="true"
+                class="note-editor rounded-md border border-[var(--line)] p-2 text-[11px]"
+              ></div>
+              <p class="text-[10px] text-gray-500">
+                Private text is saved but hidden in right-side output.
+              </p>
             </div>
           </div>
 
           <div id="tabStyle" class="tab-pane space-y-2">
             <div class="grid grid-cols-3 gap-2">
               <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700">Quote Font</span>
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Quote Font</span
+                >
                 <select
                   id="fontSelect"
                   class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
@@ -443,45 +540,113 @@
                 </select>
               </label>
               <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700">Quote Size</span>
-                <input id="fontSizeInput" type="range" min="16" max="54" step="1" value="28" class="w-full accent-[var(--accent)]" />
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Quote Size</span
+                >
+                <input
+                  id="fontSizeInput"
+                  type="range"
+                  min="16"
+                  max="54"
+                  step="1"
+                  value="28"
+                  class="w-full accent-[var(--accent)]"
+                />
               </label>
               <label class="space-y-1">
                 <span class="text-[11px] font-medium text-gray-700">Line</span>
-                <input id="lineHeightInput" type="range" min="1.2" max="2.5" step="0.05" value="1.95" class="w-full accent-[var(--accent)]" />
+                <input
+                  id="lineHeightInput"
+                  type="range"
+                  min="1.2"
+                  max="2.5"
+                  step="0.05"
+                  value="1.95"
+                  class="w-full accent-[var(--accent)]"
+                />
               </label>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
               <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700">Heading Size</span>
-                <input id="headingSizeInput" type="range" min="12" max="42" step="1" value="20" class="w-full accent-[var(--accent)]" />
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Heading Size</span
+                >
+                <input
+                  id="headingSizeInput"
+                  type="range"
+                  min="12"
+                  max="42"
+                  step="1"
+                  value="20"
+                  class="w-full accent-[var(--accent)]"
+                />
               </label>
               <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700">Reference Size</span>
-                <input id="referenceSizeInput" type="range" min="10" max="28" step="1" value="14" class="w-full accent-[var(--accent)]" />
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Reference Size</span
+                >
+                <input
+                  id="referenceSizeInput"
+                  type="range"
+                  min="10"
+                  max="28"
+                  step="1"
+                  value="14"
+                  class="w-full accent-[var(--accent)]"
+                />
               </label>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
               <label class="space-y-1">
                 <span class="text-[11px] font-medium text-gray-700">Theme</span>
-                <select id="themeSelect" class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]">
+                <select
+                  id="themeSelect"
+                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+                >
                   <option value="parchment" selected>Parchment</option>
                   <option value="night">Night</option>
                   <option value="emerald">Emerald</option>
                   <option value="rosewood">Rosewood</option>
+
+                  <option value="ocean">Ocean</option>
+                  <option value="sunset">Sunset</option>
+                  <option value="frost">Frost</option>
+                  <option value="coffee">Coffee</option>
+                  <option value="aurora">Aurora</option>
+                  <option value="amoled">AMOLED</option>
+                  <option value="pastel">Pastel</option>
+                  <option value="lava">Lava</option>
+                  <option value="forest">Forest</option>
+                  <option value="neon">Neon</option>
+                  <option value="vintage">Vintage</option>
+                  <option value="royal">Royal</option>
                 </select>
               </label>
               <label class="space-y-1">
-                <span class="text-[11px] font-medium text-gray-700">Custom Text Color</span>
-                <input id="customTextColorInput" type="text" placeholder="#1f2937 / rgb(...) / hsl(...)" class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]" />
+                <span class="text-[11px] font-medium text-gray-700"
+                  >Custom Text Color</span
+                >
+                <input
+                  id="customTextColorInput"
+                  type="text"
+                  placeholder="#1f2937 / rgb(...) / hsl(...)"
+                  class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+                />
               </label>
             </div>
 
             <label class="space-y-1">
-              <span class="text-[11px] font-medium text-gray-700">Custom Background (full CSS background)</span>
-              <input id="customBackgroundInput" type="text" placeholder="#fff, linear-gradient(...), url(...) center/cover no-repeat" class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]" />
+              <span class="text-[11px] font-medium text-gray-700"
+                >Custom Background (full CSS background)</span
+              >
+              <input
+                id="customBackgroundInput"
+                type="text"
+                placeholder="#fff, linear-gradient(...), url(...) center/cover no-repeat"
+                class="w-full rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] outline-none focus:border-[var(--accent)]"
+              />
             </label>
           </div>
 
@@ -522,9 +687,15 @@
             </div>
           </article>
 
-          <article id="notesPublicCard" class="mt-2.5 hidden rounded-xl border border-[var(--line)] bg-white/85 p-3">
+          <article
+            id="notesPublicCard"
+            class="mt-2.5 hidden rounded-xl border border-[var(--line)] bg-white/85 p-3"
+          >
             <h3 class="text-xs font-semibold text-gray-700">Notes & Links</h3>
-            <div id="notesPublicContent" class="public-note-content mt-1.5 text-xs text-gray-700"></div>
+            <div
+              id="notesPublicContent"
+              class="public-note-content mt-1.5 text-xs text-gray-700"
+            ></div>
             <div id="notesLinksList" class="mt-2 space-y-1"></div>
           </article>
         </section>
@@ -543,40 +714,170 @@
       const DB_VERSION = 1;
       const STORE_QUOTES = "quotes";
       const THEMES = {
+        // 📜 Parchment (classic reading feel)
         parchment: {
-          cardBg: "linear-gradient(165deg,#fffefc 0%,#fffdf8 70%,#faf4ec 100%)",
+          cardBg:
+            "linear-gradient(165deg, #fffefc 0%, #fffdf8 70%, #faf4ec 100%)",
           quoteColor: "#1f2937",
           headingColor: "#8b5e3c",
           referenceColor: "#6b7280",
           borderColor: "#d8cbbd",
-          markColor: "#b69478"
+          markColor: "#b69478",
         },
+
+        // 🌙 Night (dark minimal)
         night: {
-          cardBg: "linear-gradient(170deg,#0f172a 0%,#111827 100%)",
+          cardBg: "linear-gradient(170deg, #0f172a 0%, #111827 100%)",
           quoteColor: "#e5e7eb",
           headingColor: "#f3f4f6",
           referenceColor: "#9ca3af",
           borderColor: "#374151",
-          markColor: "#9ca3af"
+          markColor: "#9ca3af",
         },
+
+        // 🌿 Emerald (fresh green)
         emerald: {
-          cardBg: "linear-gradient(160deg,#f0fdf4 0%,#dcfce7 100%)",
+          cardBg: "linear-gradient(160deg, #f0fdf4 0%, #dcfce7 100%)",
           quoteColor: "#065f46",
           headingColor: "#047857",
-          referenceColor: "#065f46",
+          referenceColor: "#047857",
           borderColor: "#86efac",
-          markColor: "#059669"
+          markColor: "#059669",
         },
+
+        // 🌹 Rosewood (soft red/pink)
         rosewood: {
-          cardBg: "linear-gradient(160deg,#fff1f2 0%,#ffe4e6 100%)",
+          cardBg: "linear-gradient(160deg, #fff1f2 0%, #ffe4e6 100%)",
           quoteColor: "#4c0519",
           headingColor: "#9f1239",
           referenceColor: "#6b7280",
           borderColor: "#fecdd3",
-          markColor: "#be123c"
-        }
-      };
+          markColor: "#be123c",
+        },
 
+        // 🌊 Ocean
+        ocean: {
+          cardBg: "linear-gradient(160deg, #eff6ff 0%, #dbeafe 100%)",
+          quoteColor: "#1e3a8a",
+          headingColor: "#1d4ed8",
+          referenceColor: "#475569",
+          borderColor: "#93c5fd",
+          markColor: "#3b82f6",
+        },
+
+        // 🌅 Sunset
+        sunset: {
+          cardBg:
+            "linear-gradient(160deg, #fff7ed 0%, #ffe4e6 50%, #fde68a 100%)",
+          quoteColor: "#7c2d12",
+          headingColor: "#ea580c",
+          referenceColor: "#78716c",
+          borderColor: "#fdba74",
+          markColor: "#f97316",
+        },
+
+        // 🧊 Frost
+        frost: {
+          cardBg: "linear-gradient(160deg, #f8fafc 0%, #e2e8f0 100%)",
+          quoteColor: "#0f172a",
+          headingColor: "#334155",
+          referenceColor: "#64748b",
+          borderColor: "#cbd5e1",
+          markColor: "#94a3b8",
+        },
+
+        // 🪵 Coffee
+        coffee: {
+          cardBg: "linear-gradient(160deg, #fdf8f6 0%, #f5ebe0 100%)",
+          quoteColor: "#3e2723",
+          headingColor: "#6d4c41",
+          referenceColor: "#8d6e63",
+          borderColor: "#d7ccc8",
+          markColor: "#a1887f",
+        },
+
+        // 🌌 Aurora
+        aurora: {
+          cardBg:
+            "linear-gradient(160deg, #eef2ff 0%, #f0fdf4 50%, #ecfeff 100%)",
+          quoteColor: "#1e293b",
+          headingColor: "#7c3aed",
+          referenceColor: "#475569",
+          borderColor: "#c7d2fe",
+          markColor: "#22c55e",
+        },
+
+        // 🖤 AMOLED
+        amoled: {
+          cardBg: "linear-gradient(160deg, #000000 0%, #020617 100%)",
+          quoteColor: "#f9fafb",
+          headingColor: "#ffffff",
+          referenceColor: "#9ca3af",
+          borderColor: "#111827",
+          markColor: "#e5e7eb",
+        },
+
+        // 🎨 Pastel
+        pastel: {
+          cardBg:
+            "linear-gradient(160deg, #fdf4ff 0%, #f0f9ff 50%, #fefce8 100%)",
+          quoteColor: "#4a044e",
+          headingColor: "#a21caf",
+          referenceColor: "#6b7280",
+          borderColor: "#e9d5ff",
+          markColor: "#c084fc",
+        },
+
+        // 🔥 Lava
+        lava: {
+          cardBg: "linear-gradient(160deg, #1c1917 0%, #292524 100%)",
+          quoteColor: "#f5f5f4",
+          headingColor: "#f97316",
+          referenceColor: "#a8a29e",
+          borderColor: "#44403c",
+          markColor: "#ea580c",
+        },
+
+        // 🌲 Forest
+        forest: {
+          cardBg: "linear-gradient(160deg, #ecfdf5 0%, #d1fae5 100%)",
+          quoteColor: "#022c22",
+          headingColor: "#065f46",
+          referenceColor: "#047857",
+          borderColor: "#6ee7b7",
+          markColor: "#047857",
+        },
+
+        // 🧪 Neon
+        neon: {
+          cardBg: "linear-gradient(160deg, #0f172a 0%, #020617 100%)",
+          quoteColor: "#e0f2fe",
+          headingColor: "#22d3ee",
+          referenceColor: "#94a3b8",
+          borderColor: "#0ea5e9",
+          markColor: "#22c55e",
+        },
+
+        // 📜 Vintage
+        vintage: {
+          cardBg: "linear-gradient(160deg, #fefae0 0%, #faedcd 100%)",
+          quoteColor: "#3a2e2a",
+          headingColor: "#7f5539",
+          referenceColor: "#6c584c",
+          borderColor: "#e9edc9",
+          markColor: "#b08968",
+        },
+
+        // 💎 Royal
+        royal: {
+          cardBg: "linear-gradient(160deg, #eef2ff 0%, #e0e7ff 100%)",
+          quoteColor: "#1e1b4b",
+          headingColor: "#4338ca",
+          referenceColor: "#6366f1",
+          borderColor: "#a5b4fc",
+          markColor: "#4f46e5",
+        },
+      };
       const els = {
         languageSelect: document.getElementById("languageSelect"),
         selectionToggle: document.getElementById("selectionToggle"),
@@ -669,8 +970,12 @@
         state.activeTab = tabName;
         const tabs = ["quote", "curator", "notes", "style"];
         for (const name of tabs) {
-          const btn = document.getElementById(`tab${name[0].toUpperCase()}${name.slice(1)}Btn`);
-          const pane = document.getElementById(`tab${name[0].toUpperCase()}${name.slice(1)}`);
+          const btn = document.getElementById(
+            `tab${name[0].toUpperCase()}${name.slice(1)}Btn`,
+          );
+          const pane = document.getElementById(
+            `tab${name[0].toUpperCase()}${name.slice(1)}`,
+          );
           btn.classList.toggle("active", name === tabName);
           pane.classList.toggle("active", name === tabName);
         }
@@ -773,7 +1078,9 @@
           node.remove();
         });
 
-        temp.querySelectorAll("script,style,iframe,object").forEach((node) => node.remove());
+        temp
+          .querySelectorAll("script,style,iframe,object")
+          .forEach((node) => node.remove());
         temp.querySelectorAll("*").forEach((el) => {
           [...el.attributes].forEach((attr) => {
             if (attr.name.startsWith("on")) el.removeAttribute(attr.name);
@@ -805,7 +1112,8 @@
           if (!/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(href)) href = normalizeUrl(href);
 
           let raw = rawAttr || text || href;
-          if (!/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(raw) && raw.includes(".")) raw = normalizeUrl(raw);
+          if (!/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(raw) && raw.includes("."))
+            raw = normalizeUrl(raw);
           if (!/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(raw)) raw = href;
 
           const key = `${href}__${raw}`;
@@ -821,19 +1129,22 @@
 
         for (const linkInfo of links) {
           const row = document.createElement("div");
-          row.className = "flex items-center gap-1.5 rounded-md border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-1";
+          row.className =
+            "flex items-center gap-1.5 rounded-md border border-[var(--line)] bg-[var(--bg-panel)] px-1.5 py-1";
 
           const open = document.createElement("a");
           open.href = linkInfo.href;
           open.target = "_blank";
           open.rel = "noopener noreferrer";
-          open.className = "min-w-0 flex-1 truncate text-[10px] text-blue-700 underline";
+          open.className =
+            "min-w-0 flex-1 truncate text-[10px] text-blue-700 underline";
           open.textContent = linkInfo.raw;
           open.title = linkInfo.raw;
 
           const copyBtn = document.createElement("button");
           copyBtn.type = "button";
-          copyBtn.className = "rounded border border-[var(--line)] bg-white px-1.5 py-0.5 text-[10px] text-gray-700 hover:bg-gray-50";
+          copyBtn.className =
+            "rounded border border-[var(--line)] bg-white px-1.5 py-0.5 text-[10px] text-gray-700 hover:bg-gray-50";
           copyBtn.textContent = "Copy";
           copyBtn.addEventListener("click", async () => {
             try {
@@ -1169,7 +1480,8 @@
         els.lineHeightInput.value = String(item.lineHeight || 1.95);
         els.headingSizeInput.value = String(item.headingSize || 20);
         els.referenceSizeInput.value = String(item.referenceSize || 14);
-        els.themeSelect.value = item.theme && THEMES[item.theme] ? item.theme : "parchment";
+        els.themeSelect.value =
+          item.theme && THEMES[item.theme] ? item.theme : "parchment";
         els.customTextColorInput.value = item.customTextColor || "";
         els.customBackgroundInput.value = item.customBackground || "";
 
@@ -1368,8 +1680,12 @@
         });
         els.saveQuoteBtn.addEventListener("click", saveCurrentQuote);
 
-        els.noteBoldBtn.addEventListener("click", () => execNoteCommand("bold"));
-        els.noteItalicBtn.addEventListener("click", () => execNoteCommand("italic"));
+        els.noteBoldBtn.addEventListener("click", () =>
+          execNoteCommand("bold"),
+        );
+        els.noteItalicBtn.addEventListener("click", () =>
+          execNoteCommand("italic"),
+        );
         els.noteLinkBtn.addEventListener("click", () => {
           const url = window.prompt("Enter URL");
           if (!url) return;
@@ -1378,7 +1694,11 @@
         });
         els.notePrivateBtn.addEventListener("click", () => {
           const selection = window.getSelection();
-          if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+          if (
+            !selection ||
+            selection.rangeCount === 0 ||
+            selection.isCollapsed
+          ) {
             showStatus("Select note text first, then click Private.", true);
             return;
           }
@@ -1392,7 +1712,10 @@
             renderPreview();
             showStatus("Marked selected note text as private.");
           } catch (error) {
-            showStatus("Could not mark this selection. Try a simpler selection.", true);
+            showStatus(
+              "Could not mark this selection. Try a simpler selection.",
+              true,
+            );
           }
         });
         els.noteClearBtn.addEventListener("click", () => {
