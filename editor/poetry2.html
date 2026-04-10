@@ -1,133 +1,201 @@
 <!doctype html>
-<html lang="ur">
+<!doctype html>
+<html lang="ur" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <title>Poetry Formatter</title>
+    <title>فارمیٹرِ شاعری</title>
 
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Material Icons -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+
     <!-- shakeeb-justify -->
     <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@1.0.9/dist/shakeeb-justify.min.js"></script>
 
-    <!-- html2canvas for image download -->
+    <!-- html2canvas -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   </head>
 
-  <body class="bg-gray-100 p-6">
-    <!-- CONTROLS -->
-    <div class="max-w-5xl mx-auto space-y-4">
-      <!-- TEXT INPUT -->
-      <textarea
-        id="inputText"
-        rows="6"
-        class="w-full p-4 rounded-lg border text-lg text-right"
-        placeholder="ہر مصرع ایک لائن میں لکھیں..."
-      ></textarea>
+  <body
+    class="bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 min-h-screen"
+  >
+    <div class="max-w-7xl mx-auto p-4 md:p-6">
+      <!-- MAIN GRID -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- RIGHT SIDE (INPUT + CONTROLS in RTL) -->
+        <div class="space-y-5">
+          <!-- INPUT -->
+          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4">
+            <textarea
+              id="inputText"
+              rows="6"
+              class="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-300 outline-none text-lg text-right bg-white/60"
+              placeholder="ہر مصرع الگ لائن میں لکھیں..."
+            ></textarea>
+          </div>
 
-      <!-- PATTERN BUTTONS -->
-      <div class="flex flex-wrap gap-2 justify-center">
-        <button onclick="setPattern('sher')" class="btn">Sher</button>
-        <button onclick="setPattern('sher2')" class="btn">Sher 2-col</button>
-        <button onclick="setPattern('mukhammas')" class="btn">Mukhammas</button>
-        <button onclick="setPattern('mukhammas-3-2')" class="btn">3+2</button>
-        <button onclick="setPattern('mukhammas-mixed')" class="btn">
-          Mixed 4+1
-        </button>
-        <button onclick="setPattern('musaddas')" class="btn">Musaddas</button>
-        <button onclick="setPattern('musaddas-6')" class="btn">6 Lines</button>
-        <button onclick="setPattern('musaddas-mixed')" class="btn">
-          Mixed 4+2
-        </button>
+          <!-- PATTERNS -->
+          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4">
+            <div class="flex flex-wrap gap-2 justify-center">
+              <button onclick="setPattern('sher')" class="chip">
+                <span class="material-symbols-outlined"
+                  >format_align_center</span
+                >
+                شعر
+              </button>
+
+              <button onclick="setPattern('sher2')" class="chip">
+                دو کالم شعر
+              </button>
+              <button onclick="setPattern('mukhammas')" class="chip">
+                مخمس
+              </button>
+              <button onclick="setPattern('mukhammas-3-2')" class="chip">
+                ۳+۲
+              </button>
+              <button onclick="setPattern('mukhammas-mixed')" class="chip">
+                ۴+۱
+              </button>
+              <button onclick="setPattern('musaddas')" class="chip">
+                مسدس
+              </button>
+              <button onclick="setPattern('musaddas-6')" class="chip">
+                ۶ مصرعے
+              </button>
+              <button onclick="setPattern('musaddas-mixed')" class="chip">
+                ۴+۲
+              </button>
+            </div>
+          </div>
+
+          <!-- CUSTOM -->
+          <div
+            class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 flex gap-2"
+          >
+            <input
+              id="customPattern"
+              placeholder="جیسے ۴ یا ۳+۲"
+              class="flex-1 border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-purple-300 outline-none text-right"
+            />
+            <button
+              onclick="applyCustomPattern()"
+              class="icon-btn bg-purple-500"
+            >
+              <span class="material-symbols-outlined">auto_fix_high</span>
+            </button>
+          </div>
+
+          <!-- STYLE -->
+          <div
+            class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3"
+          >
+            <div class="flex gap-2">
+              <input
+                id="bgInput"
+                placeholder="پس منظر"
+                class="flex-1 border border-gray-200 p-2 rounded-lg text-right"
+              />
+              <input
+                id="colorInput"
+                placeholder="متن رنگ"
+                class="w-32 border border-gray-200 p-2 rounded-lg text-right"
+              />
+              <button onclick="applyStyles()" class="icon-btn bg-indigo-500">
+                <span class="material-symbols-outlined">palette</span>
+              </button>
+            </div>
+
+            <!-- FONT -->
+            <div class="flex gap-2 flex-wrap">
+              <select id="fontSelector" class="border p-2 rounded-lg">
+                <option value="Mehr">مہر نستعلیق</option>
+                <option value="Payami">پیامی نستعلیق</option>
+                <option value="Emaad">عماد نستعلیق</option>
+              </select>
+
+              <input
+                id="fontUrlInput"
+                placeholder="فونٹ کا لنک"
+                class="flex-1 border p-2 rounded-lg text-right"
+              />
+
+              <button onclick="loadCustomFont()" class="icon-btn bg-pink-500">
+                <span class="material-symbols-outlined">font_download</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ACTIONS -->
+          <div
+            class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 flex justify-center gap-3"
+          >
+            <button onclick="downloadImage()" class="icon-btn bg-green-500">
+              <span class="material-symbols-outlined">download</span>
+            </button>
+
+            <button onclick="window.print()" class="icon-btn bg-gray-700">
+              <span class="material-symbols-outlined">print</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- LEFT SIDE (PREVIEW in RTL layout) -->
+        <div class="flex items-start justify-center">
+          <div
+            id="print-area"
+            class="w-full bg-white/80 backdrop-blur rounded-3xl shadow-xl px-10 py-12 text-center text-xl leading-loose min-h-[300px] transition-all"
+          ></div>
+        </div>
       </div>
-
-      <!-- CUSTOM PATTERN -->
-      <div class="flex gap-2 justify-center">
-        <input
-          id="customPattern"
-          placeholder="Custom pattern (e.g. 4 or 3+2)"
-          class="border p-2 rounded w-48"
-        />
-        <button
-          onclick="applyCustomPattern()"
-          class="btn bg-purple-600 text-white"
-        >
-          Apply Pattern
-        </button>
-      </div>
-
-      <!-- STYLE CONTROLS -->
-      <div class="flex flex-wrap gap-3 justify-center">
-        <input
-          id="bgInput"
-          placeholder="Background (e.g. #000 or gradient)"
-          class="border p-2 rounded w-64"
-        />
-
-        <input
-          id="colorInput"
-          placeholder="Text Color"
-          class="border p-2 rounded w-40"
-        />
-
-        <button onclick="applyStyles()" class="btn bg-indigo-600 text-white">
-          Apply Style
-        </button>
-      </div>
-
-      <!-- ACTIONS -->
-      <div class="flex gap-3 justify-center">
-        <button onclick="downloadImage()" class="btn bg-green-600 text-white">
-          Download Image
-        </button>
-
-        <button onclick="window.print()" class="btn bg-gray-700 text-white">
-          Print
-        </button>
-      </div>
-    </div>
-    <!-- FONT CONTROLS -->
-    <div class="flex flex-wrap gap-3 justify-center">
-      <select id="fontSelector" class="border p-2 rounded">
-        <option value="Mehr">Mehr Nastaliq</option>
-        <option value="Payami">Payami Nastaleeq</option>
-        <option value="Emaad">Emaad Nastaleeq</option>
-      </select>
-
-      <input
-        id="fontUrlInput"
-        placeholder="Paste .woff/.ttf font URL"
-        class="border p-2 rounded w-72"
-      />
-
-      <button onclick="loadCustomFont()" class="btn bg-pink-600 text-white">
-        Load Font
-      </button>
-    </div>
-
-    <!-- RESULT -->
-    <div class="flex justify-center mt-8">
-      <div
-        id="print-area"
-        class="bg-white rounded-xl shadow-lg px-16 py-12 text-center text-xl leading-loose min-h-[200px]"
-      ></div>
     </div>
 
     <!-- STYLES -->
     <style>
-      .btn {
-        padding: 0.5rem 1rem;
-        background-color: #2563eb;
-        color: white;
-        border-radius: 0.5rem;
+      body {
+        direction: rtl;
+      }
+
+      .chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #fdf2f8;
+        color: #9d174d;
+        font-size: 14px;
         cursor: pointer;
-        border: none;
         transition: 0.2s;
       }
 
-      .btn:hover {
-        background-color: #1d4ed8;
+      .chip:hover {
+        background: #fbcfe8;
       }
+
+      .icon-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        border-radius: 10px;
+        color: white;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+
+      .icon-btn:hover {
+        opacity: 0.9;
+      }
+
+      .material-symbols-outlined {
+        font-size: 20px;
+      }
+
       @font-face {
         font-family: "Mehr";
         src: url("https://cdn.jsdelivr.net/gh/ShakesVision/MehrNastaleeq@master/MehrNastaliqWeb.woff")
@@ -152,184 +220,192 @@
           format("woff");
       }
 
-      /* Default font */
       #print-area {
         font-family: "Mehr", serif;
       }
     </style>
-
     <!-- SCRIPT -->
     <script>
-      let currentFont = "Mehr";
+      document.addEventListener("DOMContentLoaded", function () {
+        let currentFont = "Mehr";
+        let currentPattern = "sher";
 
-      // FONT SWITCHER
-      document
-        .getElementById("fontSelector")
-        .addEventListener("change", function () {
-          currentFont = this.value;
-          applyFont();
-        });
+        const inputEl = document.getElementById("inputText");
+        const previewEl = document.getElementById("print-area");
+        const fontSelector = document.getElementById("fontSelector");
 
-      function applyFont() {
-        const preview = document.getElementById("print-area");
-        const input = document.getElementById("inputText");
-
-        preview.style.fontFamily = currentFont;
-        input.style.fontFamily = currentFont;
-      }
-
-      // LOAD CUSTOM FONT
-      function loadCustomFont() {
-        const url = document.getElementById("fontUrlInput").value.trim();
-
-        if (!url) return alert("Enter font URL");
-
-        const fontName = "CustomFont_" + Date.now();
-
-        const style = document.createElement("style");
-        style.innerHTML = `
-        @font-face {
-            font-family: '${fontName}';
-            src: url('${url}');
+        // ---------- FONT SWITCHER ----------
+        if (fontSelector) {
+          fontSelector.addEventListener("change", function () {
+            currentFont = this.value;
+            applyFont();
+          });
         }
+
+        function applyFont() {
+          if (!previewEl || !inputEl) return;
+
+          previewEl.style.fontFamily = currentFont;
+          inputEl.style.fontFamily = currentFont;
+        }
+
+        // ---------- LOAD CUSTOM FONT ----------
+        window.loadCustomFont = function () {
+          const urlInput = document.getElementById("fontUrlInput");
+          if (!urlInput) return;
+
+          const url = urlInput.value.trim();
+          if (!url) return alert("Font URL درج کریں");
+
+          const fontName = "CustomFont_" + Date.now();
+
+          const style = document.createElement("style");
+          style.innerHTML = `
+      @font-face {
+        font-family: '${fontName}';
+        src: url('${url}') format('woff2');
+      }
     `;
+          document.head.appendChild(style);
 
-        document.head.appendChild(style);
+          // Add to dropdown
+          const option = document.createElement("option");
+          option.value = fontName;
+          option.textContent = "کسٹم فونٹ";
 
-        // Add to dropdown
-        const option = document.createElement("option");
-        option.value = fontName;
-        option.textContent = "Custom Font";
-        document.getElementById("fontSelector").appendChild(option);
+          fontSelector.appendChild(option);
 
-        // Auto select it
-        document.getElementById("fontSelector").value = fontName;
-        currentFont = fontName;
+          // Auto select
+          fontSelector.value = fontName;
+          currentFont = fontName;
 
-        applyFont();
-      }
-      let currentPattern = "sher";
+          applyFont();
+        };
 
-      // Auto update
-      document
-        .getElementById("inputText")
-        .addEventListener("input", generateGhazal);
+        // ---------- INPUT AUTO UPDATE ----------
+        if (inputEl) {
+          inputEl.addEventListener("input", generateGhazal);
+        }
 
-      function setPattern(pattern) {
-        currentPattern = pattern;
-        generateGhazal();
-      }
+        // ---------- PATTERN ----------
+        window.setPattern = function (pattern) {
+          currentPattern = pattern;
+          generateGhazal();
+        };
 
-      function applyCustomPattern() {
-        currentPattern = null;
-        generateGhazal();
-      }
+        window.applyCustomPattern = function () {
+          currentPattern = null;
+          generateGhazal();
+        };
 
-      function generateGhazal() {
-        const input = document.getElementById("inputText").value;
-        const container = document.getElementById("print-area");
+        // ---------- MAIN RENDER ----------
+        function generateGhazal() {
+          if (!inputEl || !previewEl) return;
 
-        container.innerHTML = "";
+          const input = inputEl.value;
+          previewEl.innerHTML = "";
 
-        const lines = input.split("\n");
+          const lines = input.split("\n");
 
-        let inPoetry = false;
-        let poetryLines = [];
-        let poetryWrapper = null;
+          let inPoetry = false;
+          let poetryLines = [];
 
-        function renderPoetryBlock() {
-          if (poetryLines.length === 0) return;
+          function renderPoetryBlock() {
+            if (poetryLines.length === 0) return;
 
-          const wrapper = document.createElement("div");
+            const wrapper = document.createElement("div");
 
-          if (currentPattern) {
-            wrapper.className = currentPattern;
-          } else {
-            const pattern = document.getElementById("customPattern").value;
-            wrapper.setAttribute("data-pattern", pattern);
+            if (currentPattern) {
+              wrapper.className = currentPattern;
+            } else {
+              const customInput = document.getElementById("customPattern");
+              const pattern = customInput ? customInput.value : "";
+              wrapper.setAttribute("data-pattern", pattern);
+            }
+
+            poetryLines.forEach((line) => {
+              const div = document.createElement("div");
+              div.textContent = line;
+              wrapper.appendChild(div);
+            });
+
+            previewEl.appendChild(wrapper);
+            poetryLines = [];
           }
 
-          poetryLines.forEach((line) => {
-            const div = document.createElement("div");
-            div.textContent = line;
-            wrapper.appendChild(div);
+          lines.forEach((line) => {
+            line = line.trim();
+
+            // START poetry
+            if (line.toLowerCase() === "[sj]") {
+              inPoetry = true;
+              return;
+            }
+
+            // END poetry
+            if (line.toLowerCase() === "[/sj]") {
+              inPoetry = false;
+              renderPoetryBlock();
+              return;
+            }
+
+            if (inPoetry) {
+              if (line) poetryLines.push(line);
+              return;
+            }
+
+            // HEADINGS
+            if (line.startsWith("## ")) {
+              const el = document.createElement("h2");
+              el.textContent = line.replace("## ", "");
+              el.className = "text-2xl font-bold my-3";
+              previewEl.appendChild(el);
+            } else if (line.startsWith("# ")) {
+              const el = document.createElement("h1");
+              el.textContent = line.replace("# ", "");
+              el.className = "text-3xl font-bold my-4";
+              previewEl.appendChild(el);
+            } else if (line !== "") {
+              const el = document.createElement("p");
+              el.textContent = line;
+              el.className = "my-2";
+              previewEl.appendChild(el);
+            }
           });
 
-          container.appendChild(wrapper);
-
-          poetryLines = [];
+          // Justify (safe call)
+          if (window.ShakeebJustify) {
+            ShakeebJustify.apply();
+          }
         }
 
-        lines.forEach((line) => {
-          line = line.trim();
+        // ---------- STYLE ----------
+        window.applyStyles = function () {
+          const bgEl = document.getElementById("bgInput");
+          const colorEl = document.getElementById("colorInput");
 
-          // START poetry
-          if (line.toLowerCase() === "[sj]") {
-            inPoetry = true;
-            poetryWrapper = [];
-            return;
-          }
+          if (!previewEl) return;
 
-          // END poetry
-          if (line.toLowerCase() === "[/sj]") {
-            inPoetry = false;
-            renderPoetryBlock();
-            return;
-          }
+          if (bgEl && bgEl.value) previewEl.style.background = bgEl.value;
+          if (colorEl && colorEl.value) previewEl.style.color = colorEl.value;
+        };
 
-          if (inPoetry) {
-            if (line) poetryLines.push(line);
-            return;
-          }
+        // ---------- DOWNLOAD ----------
+        window.downloadImage = function () {
+          if (!previewEl || !window.html2canvas) return;
 
-          // HEADINGS
-          if (line.startsWith("## ")) {
-            const el = document.createElement("h2");
-            el.textContent = line.replace("## ", "");
-            el.className = "text-2xl font-bold my-3";
-            container.appendChild(el);
-          } else if (line.startsWith("# ")) {
-            const el = document.createElement("h1");
-            el.textContent = line.replace("# ", "");
-            el.className = "text-3xl font-bold my-4";
-            container.appendChild(el);
-          } else if (line !== "") {
-            const el = document.createElement("p");
-            el.textContent = line;
-            el.className = "my-2";
-            container.appendChild(el);
-          }
-        });
+          html2canvas(previewEl).then((canvas) => {
+            const link = document.createElement("a");
+            link.download = "poetry.png";
+            link.href = canvas.toDataURL();
+            link.click();
+          });
+        };
 
-        // Apply justification after render
-        ShakeebJustify.apply();
-      }
-
-      function applyStyles() {
-        const bg = document.getElementById("bgInput").value;
-        const color = document.getElementById("colorInput").value;
-
-        const area = document.getElementById("print-area");
-
-        if (bg) area.style.background = bg;
-        if (color) area.style.color = color;
-      }
-
-      // DOWNLOAD IMAGE
-      function downloadImage() {
-        const area = document.getElementById("print-area");
-
-        html2canvas(area).then((canvas) => {
-          const link = document.createElement("a");
-          link.download = "poetry.png";
-          link.href = canvas.toDataURL();
-          link.click();
-        });
-      }
-
-      // Initial render
-      applyFont();
-      generateGhazal();
+        // ---------- INIT ----------
+        applyFont();
+        generateGhazal();
+      });
     </script>
   </body>
 </html>
