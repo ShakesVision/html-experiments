@@ -26,16 +26,17 @@
               <button type="button" class="chip" onclick="wrapSelection('**', '**')">Bold</button>
               <button type="button" class="chip" onclick="wrapSelection('*', '*')">Italic</button>
               <button type="button" class="chip" onclick="wrapSelection('~~', '~~')">Strike</button>
+              <button type="button" class="chip" onclick="insertParagraphTag()">P</button>
               <button type="button" class="chip" onclick="insertLinePrefix('- ')">List</button>
-              <button type="button" class="chip" onclick="insertLinePrefix('1. ')">Numbered</button>
-              <button type="button" class="chip" onclick="wrapSelection('> ', '')">Quote</button>
+              <button type="button" class="chip" onclick="insertNumberedList()">Numbered</button>
+              <button type="button" class="chip" onclick="insertQuoteBlock()">Quote</button>
               <button type="button" class="chip" onclick="insertLink()">Link</button>
               <button type="button" class="chip" onclick="applyAlignment('right')">Right</button>
               <button type="button" class="chip" onclick="applyAlignment('center')">Center</button>
               <button type="button" class="chip" onclick="applyAlignment('left')">Left</button>
               <button type="button" class="chip" onclick="applyAlignment('justify')">Justify</button>
               <button type="button" class="chip" onclick="applyTextColor()">Color</button>
-              <button type="button" class="chip" onclick="insertPoetryBlock()">[sj]</button>
+              <button type="button" class="chip" onclick="toggleSjModal(true)">[sj]</button>
               <button type="button" class="chip" onclick="toggleCssModal(true)">Preview CSS</button>
             </div>
 
@@ -181,6 +182,45 @@
         <div class="flex justify-end gap-2">
           <button type="button" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700" onclick="toggleCssModal(false)">Close</button>
           <button type="button" class="px-4 py-2 rounded-xl bg-pink-600 text-white" onclick="saveCustomCssFromModal()">Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="sjModal" class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center p-4 z-50">
+      <div class="w-full max-w-xl bg-white rounded-3xl shadow-2xl p-5 space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold text-slate-800">Insert Poetry Block</h2>
+          <button type="button" class="icon-btn bg-slate-700" onclick="toggleSjModal(false)">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <label class="space-y-1 text-right">
+            <span class="text-sm text-slate-600">Format</span>
+            <select id="sjFormatSelect" class="w-full border border-slate-200 rounded-xl p-3">
+              <option value="sher">شعر</option>
+              <option value="sher2">دو کالم شعر</option>
+              <option value="mukhammas">مخمس</option>
+              <option value="mukhammas-3-2">۳+۲</option>
+              <option value="mukhammas-mixed">۴+۱</option>
+              <option value="musaddas">مسدس</option>
+              <option value="musaddas-6">۶ مصرعے</option>
+              <option value="musaddas-mixed">۴+۲</option>
+              <option value="custom">custom</option>
+            </select>
+          </label>
+          <label class="space-y-1 text-right">
+            <span class="text-sm text-slate-600">Custom Pattern</span>
+            <input
+              id="sjCustomPatternInput"
+              class="w-full border border-slate-200 rounded-xl p-3 text-right"
+              placeholder="جیسے ۴ یا ۳+۲"
+            />
+          </label>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700" onclick="toggleSjModal(false)">Close</button>
+          <button type="button" class="px-4 py-2 rounded-xl bg-pink-600 text-white" onclick="insertPoetryBlockFromModal()">Insert</button>
         </div>
       </div>
     </div>
@@ -355,6 +395,9 @@
         const importFileInput = document.getElementById("importFileInput");
         const cssModalEl = document.getElementById("cssModal");
         const customCssInput = document.getElementById("customCssInput");
+        const sjModalEl = document.getElementById("sjModal");
+        const sjFormatSelect = document.getElementById("sjFormatSelect");
+        const sjCustomPatternInput = document.getElementById("sjCustomPatternInput");
 
         if (window.marked) {
           marked.setOptions({ breaks: true, gfm: true });
@@ -500,22 +543,62 @@
         }
 
         function preserveEmptyLines(text) {
-          return text
-            .split("\n")
-            .map(function (line) {
-              return line.trim() === "" ? '<div class="poetry-empty-line">&nbsp;</div>' : line;
-            })
-            .join("\n");
+          const lines = text.split("\n");
+          const output = [];
+          let blankRun = 0;
+
+          lines.forEach(function (line) {
+            if (line.trim() === "") {
+              blankRun += 1;
+              return;
+            }
+
+            if (blankRun > 0) {
+              output.push("");
+              for (let i = 1; i < blankRun; i += 1) {
+                output.push("");
+                output.push("<p>&nbsp;</p>");
+                output.push("");
+              }
+              blankRun = 0;
+            }
+
+            output.push(line);
+          });
+
+          if (blankRun > 0) {
+            output.push("");
+            for (let i = 1; i < blankRun; i += 1) {
+              output.push("");
+              output.push("<p>&nbsp;</p>");
+              output.push("");
+            }
+          }
+
+          return output.join("\n");
+        }
+
+        function parseSjAttributes(rawTag) {
+          const attributes = {};
+          const attributeRegex = /(\w+)=["']([^"']*)["']/g;
+          let match = attributeRegex.exec(rawTag);
+
+          while (match) {
+            attributes[match[1]] = match[2];
+            match = attributeRegex.exec(rawTag);
+          }
+
+          return attributes;
         }
 
         function buildPoetryHtml(lines, patternName, customPattern) {
           const classAttr = patternName ? ' class="' + patternName + '"' : "";
           const patternAttr = !patternName && customPattern ? ' data-pattern="' + customPattern.replace(/"/g, "&quot;") + '"' : "";
           const poetryLines = lines
-            .filter(function (line) {
-              return line.trim() !== "";
-            })
             .map(function (line) {
+              if (line.trim() === "") {
+                return '<div class="poetry-empty-line">&nbsp;</div>';
+              }
               return "<div>" + line.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</div>";
             })
             .join("");
@@ -529,6 +612,7 @@
           let buffer = [];
           let poetryBuffer = [];
           let inPoetry = false;
+          let poetryMeta = null;
 
           function flushBuffer() {
             if (!buffer.length) return;
@@ -537,20 +621,50 @@
           }
 
           lines.forEach(function (line) {
-            const lowered = line.trim().toLowerCase();
-            if (lowered === "[sj]") {
+            const trimmed = line.trim();
+            const sjMatch = trimmed.match(/^\[sj(?:\s+([^\]]+))?\]$/i);
+
+            if (sjMatch) {
               flushBuffer();
               inPoetry = true;
               poetryBuffer = [];
+              const attributes = parseSjAttributes(sjMatch[1] || "");
+              poetryMeta = {
+                format:
+                  typeof attributes.format !== "undefined"
+                    ? attributes.format
+                    : currentPattern,
+                custom:
+                  typeof attributes.custom !== "undefined"
+                    ? attributes.custom
+                    : customPatternEl
+                      ? customPatternEl.value
+                      : "",
+              };
               return;
             }
 
-            if (lowered === "[/sj]") {
+            if (trimmed.toLowerCase() === "[/sj]") {
               if (inPoetry) {
-                chunks.push(buildPoetryHtml(poetryBuffer, currentPattern, customPatternEl ? customPatternEl.value : ""));
+                const resolvedFormat =
+                  poetryMeta && poetryMeta.format === "custom"
+                    ? null
+                    : poetryMeta
+                      ? poetryMeta.format
+                      : currentPattern;
+                const resolvedCustom =
+                  poetryMeta && poetryMeta.format === "custom"
+                    ? poetryMeta.custom
+                    : poetryMeta && poetryMeta.custom
+                      ? poetryMeta.custom
+                      : customPatternEl
+                        ? customPatternEl.value
+                        : "";
+                chunks.push(buildPoetryHtml(poetryBuffer, resolvedFormat, resolvedCustom));
               }
               inPoetry = false;
               poetryBuffer = [];
+              poetryMeta = null;
               return;
             }
 
@@ -564,7 +678,21 @@
           flushBuffer();
 
           if (inPoetry && poetryBuffer.length) {
-            chunks.push(buildPoetryHtml(poetryBuffer, currentPattern, customPatternEl ? customPatternEl.value : ""));
+            const resolvedFormat =
+              poetryMeta && poetryMeta.format === "custom"
+                ? null
+                : poetryMeta
+                  ? poetryMeta.format
+                  : currentPattern;
+            const resolvedCustom =
+              poetryMeta && poetryMeta.format === "custom"
+                ? poetryMeta.custom
+                : poetryMeta && poetryMeta.custom
+                  ? poetryMeta.custom
+                  : customPatternEl
+                    ? customPatternEl.value
+                    : "";
+            chunks.push(buildPoetryHtml(poetryBuffer, resolvedFormat, resolvedCustom));
           }
 
           return chunks.join("\n");
@@ -681,30 +809,101 @@
           };
         }
 
+        function getExpandedLineSelection(state) {
+          const lineStart = state.value.lastIndexOf("\n", state.start - 1) + 1;
+          const lineEndIndex = state.value.indexOf("\n", state.end);
+          const lineEnd = lineEndIndex === -1 ? state.value.length : lineEndIndex;
+
+          return {
+            start: lineStart,
+            end: lineEnd,
+            text: state.value.slice(lineStart, lineEnd),
+          };
+        }
+
+        function replaceSelection(state, replacement, selectionStartOffset, selectionEndOffset) {
+          const updated =
+            state.value.slice(0, state.start) +
+            replacement +
+            state.value.slice(state.end);
+          updateInput(
+            updated,
+            state.start + selectionStartOffset,
+            state.start + selectionEndOffset
+          );
+        }
+
         window.wrapSelection = function (before, after) {
           const state = getSelectionState();
           const selected = state.selected || "متن";
-          const updated = state.value.slice(0, state.start) + before + selected + after + state.value.slice(state.end);
-          const cursorEnd = state.start + before.length + selected.length + after.length;
-          updateInput(updated, state.start + before.length, cursorEnd - after.length);
+          const replacement = before + selected + after;
+          replaceSelection(
+            state,
+            replacement,
+            before.length,
+            before.length + selected.length
+          );
         };
 
         window.insertHeading = function (level) {
           const state = getSelectionState();
           const prefix = "#".repeat(level) + " ";
           const selected = state.selected || "سرخی";
-          const updated = state.value.slice(0, state.start) + prefix + selected + state.value.slice(state.end);
-          updateInput(updated, state.start + prefix.length, state.start + prefix.length + selected.length);
+          replaceSelection(
+            state,
+            prefix + selected,
+            prefix.length,
+            prefix.length + selected.length
+          );
+        };
+
+        window.insertParagraphTag = function () {
+          const state = getSelectionState();
+          const selected = state.selected || "متن";
+          const html = "<p>" + selected.replace(/\n/g, "<br>\n") + "</p>";
+          replaceSelection(state, html, 3, html.length - 4);
         };
 
         window.insertLinePrefix = function (prefix) {
           const state = getSelectionState();
-          const selected = state.selected || "آئٹم";
+          const target = state.selected ? state : getExpandedLineSelection(state);
+          const selected = state.selected ? state.selected : target.text || "آئٹم";
           const lines = selected.split("\n").map(function (line) {
             return prefix + line;
           }).join("\n");
-          const updated = state.value.slice(0, state.start) + lines + state.value.slice(state.end);
-          updateInput(updated, state.start, state.start + lines.length);
+          updateInput(
+            state.value.slice(0, target.start) + lines + state.value.slice(target.end),
+            target.start,
+            target.start + lines.length
+          );
+        };
+
+        window.insertNumberedList = function () {
+          const state = getSelectionState();
+          const target = state.selected ? state : getExpandedLineSelection(state);
+          const selected = state.selected ? state.selected : target.text || "آئٹم";
+          const lines = selected.split("\n").map(function (line, index) {
+            return index + 1 + ". " + line;
+          }).join("\n");
+          updateInput(
+            state.value.slice(0, target.start) + lines + state.value.slice(target.end),
+            target.start,
+            target.start + lines.length
+          );
+        };
+
+        window.insertQuoteBlock = function () {
+          const state = getSelectionState();
+          const target = state.selected ? state : getExpandedLineSelection(state);
+          const selected = state.selected ? state.selected : target.text || "اقتباس";
+          const lines = selected.split("\n").map(function (line) {
+            return line.trim() ? "> " + line : ">";
+          }).join("\n");
+          updateInput(
+            state.value.slice(0, target.start) + lines + state.value.slice(target.end),
+            target.start,
+            target.start + lines.length
+          );
         };
 
         window.insertLink = function () {
@@ -720,9 +919,13 @@
         window.applyAlignment = function (alignment) {
           const state = getSelectionState();
           const selected = state.selected || "متن";
-          const snippet = '<div style="text-align:' + alignment + ';">' + selected + "</div>";
-          const updated = state.value.slice(0, state.start) + snippet + state.value.slice(state.end);
-          updateInput(updated, state.start, state.start + snippet.length);
+          const snippet =
+            '<p style="text-align:' +
+            alignment +
+            ';">' +
+            selected.replace(/\n/g, "<br>\n") +
+            "</p>";
+          replaceSelection(state, snippet, 3, snippet.length - 4);
         };
 
         window.applyTextColor = function () {
@@ -731,16 +934,47 @@
           const color = prompt("رنگ درج کریں", "#d62828");
           if (color === null) return;
           const snippet = '<span style="color:' + (color.trim() || "#d62828") + ';">' + selected + "</span>";
-          const updated = state.value.slice(0, state.start) + snippet + state.value.slice(state.end);
-          updateInput(updated, state.start, state.start + snippet.length);
+          const openingTag = '<span style="color:' + (color.trim() || "#d62828") + ';">';
+          replaceSelection(
+            state,
+            snippet,
+            openingTag.length,
+            openingTag.length + selected.length
+          );
         };
 
-        window.insertPoetryBlock = function () {
+        window.toggleSjModal = function (show) {
+          if (!sjModalEl) return;
+          if (show) {
+            if (sjFormatSelect) {
+              sjFormatSelect.value = currentPattern || "sher";
+            }
+            if (sjCustomPatternInput) {
+              sjCustomPatternInput.value = customPatternEl ? customPatternEl.value : "";
+            }
+          }
+          sjModalEl.classList.toggle("hidden", !show);
+          sjModalEl.classList.toggle("flex", !!show);
+        };
+
+        window.insertPoetryBlockFromModal = function () {
           const state = getSelectionState();
           const selected = state.selected || "پہلا مصرع\nدوسرا مصرع";
-          const snippet = "[sj]\n" + selected + "\n[/sj]";
-          const updated = state.value.slice(0, state.start) + snippet + state.value.slice(state.end);
-          updateInput(updated, state.start, state.start + snippet.length);
+          const formatValue = sjFormatSelect ? sjFormatSelect.value : "sher";
+          const customValue = sjCustomPatternInput ? sjCustomPatternInput.value.trim() : "";
+          const attributes = [];
+
+          if (formatValue) {
+            attributes.push('format="' + formatValue + '"');
+          }
+          if (formatValue === "custom" && customValue) {
+            attributes.push('custom="' + customValue.replace(/"/g, "&quot;") + '"');
+          }
+
+          const openingTag = attributes.length ? "[sj " + attributes.join(" ") + "]" : "[sj]";
+          const snippet = openingTag + "\n" + selected + "\n[/sj]";
+          replaceSelection(state, snippet, openingTag.length + 1, openingTag.length + 1 + selected.length);
+          window.toggleSjModal(false);
         };
 
         window.toggleCssModal = function (show) {
@@ -1014,6 +1248,14 @@
           cssModalEl.addEventListener("click", function (event) {
             if (event.target === cssModalEl) {
               toggleCssModal(false);
+            }
+          });
+        }
+
+        if (sjModalEl) {
+          sjModalEl.addEventListener("click", function (event) {
+            if (event.target === sjModalEl) {
+              toggleSjModal(false);
             }
           });
         }
