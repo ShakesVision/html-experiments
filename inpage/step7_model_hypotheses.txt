@@ -1,0 +1,37 @@
+Step 7/8/9/10 Model Hypotheses
+================================================================================
+
+FILE: inpage/juz_29.inp
+  stats={'all_runs': 124, 'high_conf_arabic_runs': 3, 'page_count': 2, 'style_count': 24}
+  font_candidates=['Arial Unicode MS', 'InPage Arabic Document', 'Noori Nastaliq', 'lvi Nastaleeq']
+  top_styles:
+    S001 prefix=407f000520000000 occ=28 conf=0.458
+    S002 prefix=0000010000000000 occ=14 conf=0.379
+    S003 prefix=0033010000000000 occ=11 conf=0.362
+    S004 prefix=3300010000000000 occ=8 conf=0.345
+    S005 prefix=9900010000000000 occ=8 conf=0.345
+    S006 prefix=6600010000000000 occ=7 conf=0.340
+    S007 prefix=0000000000000000 occ=7 conf=0.340
+    S008 prefix=0066010000000000 occ=5 conf=0.328
+  page_boundaries:
+    page=1 offsets=0xD9EC-0xDA22 paragraphs=2
+    page=2 offsets=0xDA24-0x28754 paragraphs=734
+  footnote_hypotheses=68
+
+FILE: inpage/juz_30.inp
+  stats={'all_runs': 225, 'high_conf_arabic_runs': 50, 'page_count': 3, 'style_count': 24}
+  font_candidates=['Arial Unicode MS', 'InPage Arabic Document', 'Noori Nastaliq', 'Trad Arabic Bold Unicode']
+  top_styles:
+    S001 prefix=407f000520000000 occ=60 conf=0.487
+    S002 prefix=0000010000000000 occ=14 conf=0.344
+    S003 prefix=0033010000000000 occ=11 conf=0.334
+    S004 prefix=0000000000000000 occ=10 conf=0.331
+    S005 prefix=3300010000000000 occ=8 conf=0.325
+    S006 prefix=9900010000000000 occ=8 conf=0.325
+    S007 prefix=6600010000000000 occ=7 conf=0.322
+    S008 prefix=407f000522000000 occ=6 conf=0.319
+  page_boundaries:
+    page=1 offsets=0x10180-0x1DC22 paragraphs=332
+    page=2 offsets=0x1DC24-0x31946 paragraphs=551
+    page=3 offsets=0x7E654-0x7E7B6 paragraphs=3
+  footnote_hypotheses=72

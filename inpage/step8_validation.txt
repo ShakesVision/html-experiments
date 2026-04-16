@@ -1,0 +1,19 @@
+Step 8 Validation
+================================================================================
+Deterministic AST output: True
+
+Document stats:
+  juz_29.ast.json: pages=2 paragraphs=736 styles=24 footnotes=68
+  juz_30.ast.json: pages=3 paragraphs=886 styles=24 footnotes=72
+
+Checks:
+  ole_map_exists: True
+  text_runs_exists: True
+  structure_analysis_exists: True
+  model_hypotheses_exists: True
+  reader_exists: True
+
+Known gaps:
+  - Footnote mapping is heuristic and requires stronger anchor/body evidence.
+  - Style table fields are inferred from prefix clustering; semantic fields remain unknown.
+  - Page segmentation is deterministic but still heuristic until explicit page markers are decoded.

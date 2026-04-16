@@ -1,0 +1,20 @@
+{
+  "documents": [
+    {
+      "source_file": "inpage/juz_29.inp",
+      "ast_file": "inpage/juz_29.ast.json",
+      "sha1": "b0478a74e7acceac1b7702fc7c61b7dbb8642b67",
+      "page_count": 2,
+      "footnote_count": 68,
+      "style_count": 24
+    },
+    {
+      "source_file": "inpage/juz_30.inp",
+      "ast_file": "inpage/juz_30.ast.json",
+      "sha1": "c793faab2d7335cadd5c69d70f01c3195f52b7ec",
+      "page_count": 3,
+      "footnote_count": 72,
+      "style_count": 24
+    }
+  ]
+}

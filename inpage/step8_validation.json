@@ -1,0 +1,43 @@
+{
+  "deterministic_ast_output": true,
+  "hash_before": {
+    "juz_29.ast.json": "b0478a74e7acceac1b7702fc7c61b7dbb8642b67",
+    "juz_30.ast.json": "c793faab2d7335cadd5c69d70f01c3195f52b7ec"
+  },
+  "hash_after_first": {
+    "juz_29.ast.json": "b0478a74e7acceac1b7702fc7c61b7dbb8642b67",
+    "juz_30.ast.json": "c793faab2d7335cadd5c69d70f01c3195f52b7ec"
+  },
+  "hash_after_second": {
+    "juz_29.ast.json": "b0478a74e7acceac1b7702fc7c61b7dbb8642b67",
+    "juz_30.ast.json": "c793faab2d7335cadd5c69d70f01c3195f52b7ec"
+  },
+  "documents": [
+    {
+      "file": "juz_29.ast.json",
+      "pages": 2,
+      "paragraphs": 736,
+      "styles": 24,
+      "footnotes": 68
+    },
+    {
+      "file": "juz_30.ast.json",
+      "pages": 3,
+      "paragraphs": 886,
+      "styles": 24,
+      "footnotes": 72
+    }
+  ],
+  "checks": {
+    "ole_map_exists": true,
+    "text_runs_exists": true,
+    "structure_analysis_exists": true,
+    "model_hypotheses_exists": true,
+    "reader_exists": true
+  },
+  "known_gaps": [
+    "Footnote mapping is heuristic and requires stronger anchor/body evidence.",
+    "Style table fields are inferred from prefix clustering; semantic fields remain unknown.",
+    "Page segmentation is deterministic but still heuristic until explicit page markers are decoded."
+  ]
+}

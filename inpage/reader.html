@@ -1,0 +1,287 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InPage INP Reader</title>
+  <style>
+    :root {
+      --bg-a: #f6f3eb;
+      --bg-b: #e9efe6;
+      --ink: #1b1e23;
+      --muted: #5b6270;
+      --card: rgba(255, 255, 255, 0.93);
+      --line: #ccd4dc;
+      --accent: #0f6d63;
+      --accent-ink: #fff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #dcecdf 0%, transparent 65%),
+        radial-gradient(900px 500px at 90% 0%, #efe1ce 0%, transparent 60%),
+        linear-gradient(160deg, var(--bg-a), var(--bg-b));
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.08);
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-right: auto;
+    }
+    button, select, input[type=file] {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+    }
+    button {
+      border: none;
+      background: var(--accent);
+      color: var(--accent-ink);
+      cursor: pointer;
+    }
+    .meta { color: var(--muted); font-size: .9rem; }
+    .layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 12px;
+    }
+    .page {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+      min-height: 480px;
+      direction: rtl;
+      text-align: right;
+      line-height: 1.9;
+      font-size: 1.2rem;
+      white-space: pre-wrap;
+      animation: fadeIn .18s ease-out;
+    }
+    .p { margin: 0 0 .9rem; }
+    .aside {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      max-height: 480px;
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+    .box {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: .88rem;
+      background: #fafcfe;
+    }
+    .box h4 {
+      margin: 0 0 6px;
+      font-size: .9rem;
+    }
+    .mono { font-family: Consolas, "Courier New", monospace; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="panel toolbar">
+      <div class="title">InPage Magical Reader (Direct `.inp`)</div>
+      <input id="fileInput" type="file" accept=".inp,.json,application/json">
+      <button id="prevBtn">Previous</button>
+      <button id="nextBtn">Next</button>
+      <select id="pageSelect"></select>
+      <div id="meta" class="meta">Upload `.inp` (or `.json` AST) to start.</div>
+    </section>
+
+    <section class="layout">
+      <article id="pageView" class="page"></article>
+      <aside class="aside">
+        <div class="box">
+          <h4>Footnotes</h4>
+          <div id="footnotesView"></div>
+        </div>
+        <div class="box">
+          <h4>Fonts</h4>
+          <div id="fontsView"></div>
+        </div>
+        <div class="box">
+          <h4>Styles</h4>
+          <div id="stylesView" class="mono"></div>
+        </div>
+        <div class="box">
+          <h4>Stream Stats</h4>
+          <div id="streamsView" class="mono"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="./inp_browser_parser.js"></script>
+  <script>
+    const state = { doc: null, pageIndex: 0 };
+    const pageView = document.getElementById("pageView");
+    const pageSelect = document.getElementById("pageSelect");
+    const meta = document.getElementById("meta");
+    const footnotesView = document.getElementById("footnotesView");
+    const fontsView = document.getElementById("fontsView");
+    const stylesView = document.getElementById("stylesView");
+    const streamsView = document.getElementById("streamsView");
+
+    function clampPage(i) {
+      if (!state.doc) return 0;
+      return Math.max(0, Math.min(i, state.doc.pages.length - 1));
+    }
+
+    function renderAux(page) {
+      const footnotes = (state.doc.footnotes || []).filter((f) =>
+        typeof f.reference_offset === "number" &&
+        f.reference_offset >= page.source_offsets.start &&
+        f.reference_offset <= page.source_offsets.end
+      ).slice(0, 30);
+      footnotesView.innerHTML = footnotes.length
+        ? footnotes.map((f) => `<div>#${f.number} | ref=0x${f.reference_offset.toString(16)} | ${(f.body_text_preview || "(no body text)").slice(0, 80)}</div>`).join("")
+        : "No mapped footnotes for this page.";
+
+      fontsView.innerHTML = (state.doc.fonts || []).length
+        ? state.doc.fonts.slice(0, 24).map((f) => `<div>${f.font_id}: ${f.name}</div>`).join("")
+        : "No font names extracted.";
+
+      stylesView.innerHTML = (state.doc.styles || []).slice(0, 18)
+        .map((s) => `${s.style_id} occ=${s.occurrences} prefix=${s.key_prefix_hex}`)
+        .join("<br>") || "No styles extracted.";
+
+      const sm = state.doc.extracted && state.doc.extracted.stream_manifest ? state.doc.extracted.stream_manifest : [];
+      const streams = sm.filter((x) => x.type === "stream");
+      const inpage = streams.find((x) => x.path === "/InPage300");
+      streamsView.innerHTML = [
+        `total_streams=${streams.length}`,
+        inpage ? `InPage300 size=${inpage.size} chain=${inpage.chainLen}` : "InPage300 not found",
+        state.doc.extracted && state.doc.extracted.run_stats ? `runs=${state.doc.extracted.run_stats.total_runs}, content_runs=${state.doc.extracted.run_stats.content_runs}` : "",
+      ].filter(Boolean).join("<br>");
+    }
+
+    function renderPage() {
+      if (!state.doc) {
+        pageView.textContent = "";
+        pageSelect.innerHTML = "";
+        footnotesView.textContent = "";
+        fontsView.textContent = "";
+        stylesView.textContent = "";
+        streamsView.textContent = "";
+        meta.textContent = "Upload `.inp` (or `.json` AST) to start.";
+        return;
+      }
+
+      state.pageIndex = clampPage(state.pageIndex);
+      const page = state.doc.pages[state.pageIndex];
+      pageView.innerHTML = "";
+
+      const paragraphs = page.paragraphs || [];
+      if (!paragraphs.length) {
+        pageView.textContent = "(No paragraph content extracted for this page)";
+      } else {
+        for (const para of paragraphs) {
+          const p = document.createElement("p");
+          p.className = "p";
+          p.textContent = (para.runs || []).map((r) => r.text || "").join("");
+          pageView.appendChild(p);
+        }
+      }
+
+      pageSelect.innerHTML = "";
+      state.doc.pages.forEach((p, i) => {
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = `Page ${p.number}`;
+        if (i === state.pageIndex) opt.selected = true;
+        pageSelect.appendChild(opt);
+      });
+
+      const source = state.doc.metadata && state.doc.metadata.source_file ? state.doc.metadata.source_file : "unknown";
+      const mode = state.doc.metadata && state.doc.metadata.source_type ? state.doc.metadata.source_type : "ast";
+      meta.textContent = `${source} | mode=${mode} | page ${page.number}/${state.doc.pages.length} | styles=${(state.doc.styles || []).length} | footnotes=${(state.doc.footnotes || []).length}`;
+      renderAux(page);
+    }
+
+    async function loadInp(file) {
+      const bytes = await file.arrayBuffer();
+      state.doc = window.InpBrowserParser.parseInpArrayBuffer(bytes, file.name);
+      state.pageIndex = 0;
+      renderPage();
+    }
+
+    async function loadJson(file) {
+      const text = await file.text();
+      state.doc = JSON.parse(text);
+      state.pageIndex = 0;
+      renderPage();
+    }
+
+    document.getElementById("fileInput").addEventListener("change", async (ev) => {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      try {
+        if (file.name.toLowerCase().endsWith(".inp")) {
+          await loadInp(file);
+        } else {
+          await loadJson(file);
+        }
+      } catch (err) {
+        alert(`Failed to load file: ${err.message || err}`);
+      }
+    });
+
+    document.getElementById("prevBtn").addEventListener("click", () => {
+      state.pageIndex -= 1;
+      renderPage();
+    });
+
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      state.pageIndex += 1;
+      renderPage();
+    });
+
+    pageSelect.addEventListener("change", () => {
+      state.pageIndex = Number(pageSelect.value || 0);
+      renderPage();
+    });
+
+    renderPage();
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+Step 6/7 Structural Marker Analysis
+================================================================================
+
+FILE: inpage/juz_29.inp
+  STREAM /DocumentInfo runs=0
+    top_before2=[]
+    top_after2=[]
+    top_boundary4=[]
+  STREAM /InPage300 runs=124
+    top_before2=[{'hex': '0000', 'count': 121}, {'hex': 'FFFF', 'count': 1}, {'hex': '0002', 'count': 1}, {'hex': '0003', 'count': 1}]
+    top_after2=[{'hex': '0000', 'count': 122}, {'hex': '0002', 'count': 1}, {'hex': '0003', 'count': 1}]
+    top_boundary4=[{'hex': '00000000', 'count': 121}, {'hex': 'ffff0200', 'count': 1}, {'hex': '02000300', 'count': 1}, {'hex': '03000000', 'count': 1}]
+
+FILE: inpage/juz_30.inp
+  STREAM /DocumentInfo runs=0
+    top_before2=[]
+    top_after2=[]
+    top_boundary4=[]
+  STREAM /InPage300 runs=225
+    top_before2=[{'hex': '0000', 'count': 174}, {'hex': '2018', 'count': 36}, {'hex': '2019', 'count': 13}, {'hex': '0002', 'count': 1}, {'hex': '0003', 'count': 1}]
+    top_after2=[{'hex': '0000', 'count': 170}, {'hex': '2019', 'count': 37}, {'hex': '2018', 'count': 12}, {'hex': '7F85', 'count': 2}, {'hex': '0003', 'count': 1}, {'hex': '0002', 'count': 1}, {'hex': '0CB8', 'count': 1}, {'hex': '7F00', 'count': 1}]
+    top_boundary4=[{'hex': '00000000', 'count': 170}, {'hex': '18201920', 'count': 35}, {'hex': '19201820', 'count': 11}, {'hex': '0000857f', 'count': 2}, {'hex': '02001820', 'count': 1}, {'hex': '18200300', 'count': 1}, {'hex': '03001920', 'count': 1}, {'hex': '19201920', 'count': 1}]
+
+Token Hypotheses:
+  inpage/juz_29.inp /InPage300 => PARAGRAPH_OR_RUN_BOUNDARY | evidence=000D / 000A around UTF-16 text run boundaries | confidence=0.45
+  inpage/juz_29.inp /InPage300 => STYLE_OR_CONTROL_RECORD_PREFIX | evidence=high-frequency single-byte controls before text (e.g. 00/01/02 clusters) | confidence=0.35
+  inpage/juz_30.inp /InPage300 => PARAGRAPH_OR_RUN_BOUNDARY | evidence=000D / 000A around UTF-16 text run boundaries | confidence=0.45
+  inpage/juz_30.inp /InPage300 => STYLE_OR_CONTROL_RECORD_PREFIX | evidence=high-frequency single-byte controls before text (e.g. 00/01/02 clusters) | confidence=0.35

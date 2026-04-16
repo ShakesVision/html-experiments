@@ -1,0 +1,52 @@
+Step 5 UTF-16 Text Run Extraction
+================================================================================
+
+FILE: inpage/juz_29.inp
+  STREAM /DocumentInfo [minifat] size=1316 runs=0
+  STREAM /InPage300 [fat] size=410578 runs=124
+    offset=0x000004CE bytes=14 chars=7 conf=0.2146 text=Magenta
+    offset=0x00000606 bytes=12 chars=6 conf=0.2125 text=Yellow
+    offset=0x00000654 bytes=18 chars=9 conf=0.2188 text=90% Black
+    offset=0x000006A2 bytes=18 chars=9 conf=0.2188 text=80% Black
+    offset=0x000006F0 bytes=18 chars=9 conf=0.2188 text=70% Black
+    offset=0x0000073E bytes=18 chars=9 conf=0.2188 text=60% Black
+    offset=0x0000078C bytes=18 chars=9 conf=0.2188 text=50% Black
+    offset=0x000007DA bytes=18 chars=9 conf=0.2188 text=40% Black
+    offset=0x00000828 bytes=18 chars=9 conf=0.2188 text=30% Black
+    offset=0x00000876 bytes=18 chars=9 conf=0.2188 text=20% Black
+    offset=0x000008C4 bytes=18 chars=9 conf=0.2188 text=10% Black
+    offset=0x00000912 bytes=12 chars=6 conf=0.2125 text=Purple
+    offset=0x00000960 bytes=12 chars=6 conf=0.2125 text=Orange
+    offset=0x000009FC bytes=20 chars=10 conf=0.2208 text=Dark Brown
+    offset=0x00000A4A bytes=22 chars=11 conf=0.2229 text=Powder Blue
+    offset=0x00000A98 bytes=22 chars=11 conf=0.2229 text=Pastel Blue
+    offset=0x00000AE6 bytes=18 chars=9 conf=0.2188 text=Baby Blue
+    offset=0x00000B34 bytes=26 chars=13 conf=0.2271 text=Electric Blue
+    offset=0x00000B82 bytes=26 chars=13 conf=0.2271 text=Twilight Blue
+    offset=0x00000BD0 bytes=18 chars=9 conf=0.2188 text=Navy Blue
+    ... 104 more runs
+
+FILE: inpage/juz_30.inp
+  STREAM /DocumentInfo [minifat] size=1316 runs=0
+  STREAM /InPage300 [fat] size=543086 runs=225
+    offset=0x000004CE bytes=14 chars=7 conf=0.2146 text=Magenta
+    offset=0x00000606 bytes=12 chars=6 conf=0.2125 text=Yellow
+    offset=0x00000654 bytes=18 chars=9 conf=0.2188 text=90% Black
+    offset=0x000006A2 bytes=18 chars=9 conf=0.2188 text=80% Black
+    offset=0x000006F0 bytes=18 chars=9 conf=0.2188 text=70% Black
+    offset=0x0000073E bytes=18 chars=9 conf=0.2188 text=60% Black
+    offset=0x0000078C bytes=18 chars=9 conf=0.2188 text=50% Black
+    offset=0x000007DA bytes=18 chars=9 conf=0.2188 text=40% Black
+    offset=0x00000828 bytes=18 chars=9 conf=0.2188 text=30% Black
+    offset=0x00000876 bytes=18 chars=9 conf=0.2188 text=20% Black
+    offset=0x000008C4 bytes=18 chars=9 conf=0.2188 text=10% Black
+    offset=0x00000912 bytes=12 chars=6 conf=0.2125 text=Purple
+    offset=0x00000960 bytes=12 chars=6 conf=0.2125 text=Orange
+    offset=0x000009FC bytes=20 chars=10 conf=0.2208 text=Dark Brown
+    offset=0x00000A4A bytes=22 chars=11 conf=0.2229 text=Powder Blue
+    offset=0x00000A98 bytes=22 chars=11 conf=0.2229 text=Pastel Blue
+    offset=0x00000AE6 bytes=18 chars=9 conf=0.2188 text=Baby Blue
+    offset=0x00000B34 bytes=26 chars=13 conf=0.2271 text=Electric Blue
+    offset=0x00000B82 bytes=26 chars=13 conf=0.2271 text=Twilight Blue
+    offset=0x00000BD0 bytes=18 chars=9 conf=0.2188 text=Navy Blue
+    ... 205 more runs
