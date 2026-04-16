@@ -1,0 +1,342 @@
+{
+  "generatedAt": "2026-04-16T02:02:58.264Z",
+  "count": 48,
+  "entries": [
+    {
+      "path": "alphabet/index.html",
+      "folder": "alphabet",
+      "isIndex": true,
+      "title": "Alphabet Adventure — Kids Letter Game",
+      "isRoot": false
+    },
+    {
+      "path": "bayaz-proto/2.html",
+      "folder": "bayaz-proto",
+      "isIndex": false,
+      "title": "Urdu Book Editor",
+      "isRoot": false
+    },
+    {
+      "path": "bayaz-proto/a.html",
+      "folder": "bayaz-proto",
+      "isIndex": false,
+      "title": "",
+      "isRoot": false
+    },
+    {
+      "path": "bayaz-proto/continuous.html",
+      "folder": "bayaz-proto",
+      "isIndex": false,
+      "title": "بیاض - Continuous Editor",
+      "isRoot": false
+    },
+    {
+      "path": "bayaz-proto/index.html",
+      "folder": "bayaz-proto",
+      "isIndex": true,
+      "title": "Bayaaz - Notion Style Editor",
+      "isRoot": false
+    },
+    {
+      "path": "bayaz-proto/simple.html",
+      "folder": "bayaz-proto",
+      "isIndex": false,
+      "title": "بیاض - سادہ کتاب ایڈیٹر",
+      "isRoot": false
+    },
+    {
+      "path": "bayaz-proto/two-page.html",
+      "folder": "bayaz-proto",
+      "isIndex": false,
+      "title": "Urdu Book Editor",
+      "isRoot": false
+    },
+    {
+      "path": "bloggerflux/index.html",
+      "folder": "bloggerflux",
+      "isIndex": true,
+      "title": "BlogFlux – Blogger Archive Extractor",
+      "isRoot": false
+    },
+    {
+      "path": "editor/index.html",
+      "folder": "editor",
+      "isIndex": true,
+      "title": "WYSIWYG Editor with Urdu Keyboard",
+      "isRoot": false
+    },
+    {
+      "path": "editor/poetry.html",
+      "folder": "editor",
+      "isIndex": false,
+      "title": "",
+      "isRoot": false
+    },
+    {
+      "path": "editor/poetry2.html",
+      "folder": "editor",
+      "isIndex": false,
+      "title": "فارمیٹرِ شاعری",
+      "isRoot": false
+    },
+    {
+      "path": "editor/try.html",
+      "folder": "editor",
+      "isIndex": false,
+      "title": "Docs Clone",
+      "isRoot": false
+    },
+    {
+      "path": "editor/wysiwyg.html",
+      "folder": "editor",
+      "isIndex": false,
+      "title": "Urdu WYSIWYG — Quill + ShakeebJustify",
+      "isRoot": false
+    },
+    {
+      "path": "epub-to-html/index.html",
+      "folder": "epub-to-html",
+      "isIndex": true,
+      "title": "EPUB to One-Page HTML Converter",
+      "isRoot": false
+    },
+    {
+      "path": "graphic-designer/index.html",
+      "folder": "graphic-designer",
+      "isIndex": true,
+      "title": "Advanced Graphic Designer Tool",
+      "isRoot": false
+    },
+    {
+      "path": "hin-en/index.html",
+      "folder": "hin-en",
+      "isIndex": true,
+      "title": "Devanagari Transliteration",
+      "isRoot": false
+    },
+    {
+      "path": "hindi-scansion/index.html",
+      "folder": "hindi-scansion",
+      "isIndex": true,
+      "title": "Devanagari Taqti — Scansion & Metre Detection",
+      "isRoot": false
+    },
+    {
+      "path": "image-resizer/index.html",
+      "folder": "image-resizer",
+      "isIndex": true,
+      "title": "Resize PWA Icons",
+      "isRoot": false
+    },
+    {
+      "path": "index.html",
+      "folder": ".",
+      "isIndex": true,
+      "title": "My Web Experiments",
+      "isRoot": true
+    },
+    {
+      "path": "inpage/reader.html",
+      "folder": "inpage",
+      "isIndex": false,
+      "title": "InPage INP Reader",
+      "isRoot": false
+    },
+    {
+      "path": "json-ui/index.html",
+      "folder": "json-ui",
+      "isIndex": true,
+      "title": "json-ui",
+      "isRoot": false
+    },
+    {
+      "path": "logo-creator/index.html",
+      "folder": "logo-creator",
+      "isIndex": true,
+      "title": "Logo Generator",
+      "isRoot": false
+    },
+    {
+      "path": "mockup/index.html",
+      "folder": "mockup",
+      "isIndex": true,
+      "title": "Offline Mock Generator — ShakesVision",
+      "isRoot": false
+    },
+    {
+      "path": "mockup/skew.html",
+      "folder": "mockup",
+      "isIndex": false,
+      "title": "ShakeVision — 3D Tilt Studio (Perfect Export)",
+      "isRoot": false
+    },
+    {
+      "path": "mushaf/index.html",
+      "folder": "mushaf",
+      "isIndex": true,
+      "title": "Mushaf Page",
+      "isRoot": false
+    },
+    {
+      "path": "number-mnemonics/index.html",
+      "folder": "number-mnemonics",
+      "isIndex": true,
+      "title": "Major System Converter",
+      "isRoot": false
+    },
+    {
+      "path": "ocr/index.html",
+      "folder": "ocr",
+      "isIndex": true,
+      "title": "OCR",
+      "isRoot": false
+    },
+    {
+      "path": "pdf-creator/index.html",
+      "folder": "pdf-creator",
+      "isIndex": true,
+      "title": "Convert Image to PDF",
+      "isRoot": false
+    },
+    {
+      "path": "pdf-image/index.html",
+      "folder": "pdf-image",
+      "isIndex": true,
+      "title": "PDF to Images Converter",
+      "isRoot": false
+    },
+    {
+      "path": "post-maker/index.html",
+      "folder": "post-maker",
+      "isIndex": true,
+      "title": "Quran Image Generator",
+      "isRoot": false
+    },
+    {
+      "path": "quoter/index.html",
+      "folder": "quoter",
+      "isIndex": true,
+      "title": "Quoter",
+      "isRoot": false
+    },
+    {
+      "path": "rss-reader/index.html",
+      "folder": "rss-reader",
+      "isIndex": true,
+      "title": "Material Feed Reader",
+      "isRoot": false
+    },
+    {
+      "path": "scraper/index.html",
+      "folder": "scraper",
+      "isIndex": true,
+      "title": "Scraper Webapp",
+      "isRoot": false
+    },
+    {
+      "path": "shopping-list/index.html",
+      "folder": "shopping-list",
+      "isIndex": true,
+      "title": "Audio to Shopping List",
+      "isRoot": false
+    },
+    {
+      "path": "stock-profit-tracker/index.html",
+      "folder": "stock-profit-tracker",
+      "isIndex": true,
+      "title": "Stock Profit Tracker",
+      "isRoot": false
+    },
+    {
+      "path": "stock-profit-tracker/sip.html",
+      "folder": "stock-profit-tracker",
+      "isIndex": false,
+      "title": "Halal Early Retirement Planner",
+      "isRoot": false
+    },
+    {
+      "path": "stock-profit-tracker/tradingview.html",
+      "folder": "stock-profit-tracker",
+      "isIndex": false,
+      "title": "TradingView Embed Example",
+      "isRoot": false
+    },
+    {
+      "path": "stock-profit-tracker/watchlist.html",
+      "folder": "stock-profit-tracker",
+      "isIndex": false,
+      "title": "Shariah Watchlist",
+      "isRoot": false
+    },
+    {
+      "path": "super-scrape/index.html",
+      "folder": "super-scrape",
+      "isIndex": true,
+      "title": "Advanced Scraper WebApp",
+      "isRoot": false
+    },
+    {
+      "path": "svg-theme/index.html",
+      "folder": "svg-theme",
+      "isIndex": true,
+      "title": "SVG Theme Studio | Pitch Deck",
+      "isRoot": false
+    },
+    {
+      "path": "text-aggregator/index.html",
+      "folder": "text-aggregator",
+      "isIndex": true,
+      "title": "Story Collection",
+      "isRoot": false
+    },
+    {
+      "path": "textRead/files/a.html",
+      "folder": "textRead",
+      "isIndex": false,
+      "title": "",
+      "isRoot": false
+    },
+    {
+      "path": "textRead/files/b.html",
+      "folder": "textRead",
+      "isIndex": false,
+      "title": "",
+      "isRoot": false
+    },
+    {
+      "path": "textRead/index.html",
+      "folder": "textRead",
+      "isIndex": true,
+      "title": "Enhanced Folder Reader",
+      "isRoot": false
+    },
+    {
+      "path": "urdu-dashboard/card.html",
+      "folder": "urdu-dashboard",
+      "isIndex": false,
+      "title": "3D Card Grid",
+      "isRoot": false
+    },
+    {
+      "path": "urdu-dashboard/index.html",
+      "folder": "urdu-dashboard",
+      "isIndex": true,
+      "title": "اردو ڈیش بورڈ",
+      "isRoot": false
+    },
+    {
+      "path": "wp-dp-dw/index.html",
+      "folder": "wp-dp-dw",
+      "isIndex": true,
+      "title": "WhatsApp DP Viewer",
+      "isRoot": false
+    },
+    {
+      "path": "zip-editor/index.html",
+      "folder": "zip-editor",
+      "isIndex": true,
+      "title": "ZIP File Viewer & Editor",
+      "isRoot": false
+    }
+  ]
+}

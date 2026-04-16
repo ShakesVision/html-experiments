@@ -1,46 +1,50 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
+const { scanProjectFiles } = require("./scripts/lib/project-scan");
 
-const baseURL = 'https://shakesvision.github.io/html-experiments/';
-const outputMarkdown = 'README.md'; // Markdown file to update
-const projectRoot = __dirname;
+const BASE_URL = process.env.BASE_URL || "https://shakesvision.github.io/html-experiments/";
+const OUTPUT_MARKDOWN = path.join(__dirname, "README.md");
+const PROJECTS_HEADING = "### Projects";
 
-function generateMarkdownLinks() {
-    const folders = fs.readdirSync(projectRoot, { withFileTypes: true })
-        .filter(dirent => dirent.isDirectory() && fs.existsSync(path.join(projectRoot, dirent.name, 'index.html')))
-        .map(dirent => dirent.name);
+function generateProjectLinks() {
+  const entries = scanProjectFiles({ root: __dirname });
+  const toolEntries = entries.filter(
+    (item) =>
+      item.isIndex &&
+      !item.isRoot &&
+      item.path.split("/").length === 2,
+  );
 
-    let links = [];
-    folders.forEach(folder => {
-        const projectURL = `${baseURL}${folder}/index.html`;
-        links.push(`- [${folder}](${projectURL})`);
-    });
-
-    return links;
+  return toolEntries.map((item) => {
+    const folder = item.folder;
+    return `- [${folder}](${BASE_URL}${folder}/index.html)`;
+  });
 }
 
 function updateMarkdownFile() {
-    // Read the existing markdown file
-    let existingContent = '';
-    if (fs.existsSync(outputMarkdown)) {
-        existingContent = fs.readFileSync(outputMarkdown, 'utf-8');
-    }
+  if (!fs.existsSync(OUTPUT_MARKDOWN)) {
+    throw new Error(`README not found at ${OUTPUT_MARKDOWN}`);
+  }
 
-    const existingLinks = new Set(
-        existingContent
-            .split('\n') // Split by lines
-            .filter(line => line.startsWith('- [')) // Keep only lines that are project links
-    );
+  const existingContent = fs.readFileSync(OUTPUT_MARKDOWN, "utf8");
+  const headingIndex = existingContent.indexOf(PROJECTS_HEADING);
 
-    const newLinks = generateMarkdownLinks().filter(link => !existingLinks.has(link));
+  if (headingIndex === -1) {
+    throw new Error(`Could not find "${PROJECTS_HEADING}" heading in README.md`);
+  }
 
-    if (newLinks.length > 0) {
-        const newContent = newLinks.join('\n') + '\n';
-        fs.appendFileSync(outputMarkdown, newContent);
-        console.log(`Added ${newLinks.length} new projects to ${outputMarkdown}.`);
-    } else {
-        console.log('No new projects to add.');
-    }
+  const beforeProjects = existingContent.slice(0, headingIndex).trimEnd();
+  const links = generateProjectLinks();
+  const refreshedSection = [
+    PROJECTS_HEADING,
+    "",
+    `[Home page](${BASE_URL}index.html)`,
+    ...links,
+  ].join("\n");
+
+  const output = `${beforeProjects}\n\n${refreshedSection}\n`;
+  fs.writeFileSync(OUTPUT_MARKDOWN, output, "utf8");
+  console.log(`README updated with ${links.length} project links.`);
 }
 
 updateMarkdownFile();

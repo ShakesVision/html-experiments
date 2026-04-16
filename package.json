@@ -1,0 +1,12 @@
+{
+  "name": "html-experiments",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Static HTML experiments tooling scripts",
+  "scripts": {
+    "build:manifest": "node scripts/generate-tools-manifest.js",
+    "sync:html-head": "node scripts/ensure-shared-head.js",
+    "sync:readme": "node update_readme.js",
+    "sync:all": "npm run sync:html-head && npm run build:manifest && npm run sync:readme"
+  }
+}

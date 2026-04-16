@@ -1,96 +1,359 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/images/icon.png" type="image/png" sizes="16x16">
     <title>My Web Experiments</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="./assets/js/shared-init.js"></script>
 </head>
-
 <body class="bg-gray-50 font-sans">
-
-    <!-- Master Page Header -->
-    <header class="flex bg-[#572828] text-white text-center justify-center align-center
-    p-6">
-        <img class="size-20 mr-2" src="assets/images/icon.png" alt="logo">
+    <header class="flex bg-[#572828] text-white text-center justify-center items-center p-6 gap-4">
+        <img class="size-20" src="assets/images/icon.png" alt="logo">
         <div class="text-left">
             <h1 class="text-4xl font-bold">My Web Experiments</h1>
-            <p class="mt-2 text-lg">Explore my collection of web experiments, mostly built with HTML, Tailwind, and Js.
-            </p>
+            <p class="mt-2 text-lg">Explore my collection of web experiments, mostly built with HTML, Tailwind, and JS.</p>
         </div>
     </header>
 
-    <!-- Search Bar -->
-    <div class="p-6 flex justify-center">
-        <input id="searchBox" type="text" placeholder="Search Projects..."
-            class="p-3 w-1/2 border border-gray-300 rounded-md">
+    <section class="p-4 sm:p-6">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row gap-3">
+            <input id="searchBox" type="text" placeholder="Search Projects..."
+                class="p-3 w-full border border-gray-300 rounded-md">
+            <button id="allPagesBtn"
+                class="px-4 py-3 whitespace-nowrap rounded-md bg-[#572828] text-white hover:opacity-90 transition-opacity">
+                All Pages
+            </button>
+        </div>
+        <p id="statusMessage" class="max-w-6xl mx-auto mt-3 text-sm text-gray-600"></p>
+    </section>
+
+    <main id="projectsContainer" class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4 sm:px-6 pb-8"></main>
+
+    <div id="allPagesModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-4xl rounded-lg shadow-2xl overflow-hidden">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h2 class="text-xl font-semibold">All HTML Pages</h2>
+                <button id="closePagesModal" class="text-gray-600 hover:text-black text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 border-b">
+                <input id="pagesSearchBox" type="text" placeholder="Filter pages by name or path..."
+                    class="w-full p-2 border rounded-md border-gray-300">
+                <p id="pagesSourceLabel" class="mt-2 text-xs text-gray-500"></p>
+            </div>
+            <div id="pagesContainer" class="max-h-[70vh] overflow-y-auto p-4 space-y-4"></div>
+        </div>
     </div>
 
-    <!-- Project Cards -->
-    <div id="projectsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6"></div>
-
-
     <script>
-        // Search functionality
+        const GITHUB_CONFIG = {
+            owner: "shakesvision",
+            repo: "html-experiments",
+            branch: "main",
+            cacheKey: "all-html-pages-cache-v1",
+            cacheExpiryMs: 24 * 60 * 60 * 1000
+        };
+
+        const state = {
+            projects: [],
+            projectQuery: "",
+            pages: [],
+            pagesLoaded: false
+        };
+
         const searchBox = document.getElementById("searchBox");
-        const projectCards = document.querySelectorAll(".project-card");
+        const projectsContainer = document.getElementById("projectsContainer");
+        const statusMessage = document.getElementById("statusMessage");
 
-        searchBox.setAttribute("placeholder", `Search in ${projectCards.length} Projects...`);
-        searchBox.addEventListener("input", function () {
-            const searchQuery = searchBox.value.toLowerCase();
+        const allPagesBtn = document.getElementById("allPagesBtn");
+        const allPagesModal = document.getElementById("allPagesModal");
+        const closePagesModal = document.getElementById("closePagesModal");
+        const pagesSearchBox = document.getElementById("pagesSearchBox");
+        const pagesContainer = document.getElementById("pagesContainer");
+        const pagesSourceLabel = document.getElementById("pagesSourceLabel");
 
-            projectCards.forEach(card => {
-                const projectName = card.getAttribute("data-name").toLowerCase();
-                const projectHeading = card.querySelector("h3").textContent.toLowerCase();
-                const projectDescription = card.querySelector("p").textContent.toLowerCase();
-                if (projectName.includes(searchQuery) || projectHeading.includes(searchQuery) || projectDescription.includes(searchQuery)) {
-                    card.style.display = "block";
-                } else {
-                    card.style.display = "none";
-                }
-            });
-        });
-    </script>
-    <script>
-        async function loadProjects() {
-            const res = await fetch("projects.json");
-            const projects = await res.json();
-
-            const container = document.getElementById("projectsContainer");
-
-            container.innerHTML = projects
-                .map(p => `
-      <div class="project-card" data-name="#${p.id}">
-        <div class="bg-white p-4 rounded-lg shadow-lg h-full flex flex-col">
-          <img
-            class="h-32 w-32 object-cover mx-auto rounded-full"
-            src="${p.img}"
-            alt="${p.title}"
-          />
-          <h3 class="mt-4 text-xl font-semibold text-center">
-            ${p.title}
-          </h3>
-          <p class="text-gray-700 mt-2 text-center flex-grow">
-            ${p.desc}
-          </p>
-          <a
-            href="${p.link}"
-            class="block mt-4 text-[#572828] text-center font-medium"
-          >
-            Go to Project
-          </a>
-        </div>
-      </div>
-    `)
-                .join("");
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
         }
+
+        function renderProjects() {
+            const query = state.projectQuery.trim().toLowerCase();
+            const filtered = state.projects.filter((p) => {
+                const haystack = [p.id, p.title, p.desc, p.link].join(" ").toLowerCase();
+                return haystack.includes(query);
+            });
+
+            if (filtered.length === 0) {
+                projectsContainer.innerHTML = `
+                    <div class="col-span-full bg-white rounded-lg shadow p-6 text-gray-600">
+                        No projects found for "<strong>${escapeHtml(state.projectQuery)}</strong>".
+                    </div>
+                `;
+                return;
+            }
+
+            projectsContainer.innerHTML = filtered.map((p) => `
+                <article class="project-card" data-name="#${p.id}">
+                    <div class="bg-white p-4 rounded-lg shadow-lg h-full flex flex-col">
+                        <img
+                            class="h-32 w-32 object-cover mx-auto rounded-full"
+                            src="${escapeHtml(p.img)}"
+                            alt="${escapeHtml(p.title)}"
+                            loading="lazy"
+                            decoding="async"
+                        />
+                        <h3 class="mt-4 text-xl font-semibold text-center">${escapeHtml(p.title)}</h3>
+                        <p class="text-gray-700 mt-2 text-center flex-grow">${escapeHtml(p.desc)}</p>
+                        <a href="${escapeHtml(p.link)}" class="block mt-4 text-[#572828] text-center font-medium">
+                            Go to Project
+                        </a>
+                    </div>
+                </article>
+            `).join("");
+        }
+
+        async function loadProjects() {
+            try {
+                statusMessage.textContent = "Loading projects...";
+                const res = await fetch("projects.json", { cache: "no-store" });
+                if (!res.ok) {
+                    throw new Error(`projects.json request failed with ${res.status}`);
+                }
+
+                const projects = await res.json();
+                state.projects = Array.isArray(projects) ? projects : [];
+                searchBox.placeholder = `Search in ${state.projects.length} Projects...`;
+                renderProjects();
+                statusMessage.textContent = "";
+            } catch (error) {
+                statusMessage.textContent = "Could not load showcase projects right now.";
+                projectsContainer.innerHTML = `
+                    <div class="col-span-full bg-red-50 border border-red-200 rounded-lg p-6 text-red-700">
+                        Failed to load projects. Please refresh and try again.
+                    </div>
+                `;
+                console.error(error);
+            }
+        }
+
+        function groupByFolder(entries) {
+            const groups = {};
+            entries.forEach((entry) => {
+                const folder = entry.folder || "(root)";
+                if (!groups[folder]) {
+                    groups[folder] = [];
+                }
+                groups[folder].push(entry);
+            });
+
+            Object.keys(groups).forEach((folder) => {
+                groups[folder].sort((a, b) => a.path.localeCompare(b.path));
+            });
+
+            return Object.keys(groups).sort().map((folder) => ({
+                folder,
+                entries: groups[folder]
+            }));
+        }
+
+        function renderPagesList() {
+            const query = pagesSearchBox.value.trim().toLowerCase();
+            const filtered = state.pages.filter((item) => {
+                return [item.path, item.folder, item.title].join(" ").toLowerCase().includes(query);
+            });
+
+            if (filtered.length === 0) {
+                pagesContainer.innerHTML = '<p class="text-sm text-gray-500">No pages match your filter.</p>';
+                return;
+            }
+
+            const groups = groupByFolder(filtered);
+            pagesContainer.innerHTML = groups.map((group) => `
+                <section>
+                    <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-600 mb-2">
+                        ${escapeHtml(group.folder)} <span class="text-gray-400 normal-case">(${group.entries.length})</span>
+                    </h3>
+                    <ul class="space-y-1">
+                        ${group.entries.map((entry) => `
+                            <li>
+                                <a href="${escapeHtml(entry.path)}" class="text-[#572828] hover:underline break-all">
+                                    ${escapeHtml(entry.path)}
+                                </a>
+                            </li>
+                        `).join("")}
+                    </ul>
+                </section>
+            `).join("");
+        }
+
+        function readCachedPages() {
+            try {
+                const raw = localStorage.getItem(GITHUB_CONFIG.cacheKey);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!parsed?.timestamp || !Array.isArray(parsed?.entries)) return null;
+                if (Date.now() - parsed.timestamp > GITHUB_CONFIG.cacheExpiryMs) return null;
+                return parsed.entries;
+            } catch {
+                return null;
+            }
+        }
+
+        function writeCachedPages(entries) {
+            try {
+                const payload = JSON.stringify({
+                    timestamp: Date.now(),
+                    entries
+                });
+                localStorage.setItem(GITHUB_CONFIG.cacheKey, payload);
+            } catch {
+            }
+        }
+
+        function normalizeManifestEntries(data) {
+            const entries = Array.isArray(data) ? data : data?.entries;
+            if (!Array.isArray(entries)) return [];
+
+            return entries
+                .filter((entry) => typeof entry.path === "string" && entry.path.endsWith(".html"))
+                .map((entry) => {
+                    const pathValue = entry.path;
+                    const parts = pathValue.split("/");
+                    return {
+                        path: pathValue,
+                        folder: entry.folder || (parts.length > 1 ? parts[0] : "(root)"),
+                        title: entry.title || pathValue
+                    };
+                });
+        }
+
+        async function fetchManifestEntries() {
+            const response = await fetch("assets/data/tools-manifest.json", { cache: "no-store" });
+            if (!response.ok) {
+                throw new Error(`manifest failed with ${response.status}`);
+            }
+            const json = await response.json();
+            const entries = normalizeManifestEntries(json);
+            if (!entries.length) {
+                throw new Error("manifest returned no entries");
+            }
+            return entries;
+        }
+
+        async function fetchGitHubEntries() {
+            const endpoint = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/git/trees/${GITHUB_CONFIG.branch}?recursive=1`;
+            const response = await fetch(endpoint, { cache: "no-store" });
+            if (!response.ok) {
+                throw new Error(`github tree failed with ${response.status}`);
+            }
+            const json = await response.json();
+            const tree = Array.isArray(json?.tree) ? json.tree : [];
+            const entries = tree
+                .filter((item) => item.type === "blob" && item.path.endsWith(".html"))
+                .map((item) => {
+                    const parts = item.path.split("/");
+                    const filename = parts[parts.length - 1];
+                    return {
+                        path: item.path,
+                        folder: parts.length > 1 ? parts[0] : "(root)",
+                        title: filename
+                    };
+                });
+
+            if (!entries.length) {
+                throw new Error("github returned no html files");
+            }
+
+            entries.sort((a, b) => a.path.localeCompare(b.path));
+            return entries;
+        }
+
+        async function resolveAllPages() {
+            try {
+                const manifestEntries = await fetchManifestEntries();
+                writeCachedPages(manifestEntries);
+                return { entries: manifestEntries, source: "Loaded from local manifest" };
+            } catch (manifestError) {
+                console.warn("Manifest load failed:", manifestError);
+            }
+
+            try {
+                const githubEntries = await fetchGitHubEntries();
+                writeCachedPages(githubEntries);
+                return { entries: githubEntries, source: "Loaded from GitHub API" };
+            } catch (githubError) {
+                console.warn("GitHub fallback failed:", githubError);
+            }
+
+            const cachedEntries = readCachedPages();
+            if (cachedEntries && cachedEntries.length) {
+                return { entries: cachedEntries, source: "Loaded from local cache (stale fallback)" };
+            }
+
+            throw new Error("No page list source is available.");
+        }
+
+        async function openAllPagesModal() {
+            allPagesModal.classList.remove("hidden");
+            allPagesModal.classList.add("flex");
+
+            if (!state.pagesLoaded) {
+                pagesContainer.innerHTML = '<p class="text-sm text-gray-500">Loading pages...</p>';
+                pagesSourceLabel.textContent = "";
+
+                try {
+                    const resolved = await resolveAllPages();
+                    state.pages = resolved.entries;
+                    state.pagesLoaded = true;
+                    pagesSourceLabel.textContent = `${resolved.source} · ${state.pages.length} pages`;
+                    renderPagesList();
+                } catch (error) {
+                    pagesContainer.innerHTML = `
+                        <p class="text-sm text-red-600">Could not load page list right now.</p>
+                    `;
+                    pagesSourceLabel.textContent = "Manifest and GitHub fallback both failed.";
+                    console.error(error);
+                }
+            } else {
+                renderPagesList();
+            }
+
+            pagesSearchBox.focus();
+        }
+
+        function closeAllPagesModal() {
+            allPagesModal.classList.add("hidden");
+            allPagesModal.classList.remove("flex");
+        }
+
+        searchBox.addEventListener("input", () => {
+            state.projectQuery = searchBox.value;
+            renderProjects();
+        });
+
+        allPagesBtn.addEventListener("click", openAllPagesModal);
+        closePagesModal.addEventListener("click", closeAllPagesModal);
+        pagesSearchBox.addEventListener("input", renderPagesList);
+
+        allPagesModal.addEventListener("click", (event) => {
+            if (event.target === allPagesModal) {
+                closeAllPagesModal();
+            }
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && !allPagesModal.classList.contains("hidden")) {
+                closeAllPagesModal();
+            }
+        });
 
         loadProjects();
     </script>
-
-    <script src="script.js"></script>
 </body>
-
 </html>
