@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Naseem PDF Texter Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-stone-950 text-stone-100">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <header class="mb-6 overflow-hidden rounded-3xl border border-amber-500/20 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_35%),linear-gradient(135deg,rgba(41,37,36,0.96),rgba(12,10,9,0.98))] p-6 shadow-2xl shadow-black/30">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div class="max-w-3xl">
+            <p class="mb-2 text-xs uppercase tracking-[0.35em] text-amber-300/80">Frontend-Only Prototype</p>
+            <h1 class="text-3xl font-black tracking-tight text-amber-50 sm:text-4xl">Naseem PDF Texter Web</h1>
+            <p class="mt-3 max-w-2xl text-sm leading-6 text-stone-300 sm:text-base">
+              Browser-side PDF decoding prototype that lifts the legacy WinForms ligature logic into JavaScript and processes single pages, ranges, or whole books.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-stone-700/80 bg-black/20 px-4 py-3 text-sm text-stone-300">
+            <div id="status-badge" class="font-medium text-amber-200">Waiting for PDF</div>
+            <div id="status-detail" class="mt-1 text-stone-400">Load a PDF and XML mappings to begin.</div>
+          </div>
+        </div>
+      </header>
+
+      <main class="grid gap-6 xl:grid-cols-[380px,minmax(0,1fr)]">
+        <section class="rounded-3xl border border-stone-800 bg-stone-900/80 p-5 shadow-xl shadow-black/20">
+          <h2 class="mb-4 text-lg font-semibold text-amber-100">Controls</h2>
+
+          <div class="space-y-4">
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-stone-200">PDF file</span>
+              <input id="pdf-file" type="file" accept="application/pdf" class="block w-full rounded-2xl border border-stone-700 bg-stone-950 px-3 py-3 text-sm text-stone-200 file:mr-4 file:rounded-xl file:border-0 file:bg-amber-400 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-stone-950 hover:file:bg-amber-300" />
+            </label>
+
+            <div id="pdf-page-controls" class="grid gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+              <label class="rounded-2xl border border-stone-800 bg-stone-950/70 p-3">
+                <span class="mb-2 block text-xs uppercase tracking-[0.24em] text-stone-400">Mode</span>
+                <select id="page-mode" class="w-full rounded-xl border border-stone-700 bg-stone-900 px-3 py-2 text-sm">
+                  <option value="single">Single Page</option>
+                  <option value="range">Page Range</option>
+                  <option value="all">Whole Book</option>
+                </select>
+              </label>
+
+              <label class="rounded-2xl border border-stone-800 bg-stone-950/70 p-3">
+                <span class="mb-2 block text-xs uppercase tracking-[0.24em] text-stone-400">Start</span>
+                <input id="start-page" type="number" min="1" value="5" class="w-full rounded-xl border border-stone-700 bg-stone-900 px-3 py-2 text-sm" />
+              </label>
+
+              <label class="rounded-2xl border border-stone-800 bg-stone-950/70 p-3">
+                <span class="mb-2 block text-xs uppercase tracking-[0.24em] text-stone-400">End</span>
+                <input id="end-page" type="number" min="1" value="5" class="w-full rounded-xl border border-stone-700 bg-stone-900 px-3 py-2 text-sm" />
+              </label>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-2">
+              <label class="rounded-2xl border border-stone-800 bg-stone-950/70 p-3">
+                <span class="mb-2 block text-xs uppercase tracking-[0.24em] text-stone-400">Break Mode</span>
+                <select id="break-mode" class="w-full rounded-xl border border-stone-700 bg-stone-900 px-3 py-2 text-sm">
+                  <option value="paragraph">Paragraph</option>
+                  <option value="line">Line</option>
+                  <option value="none">Flat</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="grid gap-3">
+              <label class="flex items-center justify-between rounded-2xl border border-stone-800 bg-stone-950/70 px-4 py-3">
+                <span class="text-sm text-stone-200">Skip English-heavy runs</span>
+                <input id="skip-english" type="checkbox" checked class="h-5 w-5 accent-amber-400" />
+              </label>
+              <label class="flex items-center justify-between rounded-2xl border border-stone-800 bg-stone-950/70 px-4 py-3">
+                <span class="text-sm text-stone-200">Preserve line feeds</span>
+                <input id="line-feed" type="checkbox" checked class="h-5 w-5 accent-amber-400" />
+              </label>
+              <label class="flex items-center justify-between rounded-2xl border border-stone-800 bg-stone-950/70 px-4 py-3">
+                <span class="text-sm text-stone-200">Repair lines with ﷺ</span>
+                <input id="swap-text" type="checkbox" checked class="h-5 w-5 accent-amber-400" />
+              </label>
+              <label class="flex items-center justify-between rounded-2xl border border-stone-800 bg-stone-950/70 px-4 py-3">
+                <span class="text-sm text-stone-200">Include page separators</span>
+                <input id="page-separators" type="checkbox" class="h-5 w-5 accent-amber-400" />
+              </label>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-2">
+              <button id="process-btn" class="rounded-2xl bg-amber-400 px-4 py-3 text-sm font-bold text-stone-950 transition hover:bg-amber-300">
+                Process PDF
+              </button>
+              <button id="copy-btn" class="rounded-2xl border border-stone-700 bg-stone-950 px-4 py-3 text-sm font-semibold text-stone-100 transition hover:border-amber-400 hover:text-amber-200">
+                Copy Output
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-6 rounded-2xl border border-stone-800 bg-black/20 p-4">
+            <h3 class="mb-2 text-sm font-semibold text-amber-100">Runtime notes</h3>
+            <ul class="space-y-2 text-sm leading-6 text-stone-300">
+              <li>Uses the original XML mapping files from the legacy app.</li>
+              <li>`Paragraph` mode is now the default output mode.</li>
+              <li>Uses MuPDF WebAssembly in-browser instead of the old PowerShell preprocessing path.</li>
+              <li>Page 5 is the default starting point for the supplied sample PDF.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="grid gap-6">
+          <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr),320px]">
+            <article class="rounded-3xl border border-stone-800 bg-stone-900/80 p-5 shadow-xl shadow-black/20">
+              <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-amber-100">Extracted Text</h2>
+                <div id="page-summary" class="text-sm text-stone-400">No pages processed yet.</div>
+              </div>
+              <textarea id="output" dir="rtl" class="h-[28rem] w-full rounded-2xl border border-stone-700 bg-stone-950 p-4 text-right text-lg leading-9 text-stone-100 outline-none" placeholder="Processed text will appear here..."></textarea>
+            </article>
+
+            <article class="rounded-3xl border border-stone-800 bg-stone-900/80 p-5 shadow-xl shadow-black/20">
+              <h2 class="mb-4 text-lg font-semibold text-amber-100">Debug</h2>
+              <div id="debug" class="h-[28rem] overflow-auto rounded-2xl border border-stone-700 bg-stone-950 p-4 font-mono text-xs leading-6 text-stone-300"></div>
+            </article>
+          </div>
+
+          <article class="rounded-3xl border border-stone-800 bg-stone-900/80 p-5 shadow-xl shadow-black/20">
+            <h2 class="mb-4 text-lg font-semibold text-amber-100">Page Results</h2>
+            <div id="results" class="grid gap-3"></div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

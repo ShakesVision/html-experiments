@@ -1,0 +1,11 @@
+{
+  "name": "naseem-pdf-texter-webapp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node ./tests/run-tests.js"
+  },
+  "dependencies": {
+    "mupdf": "^1.27.0"
+  }
+}
