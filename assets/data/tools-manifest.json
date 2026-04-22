@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-16T02:02:58.264Z",
-  "count": 48,
+  "generatedAt": "2026-04-22T16:48:13.667Z",
+  "count": 50,
   "entries": [
     {
       "path": "alphabet/index.html",
@@ -136,10 +136,24 @@
       "isRoot": true
     },
     {
+      "path": "inpage/pdf-texter/index.html",
+      "folder": "inpage",
+      "isIndex": true,
+      "title": "Naseem PDF Texter Web",
+      "isRoot": false
+    },
+    {
       "path": "inpage/reader.html",
       "folder": "inpage",
       "isIndex": false,
       "title": "InPage INP Reader",
+      "isRoot": false
+    },
+    {
+      "path": "jibreel/index.html",
+      "folder": "jibreel",
+      "isIndex": true,
+      "title": "MJBX Converter + Reader",
       "isRoot": false
     },
     {
