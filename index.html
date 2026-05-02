@@ -18,13 +18,9 @@
     </header>
 
     <section class="p-4 sm:p-6">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row gap-3">
+        <div class="max-w-6xl mx-auto">
             <input id="searchBox" type="text" placeholder="Search Projects..."
                 class="p-3 w-full border border-gray-300 rounded-md">
-            <button id="allPagesBtn"
-                class="px-4 py-3 whitespace-nowrap rounded-md bg-[#572828] text-white hover:opacity-90 transition-opacity">
-                All Pages
-            </button>
         </div>
         <p id="statusMessage" class="max-w-6xl mx-auto mt-3 text-sm text-gray-600"></p>
     </section>
@@ -66,7 +62,6 @@
         const projectsContainer = document.getElementById("projectsContainer");
         const statusMessage = document.getElementById("statusMessage");
 
-        const allPagesBtn = document.getElementById("allPagesBtn");
         const allPagesModal = document.getElementById("allPagesModal");
         const closePagesModal = document.getElementById("closePagesModal");
         const pagesSearchBox = document.getElementById("pagesSearchBox");
@@ -82,10 +77,41 @@
                 .replaceAll("'", "&#39;");
         }
 
+        function renderStatusBadge(status) {
+            const normalized = String(status || "").trim().toLowerCase();
+            const badges = {
+                alpha: {
+                    symbol: "α",
+                    label: "Alpha",
+                    classes: "bg-amber-100 text-amber-800 border-amber-200"
+                },
+                beta: {
+                    symbol: "β",
+                    label: "Beta",
+                    classes: "bg-sky-100 text-sky-800 border-sky-200"
+                }
+            };
+            const badge = badges[normalized];
+
+            if (!badge) {
+                return "";
+            }
+
+            return `
+                <span
+                    class="absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full border text-sm font-bold ${badge.classes}"
+                    title="${badge.label}"
+                    aria-label="${badge.label}"
+                >
+                    ${badge.symbol}
+                </span>
+            `;
+        }
+
         function renderProjects() {
             const query = state.projectQuery.trim().toLowerCase();
             const filtered = state.projects.filter((p) => {
-                const haystack = [p.id, p.title, p.desc, p.link].join(" ").toLowerCase();
+                const haystack = [p.id, p.title, p.desc, p.link, p.status].join(" ").toLowerCase();
                 return haystack.includes(query);
             });
 
@@ -100,7 +126,8 @@
 
             projectsContainer.innerHTML = filtered.map((p) => `
                 <article class="project-card" data-name="#${p.id}">
-                    <div class="bg-white p-4 rounded-lg shadow-lg h-full flex flex-col">
+                    <div class="relative bg-white p-4 rounded-lg shadow-lg h-full flex flex-col">
+                        ${renderStatusBadge(p.status)}
                         <img
                             class="h-32 w-32 object-cover mx-auto rounded-full"
                             src="${escapeHtml(p.img)}"
@@ -334,10 +361,16 @@
 
         searchBox.addEventListener("input", () => {
             state.projectQuery = searchBox.value;
+
+            if (state.projectQuery.trim().toLowerCase() === ":pages") {
+                searchBox.value = "";
+                state.projectQuery = "";
+                openAllPagesModal();
+            }
+
             renderProjects();
         });
 
-        allPagesBtn.addEventListener("click", openAllPagesModal);
         closePagesModal.addEventListener("click", closeAllPagesModal);
         pagesSearchBox.addEventListener("input", renderPagesList);
 
@@ -350,6 +383,11 @@
         document.addEventListener("keydown", (event) => {
             if (event.key === "Escape" && !allPagesModal.classList.contains("hidden")) {
                 closeAllPagesModal();
+            }
+
+            if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "p") {
+                event.preventDefault();
+                openAllPagesModal();
             }
         });
 

@@ -4,7 +4,8 @@
     "title": "OCR",
     "desc": "OCR try using Tesseract.js.",
     "img": "ocr/ocr.png",
-    "link": "ocr/index.html"
+    "link": "ocr/index.html",
+    "status": "alpha"
   },
   {
     "id": 2,
@@ -18,7 +19,8 @@
     "title": "Image to PDF",
     "desc": "Select images and convert them to PDF, offline.",
     "img": "pdf-creator/img-pdf.png",
-    "link": "pdf-creator/index.html"
+    "link": "pdf-creator/index.html",
+    "status": "alpha"
   },
   {
     "id": 4,
@@ -32,7 +34,8 @@
     "title": "Logo Creator",
     "desc": "Create logos using simple intuitive interface.",
     "img": "logo-creator/icon.png",
-    "link": "logo-creator/index.html"
+    "link": "logo-creator/index.html",
+    "status": "beta"
   },
   {
     "id": 6,
@@ -53,7 +56,8 @@
     "title": "Graphic Designer",
     "desc": "A simple graphic designer which allows you to add image, text, pencil brush, colors, custom canvas size and png/svg exports in any size.",
     "img": "graphic-designer/graphic-designer.png",
-    "link": "graphic-designer/index.html"
+    "link": "graphic-designer/index.html",
+    "status": "alpha"
   },
   {
     "id": 9,
@@ -81,7 +85,8 @@
     "title": "Stock Profit Tracker",
     "desc": "Tracks your stock profit and loss, with % profit targets.",
     "img": "stock-profit-tracker/icon.png",
-    "link": "stock-profit-tracker/index.html"
+    "link": "stock-profit-tracker/index.html",
+    "status": "beta"
   },
   {
     "id": 13,
@@ -95,6 +100,79 @@
     "title": "Material RSS Reader",
     "desc": "Minimal Material-style feed reader with Blogger JSONP support, pagination, reader settings, and immersive reading mode.",
     "img": "rss-reader/icon.png",
-    "link": "rss-reader/index.html"
+    "link": "rss-reader/index.html",
+    "status": "beta"
+  },
+  {
+    "id": 15,
+    "title": "Alphabet Adventure",
+    "desc": "A playful kids letter game for learning alphabet sounds and recognition.",
+    "img": "assets/images/project.png",
+    "link": "alphabet/index.html",
+    "status": "beta"
+  },
+  {
+    "id": 16,
+    "title": "BlogFlux",
+    "desc": "Extract and browse Blogger archive data from a blog feed.",
+    "img": "assets/images/project.png",
+    "link": "bloggerflux/index.html",
+    "status": "beta"
+  },
+  {
+    "id": 17,
+    "title": "Poetry Formatter",
+    "desc": "Format Urdu poetry text into cleaner, presentation-ready layouts.",
+    "img": "editor/urdu-editor.png",
+    "link": "editor/poetry2.html",
+    "status": "alpha"
+  },
+  {
+    "id": 18,
+    "title": "Naseem PDF Texter",
+    "desc": "A web tool for preparing and placing Naseem-style text over PDF pages.",
+    "img": "assets/images/project.png",
+    "link": "inpage/pdf-texter/index.html",
+    "status": "alpha"
+  },
+  {
+    "id": 19,
+    "title": "InPage INP Reader",
+    "desc": "Read and inspect InPage INP content directly in the browser.",
+    "img": "assets/images/project.png",
+    "link": "inpage/reader.html",
+    "status": "alpha"
+  },
+  {
+    "id": 20,
+    "title": "Offline Mock Generator",
+    "desc": "Create quick offline mockups and export clean presentation images.",
+    "img": "assets/images/project.png",
+    "link": "mockup/index.html",
+    "status": "beta"
+  },
+  {
+    "id": 21,
+    "title": "3D Tilt Studio",
+    "desc": "Skew, tilt, and export interface mockups with a 3D presentation effect.",
+    "img": "assets/images/project.png",
+    "link": "mockup/skew.html",
+    "status": "alpha"
+  },
+  {
+    "id": 22,
+    "title": "Quoter",
+    "desc": "Create clean quote graphics from short text snippets.",
+    "img": "assets/images/project.png",
+    "link": "quoter/index.html",
+    "status": "beta"
+  },
+  {
+    "id": 23,
+    "title": "WhatsApp DP Viewer",
+    "desc": "Preview and download WhatsApp display pictures from a simple browser tool.",
+    "img": "assets/images/project.png",
+    "link": "wp-dp-dw/index.html",
+    "status": "alpha"
   }
 ]
