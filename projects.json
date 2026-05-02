@@ -181,7 +181,31 @@
     "title": "Rekhta Reader",
     "desc": "Load Rekhta book pages through a proxy, preview them lazily, and export a PDF when needed.",
     "img": "assets/images/project.png",
-    "link": "rekhta/index.html",
+    "link": "rekhta-reader/index.html",
     "status": "alpha"
+  },
+  {
+    "id": 25,
+    "title": "Utools",
+    "desc": "A dedicated toolbox of Urdu-focused utilities hosted as its own full app.",
+    "img": "https://play-lh.googleusercontent.com/Dsjxk8LMkDOvIpjK-RYYaWm64P9zdBxLqbkMeA6ODnvqTo_RptHryPG9wzh_UB1B8A=w480-h960-rw",
+    "link": "https://utools.shakeeb.in",
+    "external": true
+  },
+  {
+    "id": 26,
+    "title": "Qaafiyah Expert",
+    "desc": "A focused tool for qaafiyah work, meter-adjacent analysis, and poetic assistance.",
+    "img": "https://lh3.googleusercontent.com/Zl1iGtSkUpSlTbRh3g8ps5KcYPqoTkVNGsvlbDVxwj3RoUN5z823HRz3dAPrSa0JjoHT=s180-rw",
+    "link": "https://qaafiyah.sarbakaf.com",
+    "external": true
+  },
+  {
+    "id": 27,
+    "title": "Hifz Helper",
+    "desc": "A Quran memorization helper built as a standalone experience outside this tools host.",
+    "img": "https://play-lh.googleusercontent.com/TldXGOQXc8jfNNyFNWprbdMHg9ZhuIlmQD9idRPsEz3hY7uDcTXgVDIDu1ueN3vtAeYdAp7W9jsvZINz7fCNKw=s96-rw",
+    "link": "https://quran.shakeeb.in",
+    "external": true
   }
 ]

@@ -5,44 +5,305 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/images/icon.png" type="image/png" sizes="16x16">
     <title>tools.shakeeb.in</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Manrope:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/tailwind.css" />
     <script defer src="./assets/js/shared-init.js"></script>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg-1: #edf2ff;
+            --bg-2: #f8fbff;
+            --ink-1: #19233b;
+            --ink-2: #5d6882;
+            --line: rgba(145, 163, 204, 0.22);
+            --glass-fill: rgba(255, 255, 255, 0.36);
+            --glass-fill-strong: rgba(255, 255, 255, 0.56);
+            --glass-stroke: rgba(255, 255, 255, 0.82);
+            --shadow-lg: 0 22px 56px rgba(99, 117, 158, 0.18);
+            --shadow-md: 0 14px 34px rgba(99, 117, 158, 0.14);
+            --blue-glow: rgba(94, 174, 255, 0.45);
+            --amber-glow: rgba(255, 182, 115, 0.35);
+            --mint-glow: rgba(120, 241, 212, 0.28);
+        }
+
+        html {
+            min-height: 100%;
+            background:
+                radial-gradient(circle at 14% 10%, var(--amber-glow), transparent 20%),
+                radial-gradient(circle at 86% 12%, var(--blue-glow), transparent 22%),
+                radial-gradient(circle at 50% 72%, rgba(155, 173, 255, 0.16), transparent 26%),
+                linear-gradient(180deg, var(--bg-1), var(--bg-2));
+        }
+
+        body {
+            min-height: 100vh;
+            background: transparent;
+            color: var(--ink-1);
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+
+        .display-face {
+            font-family: "Manrope", sans-serif;
+        }
+
+        .glass-panel {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--glass-stroke);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.24)),
+                linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.08));
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(26px) saturate(175%);
+            -webkit-backdrop-filter: blur(26px) saturate(175%);
+        }
+
+        .glass-panel::before {
+            content: "";
+            position: absolute;
+            inset: 1px;
+            border-radius: inherit;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.04));
+            pointer-events: none;
+        }
+
+        .glass-pill {
+            border: 1px solid rgba(255, 255, 255, 0.86);
+            background: var(--glass-fill-strong);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.88),
+                0 10px 24px rgba(99, 117, 158, 0.1);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .glass-card {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--glass-stroke);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.22)),
+                linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08));
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(24px) saturate(165%);
+            -webkit-backdrop-filter: blur(24px) saturate(165%);
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 22px 44px rgba(99, 117, 158, 0.2);
+            border-color: rgba(255, 255, 255, 0.94);
+        }
+
+        .glass-card::before {
+            content: "";
+            position: absolute;
+            inset: 1px;
+            border-radius: inherit;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.05));
+            pointer-events: none;
+        }
+
+        .card-media {
+            position: relative;
+            min-height: 168px;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.58);
+            background:
+                radial-gradient(circle at 18% 15%, rgba(255, 188, 118, 0.46), transparent 28%),
+                radial-gradient(circle at 84% 22%, rgba(103, 207, 255, 0.42), transparent 30%),
+                radial-gradient(circle at 74% 78%, rgba(120, 241, 212, 0.24), transparent 24%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(234, 243, 255, 0.76));
+        }
+
+        .card-media::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.38), transparent 52%);
+            pointer-events: none;
+        }
+
+        .media-icon-wrap {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .media-icon {
+            height: 6.5rem;
+            width: 6.5rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.86);
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.62);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.92),
+                0 16px 34px rgba(110, 131, 178, 0.16);
+        }
+
+        .search-shell {
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.88);
+            background: rgba(255, 255, 255, 0.48);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.94),
+                0 18px 38px rgba(99, 117, 158, 0.12);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .search-shell:focus-within {
+            border-color: rgba(121, 208, 255, 0.98);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.95),
+                0 0 0 4px rgba(100, 199, 255, 0.14),
+                0 22px 42px rgba(99, 117, 158, 0.16);
+        }
+
+        .search-shell input {
+            background: transparent;
+            outline: none;
+        }
+
+        .hero-spot {
+            position: absolute;
+            inset: auto -2rem -2rem auto;
+            height: 8rem;
+            width: 8rem;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(98, 205, 255, 0.45), transparent 64%);
+            filter: blur(10px);
+            pointer-events: none;
+        }
+
+        .subtle-grid {
+            background-image:
+                linear-gradient(rgba(143, 160, 199, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(143, 160, 199, 0.08) 1px, transparent 1px);
+            background-size: 34px 34px;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92), transparent 92%);
+        }
+    </style>
 </head>
-<body class="bg-gray-50 font-sans">
-    <header class="flex bg-[#572828] text-white text-center justify-center items-center p-6 gap-4">
-        <img class="size-20" src="assets/images/icon.png" alt="logo">
-        <div class="text-left">
-            <h1 class="text-4xl font-bold">tools.shakeeb.in</h1>
-            <p class="mt-2 text-lg">Explore my collection of web experiments, mostly built with HTML, Tailwind, and JS.</p>
-            <p class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-white/85">
-                <a class="underline underline-offset-4 hover:text-white" href="https://www.shakeeb.in">www.shakeeb.in</a>
-                <a class="underline underline-offset-4 hover:text-white" href="https://ur.shakeeb.in">ur.shakeeb.in</a>
-            </p>
+<body>
+    <div class="pointer-events-none absolute inset-0 subtle-grid"></div>
+
+    <header class="px-4 pt-6 sm:px-6 sm:pt-8">
+        <div class="glass-panel mx-auto max-w-6xl rounded-[2rem] px-5 py-6 sm:px-7 sm:py-7">
+            <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="mb-4 flex flex-wrap gap-3">
+                        <span class="glass-pill inline-flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">
+                            <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(74,222,128,0.8)]"></span>
+                            Live directory
+                        </span>
+                        <span class="glass-pill inline-flex items-center rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">
+                            Experimental tools
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-4 sm:gap-5">
+                        <div class="glass-pill flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.5rem] sm:h-20 sm:w-20">
+                            <img class="h-9 w-9 sm:h-11 sm:w-11" src="assets/images/icon.png" alt="tools logo">
+                        </div>
+                        <div class="min-w-0">
+                            <h1 class="display-face text-3xl font-extrabold tracking-tight text-[var(--ink-1)] sm:text-5xl">
+                                tools.shakeeb.in
+                            </h1>
+                            <p class="mt-3 max-w-2xl text-sm leading-7 text-[var(--ink-2)] sm:text-base">
+                                A quiet shelf of useful experiments: editors, readers, converters, Urdu tools, small workflow helpers, and strange useful web things.
+                            </p>
+                            <div class="mt-4 flex flex-wrap gap-3 text-sm text-[var(--ink-2)]">
+                                <a class="glass-pill inline-flex items-center rounded-full px-4 py-2 transition hover:bg-white/80 hover:text-[var(--ink-1)]" href="https://www.shakeeb.in">www.shakeeb.in</a>
+                                <a class="glass-pill inline-flex items-center rounded-full px-4 py-2 transition hover:bg-white/80 hover:text-[var(--ink-1)]" href="https://ur.shakeeb.in">ur.shakeeb.in</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="grid min-w-[200px] gap-3 sm:grid-cols-3 lg:w-[320px] lg:grid-cols-1">
+                    <div class="glass-pill rounded-[1.4rem] px-4 py-4">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">Hosted</p>
+                        <p class="mt-2 text-2xl font-extrabold text-[var(--ink-1)]" id="heroProjectCount">0</p>
+                    </div>
+                    <div class="glass-pill rounded-[1.4rem] px-4 py-4">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">Alpha</p>
+                        <p class="mt-2 text-2xl font-extrabold text-[var(--ink-1)]" id="heroAlphaCount">0</p>
+                    </div>
+                    <div class="glass-pill rounded-[1.4rem] px-4 py-4">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">Beta</p>
+                        <p class="mt-2 text-2xl font-extrabold text-[var(--ink-1)]" id="heroBetaCount">0</p>
+                    </div>
+                </aside>
+            </div>
+            <div class="hero-spot"></div>
         </div>
     </header>
 
-    <section class="p-4 sm:p-6">
-        <div class="max-w-6xl mx-auto">
-            <input id="searchBox" type="text" placeholder="Search Projects..."
-                class="p-3 w-full border border-gray-300 rounded-md">
+    <section class="px-4 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6">
+        <div class="mx-auto max-w-6xl">
+            <div id="externalProjectsSection" class="hidden">
+                <div class="mb-4 flex items-center justify-between gap-4">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">Elsewhere</p>
+                        <h2 class="display-face mt-2 text-2xl font-bold text-[var(--ink-1)]">Standalone projects worth visiting</h2>
+                    </div>
+                </div>
+                <div id="externalProjectsContainer" class="grid grid-cols-1 gap-4 lg:grid-cols-3"></div>
+            </div>
         </div>
-        <p id="statusMessage" class="max-w-6xl mx-auto mt-3 text-sm text-gray-600"></p>
     </section>
 
-    <main id="projectsContainer" class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4 sm:px-6 pb-8"></main>
+    <section class="px-4 pb-5 pt-1 sm:px-6 sm:pb-6">
+        <div class="mx-auto max-w-6xl">
+            <div class="search-shell flex items-center gap-3 rounded-[1.9rem] px-4 py-3 sm:px-5">
+                <div class="glass-pill inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-[var(--ink-2)]">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" class="h-5 w-5">
+                        <path d="M10.5 4a6.5 6.5 0 1 0 3.98 11.64l4.94 4.94 1.41-1.41-4.94-4.94A6.5 6.5 0 0 0 10.5 4Zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <input id="searchBox" type="text" placeholder="Search hosted tools, statuses, or paths..."
+                    class="min-w-0 flex-1 border-none p-0 text-base text-[var(--ink-1)] placeholder:text-[var(--ink-2)] sm:text-lg">
+                <div class="hidden rounded-full border border-white/80 bg-white/44 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)] sm:block">
+                    hosted only
+                </div>
+            </div>
+            <p id="statusMessage" class="mt-3 px-1 text-sm text-[var(--ink-2)]"></p>
+        </div>
+    </section>
 
-    <div id="allPagesModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white w-full max-w-4xl rounded-lg shadow-2xl overflow-hidden">
-            <div class="flex justify-between items-center p-4 border-b">
-                <h2 class="text-xl font-semibold">All HTML Pages</h2>
-                <button id="closePagesModal" class="text-gray-600 hover:text-black text-2xl leading-none">&times;</button>
+    <main class="px-4 pb-10 sm:px-6 sm:pb-12">
+        <div class="mx-auto max-w-6xl">
+            <div class="mb-4">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">Hosted on this domain</p>
+                <h2 class="display-face mt-2 text-2xl font-bold text-[var(--ink-1)]">Tool library</h2>
             </div>
-            <div class="p-4 border-b">
-                <input id="pagesSearchBox" type="text" placeholder="Filter pages by name or path..."
-                    class="w-full p-2 border rounded-md border-gray-300">
-                <p id="pagesSourceLabel" class="mt-2 text-xs text-gray-500"></p>
+            <div id="projectsContainer" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+        </div>
+    </main>
+
+    <div id="allPagesModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/45 p-4 backdrop-blur">
+        <div class="glass-panel relative w-full max-w-4xl rounded-[2rem]">
+            <div class="relative z-10 flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+                <h2 class="display-face text-xl font-bold text-[var(--ink-1)]">All HTML Pages</h2>
+                <button id="closePagesModal" class="glass-pill inline-flex h-11 w-11 items-center justify-center rounded-full text-xl leading-none text-[var(--ink-2)] transition hover:text-[var(--ink-1)]">&times;</button>
             </div>
-            <div id="pagesContainer" class="max-h-[70vh] overflow-y-auto p-4 space-y-4"></div>
+            <div class="relative z-10 border-b border-[var(--line)] px-5 py-4">
+                <div class="search-shell flex items-center gap-3 rounded-[1.4rem] px-4 py-3">
+                    <input id="pagesSearchBox" type="text" placeholder="Filter pages by name or path..."
+                        class="min-w-0 flex-1 border-none bg-transparent p-0 text-sm text-[var(--ink-1)] placeholder:text-[var(--ink-2)]">
+                </div>
+                <p id="pagesSourceLabel" class="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]"></p>
+            </div>
+            <div id="pagesContainer" class="relative z-10 max-h-[70vh] space-y-4 overflow-y-auto px-5 py-5"></div>
         </div>
     </div>
 
@@ -57,6 +318,7 @@
 
         const state = {
             projects: [],
+            externalProjects: [],
             projectQuery: "",
             pages: [],
             pagesLoaded: false
@@ -64,7 +326,12 @@
 
         const searchBox = document.getElementById("searchBox");
         const projectsContainer = document.getElementById("projectsContainer");
+        const externalProjectsSection = document.getElementById("externalProjectsSection");
+        const externalProjectsContainer = document.getElementById("externalProjectsContainer");
         const statusMessage = document.getElementById("statusMessage");
+        const heroProjectCount = document.getElementById("heroProjectCount");
+        const heroAlphaCount = document.getElementById("heroAlphaCount");
+        const heroBetaCount = document.getElementById("heroBetaCount");
 
         const allPagesModal = document.getElementById("allPagesModal");
         const closePagesModal = document.getElementById("closePagesModal");
@@ -87,12 +354,12 @@
                 alpha: {
                     symbol: "&alpha;",
                     label: "Alpha",
-                    classes: "bg-amber-100 text-amber-800 border-amber-200"
+                    classes: "border-amber-300 bg-amber-50/85 text-amber-700 shadow-[0_10px_24px_rgba(255,184,109,0.22)]"
                 },
                 beta: {
                     symbol: "&beta;",
                     label: "Beta",
-                    classes: "bg-sky-100 text-sky-800 border-sky-200"
+                    classes: "border-sky-200 bg-sky-50/85 text-sky-700 shadow-[0_10px_24px_rgba(110,211,255,0.2)]"
                 }
             };
             const badge = badges[normalized];
@@ -103,7 +370,7 @@
 
             return `
                 <span
-                    class="absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full border text-sm font-bold ${badge.classes}"
+                    class="glass-pill absolute right-4 top-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm font-bold ${badge.classes}"
                     title="${badge.label}"
                     aria-label="${badge.label}"
                 >
@@ -112,38 +379,89 @@
             `;
         }
 
+        function renderOverview() {
+            heroProjectCount.textContent = state.projects.length;
+            heroAlphaCount.textContent = state.projects.filter((project) => String(project.status).toLowerCase() === "alpha").length;
+            heroBetaCount.textContent = state.projects.filter((project) => String(project.status).toLowerCase() === "beta").length;
+        }
+
+        function renderExternalProjects() {
+            if (!state.externalProjects.length) {
+                externalProjectsSection.classList.add("hidden");
+                externalProjectsContainer.innerHTML = "";
+                return;
+            }
+
+            externalProjectsSection.classList.remove("hidden");
+            externalProjectsContainer.innerHTML = state.externalProjects.map((project) => `
+                <article class="glass-card rounded-[1.7rem]">
+                    <a href="${escapeHtml(project.link)}" target="_blank" rel="noreferrer" class="block h-full">
+                        <div class="card-media rounded-t-[1.7rem]">
+                            <div class="media-icon-wrap">
+                                <img
+                                    class="media-icon"
+                                    src="${escapeHtml(project.img)}"
+                                    alt="${escapeHtml(project.title)}"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                            </div>
+                        </div>
+                        <div class="relative z-10 p-5">
+                            <div class="mb-3 flex items-center justify-between gap-3">
+                                <span class="glass-pill rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">External</span>
+                                <span class="text-sm text-[var(--ink-2)]">Opens new tab</span>
+                            </div>
+                            <h3 class="display-face text-xl font-bold text-[var(--ink-1)]">${escapeHtml(project.title)}</h3>
+                            <p class="mt-3 text-sm leading-6 text-[var(--ink-2)]">${escapeHtml(project.desc)}</p>
+                        </div>
+                    </a>
+                </article>
+            `).join("");
+        }
+
         function renderProjects() {
             const query = state.projectQuery.trim().toLowerCase();
-            const filtered = state.projects.filter((p) => {
-                const haystack = [p.id, p.title, p.desc, p.link, p.status].join(" ").toLowerCase();
+            const filtered = state.projects.filter((project) => {
+                const haystack = [project.id, project.title, project.desc, project.link, project.status].join(" ").toLowerCase();
                 return haystack.includes(query);
             });
 
             if (filtered.length === 0) {
                 projectsContainer.innerHTML = `
-                    <div class="col-span-full bg-white rounded-lg shadow p-6 text-gray-600">
-                        No projects found for "<strong>${escapeHtml(state.projectQuery)}</strong>".
+                    <div class="glass-panel col-span-full rounded-[1.8rem] px-6 py-8 text-center text-[var(--ink-2)]">
+                        No tools found for "<strong class="text-[var(--ink-1)]">${escapeHtml(state.projectQuery)}</strong>".
                     </div>
                 `;
                 return;
             }
 
-            projectsContainer.innerHTML = filtered.map((p) => `
-                <article class="project-card" data-name="#${p.id}">
-                    <div class="relative bg-white p-4 rounded-lg shadow-lg h-full flex flex-col">
-                        ${renderStatusBadge(p.status)}
-                        <img
-                            class="h-32 w-32 object-cover mx-auto rounded-full"
-                            src="${escapeHtml(p.img)}"
-                            alt="${escapeHtml(p.title)}"
-                            loading="lazy"
-                            decoding="async"
-                        />
-                        <h3 class="mt-4 text-xl font-semibold text-center">${escapeHtml(p.title)}</h3>
-                        <p class="text-gray-700 mt-2 text-center flex-grow">${escapeHtml(p.desc)}</p>
-                        <a href="${escapeHtml(p.link)}" class="block mt-4 text-[#572828] text-center font-medium">
-                            Go to Project
-                        </a>
+            projectsContainer.innerHTML = filtered.map((project) => `
+                <article class="glass-card rounded-[1.8rem]">
+                    <div class="relative h-full">
+                        ${renderStatusBadge(project.status)}
+                        <div class="card-media rounded-t-[1.8rem]">
+                            <div class="media-icon-wrap">
+                                <img
+                                    class="media-icon"
+                                    src="${escapeHtml(project.img)}"
+                                    alt="${escapeHtml(project.title)}"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                            </div>
+                        </div>
+                        <div class="relative z-10 flex h-[calc(100%-168px)] flex-col p-5">
+                            <div class="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">
+                                <span class="glass-pill rounded-full px-3 py-1">#${escapeHtml(project.id)}</span>
+                                ${project.status ? `<span class="glass-pill rounded-full px-3 py-1">${escapeHtml(project.status)}</span>` : ""}
+                            </div>
+                            <h3 class="display-face text-xl font-bold leading-tight text-[var(--ink-1)]">${escapeHtml(project.title)}</h3>
+                            <p class="mt-3 flex-grow text-sm leading-6 text-[var(--ink-2)]">${escapeHtml(project.desc)}</p>
+                            <a href="${escapeHtml(project.link)}" class="glass-pill mt-5 inline-flex items-center justify-center rounded-full bg-white/58 px-4 py-3 text-sm font-semibold text-[var(--ink-1)] transition hover:bg-white/82">
+                                Open Tool
+                            </a>
+                        </div>
                     </div>
                 </article>
             `).join("");
@@ -151,21 +469,25 @@
 
         async function loadProjects() {
             try {
-                statusMessage.textContent = "Loading projects...";
+                statusMessage.textContent = "Loading project registry...";
                 const res = await fetch("projects.json", { cache: "no-store" });
                 if (!res.ok) {
                     throw new Error(`projects.json request failed with ${res.status}`);
                 }
 
-                const projects = await res.json();
-                state.projects = Array.isArray(projects) ? projects : [];
-                searchBox.placeholder = `Search in ${state.projects.length} Projects...`;
+                const allProjects = await res.json();
+                const items = Array.isArray(allProjects) ? allProjects : [];
+                state.projects = items.filter((item) => !item.external);
+                state.externalProjects = items.filter((item) => item.external);
+                searchBox.placeholder = `Search across ${state.projects.length} hosted tools...`;
+                renderOverview();
+                renderExternalProjects();
                 renderProjects();
                 statusMessage.textContent = "";
             } catch (error) {
                 statusMessage.textContent = "Could not load showcase projects right now.";
                 projectsContainer.innerHTML = `
-                    <div class="col-span-full bg-red-50 border border-red-200 rounded-lg p-6 text-red-700">
+                    <div class="glass-panel col-span-full rounded-[1.8rem] border border-red-200 bg-red-50/75 px-6 py-8 text-red-700">
                         Failed to load projects. Please refresh and try again.
                     </div>
                 `;
@@ -200,20 +522,20 @@
             });
 
             if (filtered.length === 0) {
-                pagesContainer.innerHTML = '<p class="text-sm text-gray-500">No pages match your filter.</p>';
+                pagesContainer.innerHTML = '<p class="text-sm text-[var(--ink-2)]">No pages match your filter.</p>';
                 return;
             }
 
             const groups = groupByFolder(filtered);
             pagesContainer.innerHTML = groups.map((group) => `
-                <section>
-                    <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-600 mb-2">
-                        ${escapeHtml(group.folder)} <span class="text-gray-400 normal-case">(${group.entries.length})</span>
+                <section class="glass-pill rounded-[1.35rem] p-4">
+                    <h3 class="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">
+                        ${escapeHtml(group.folder)} <span class="normal-case text-[var(--ink-1)]">(${group.entries.length})</span>
                     </h3>
-                    <ul class="space-y-1">
+                    <ul class="mt-3 space-y-2">
                         ${group.entries.map((entry) => `
                             <li>
-                                <a href="${escapeHtml(entry.path)}" class="text-[#572828] hover:underline break-all">
+                                <a href="${escapeHtml(entry.path)}" class="text-sm text-[var(--ink-1)] transition hover:text-sky-700 hover:underline break-all">
                                     ${escapeHtml(entry.path)}
                                 </a>
                             </li>
@@ -335,7 +657,7 @@
             allPagesModal.classList.add("flex");
 
             if (!state.pagesLoaded) {
-                pagesContainer.innerHTML = '<p class="text-sm text-gray-500">Loading pages...</p>';
+                pagesContainer.innerHTML = '<p class="text-sm text-[var(--ink-2)]">Loading pages...</p>';
                 pagesSourceLabel.textContent = "";
 
                 try {
