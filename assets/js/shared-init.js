@@ -47,9 +47,6 @@
   }
 
   function runDeferredEnhancements() {
-    preconnectIfUsed("https://cdn.tailwindcss.com", [
-      'script[src*="cdn.tailwindcss.com"]',
-    ]);
     preconnectIfUsed("https://cdn.jsdelivr.net", [
       'script[src*="cdn.jsdelivr.net"]',
       'link[href*="cdn.jsdelivr.net"]',

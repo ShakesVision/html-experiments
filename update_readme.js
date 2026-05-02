@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { scanProjectFiles } = require("./scripts/lib/project-scan");
 
-const BASE_URL = process.env.BASE_URL || "https://shakesvision.github.io/html-experiments/";
+const BASE_URL = process.env.BASE_URL || "https://tools.shakeeb.in/";
 const OUTPUT_MARKDOWN = path.join(__dirname, "README.md");
 const PROJECTS_HEADING = "### Projects";
 

@@ -42,7 +42,8 @@
     "title": "Urdu Editor",
     "desc": "Write Urdu / English with your default keyboard.",
     "img": "editor/urdu-editor.png",
-    "link": "editor/index.html"
+    "link": "editor/index.html",
+    "status": "beta"
   },
   {
     "id": 7,
@@ -173,6 +174,14 @@
     "desc": "Preview and download WhatsApp display pictures from a simple browser tool.",
     "img": "assets/images/project.png",
     "link": "wp-dp-dw/index.html",
+    "status": "alpha"
+  },
+  {
+    "id": 24,
+    "title": "Rekhta Reader",
+    "desc": "Load Rekhta book pages through a proxy, preview them lazily, and export a PDF when needed.",
+    "img": "assets/images/project.png",
+    "link": "rekhta/index.html",
     "status": "alpha"
   }
 ]

@@ -5,6 +5,8 @@ const DEFAULT_EXCLUDES = new Set([
   ".git",
   "node_modules",
   ".vscode",
+  "%TEMP%",
+  "rekhta-upstream-temp",
 ]);
 
 function toPosixPath(inputPath) {

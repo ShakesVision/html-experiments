@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-22T16:48:13.667Z",
-  "count": 50,
+  "generatedAt": "2026-05-02T14:48:52.351Z",
+  "count": 51,
   "entries": [
     {
       "path": "alphabet/index.html",
@@ -132,7 +132,7 @@
       "path": "index.html",
       "folder": ".",
       "isIndex": true,
-      "title": "My Web Experiments",
+      "title": "tools.shakeeb.in",
       "isRoot": true
     },
     {
@@ -231,6 +231,13 @@
       "folder": "quoter",
       "isIndex": true,
       "title": "Quoter",
+      "isRoot": false
+    },
+    {
+      "path": "rekhta-reader/index.html",
+      "folder": "rekhta-reader",
+      "isIndex": true,
+      "title": "Rekhta Book Downloader",
       "isRoot": false
     },
     {

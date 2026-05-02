@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .tool-btn {
+    @apply flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-gray-200;
+  }
+
+  .tool-btn.active {
+    @apply bg-blue-500 text-white hover:bg-blue-600;
+  }
+
+  .sidebar {
+    @apply w-64 overflow-y-auto bg-white p-4 shadow-lg;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+  }
+
+  .graphic-designer-shell {
+    flex-direction: column;
+  }
+}

@@ -4,16 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/images/icon.png" type="image/png" sizes="16x16">
-    <title>My Web Experiments</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>tools.shakeeb.in</title>
+    <link rel="stylesheet" href="./assets/css/tailwind.css" />
     <script defer src="./assets/js/shared-init.js"></script>
 </head>
 <body class="bg-gray-50 font-sans">
     <header class="flex bg-[#572828] text-white text-center justify-center items-center p-6 gap-4">
         <img class="size-20" src="assets/images/icon.png" alt="logo">
         <div class="text-left">
-            <h1 class="text-4xl font-bold">My Web Experiments</h1>
+            <h1 class="text-4xl font-bold">tools.shakeeb.in</h1>
             <p class="mt-2 text-lg">Explore my collection of web experiments, mostly built with HTML, Tailwind, and JS.</p>
+            <p class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-white/85">
+                <a class="underline underline-offset-4 hover:text-white" href="https://www.shakeeb.in">www.shakeeb.in</a>
+                <a class="underline underline-offset-4 hover:text-white" href="https://ur.shakeeb.in">ur.shakeeb.in</a>
+            </p>
         </div>
     </header>
 
@@ -81,12 +85,12 @@
             const normalized = String(status || "").trim().toLowerCase();
             const badges = {
                 alpha: {
-                    symbol: "α",
+                    symbol: "&alpha;",
                     label: "Alpha",
                     classes: "bg-amber-100 text-amber-800 border-amber-200"
                 },
                 beta: {
-                    symbol: "β",
+                    symbol: "&beta;",
                     label: "Beta",
                     classes: "bg-sky-100 text-sky-800 border-sky-200"
                 }
@@ -338,7 +342,7 @@
                     const resolved = await resolveAllPages();
                     state.pages = resolved.entries;
                     state.pagesLoaded = true;
-                    pagesSourceLabel.textContent = `${resolved.source} · ${state.pages.length} pages`;
+                    pagesSourceLabel.textContent = `${resolved.source} - ${state.pages.length} pages`;
                     renderPagesList();
                 } catch (error) {
                     pagesContainer.innerHTML = `

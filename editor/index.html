@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WYSIWYG Editor with Urdu Keyboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>WYSIWYG Editor with Urdu Keyboard</title>    <link rel="stylesheet" href="../assets/css/tailwind.css" />
     <script src="ur-phonetic.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=Gulzar&display=swap');
@@ -168,9 +167,6 @@
         /*
         * Theme toggle
         */
-        tailwind.config = {
-            darkMode: 'class'
-        }
         const root = document.documentElement;
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
