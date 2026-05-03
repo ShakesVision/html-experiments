@@ -11,33 +11,105 @@
     <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@1.0.9/dist/shakeeb-justify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-      <script defer src="../assets/js/shared-init.js"></script>
-</head>
+    <script defer src="../assets/js/shared-init.js"></script>
+  </head>
 
-  <body class="bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 min-h-screen">
+  <body
+    class="bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 min-h-screen"
+  >
     <div class="max-w-7xl mx-auto p-4 md:p-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="space-y-5">
-          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3">
+          <div
+            class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3"
+          >
             <div class="toolbar-grid">
-              <button type="button" class="chip" onclick="insertHeading(1)">H1</button>
-              <button type="button" class="chip" onclick="insertHeading(2)">H2</button>
-              <button type="button" class="chip" onclick="insertHeading(3)">H3</button>
-              <button type="button" class="chip" onclick="wrapSelection('**', '**')">Bold</button>
-              <button type="button" class="chip" onclick="wrapSelection('*', '*')">Italic</button>
-              <button type="button" class="chip" onclick="wrapSelection('~~', '~~')">Strike</button>
-              <button type="button" class="chip" onclick="insertParagraphTag()">P</button>
-              <button type="button" class="chip" onclick="insertLinePrefix('- ')">List</button>
-              <button type="button" class="chip" onclick="insertNumberedList()">Numbered</button>
-              <button type="button" class="chip" onclick="insertQuoteBlock()">Quote</button>
-              <button type="button" class="chip" onclick="insertLink()">Link</button>
-              <button type="button" class="chip" onclick="applyAlignment('right')">Right</button>
-              <button type="button" class="chip" onclick="applyAlignment('center')">Center</button>
-              <button type="button" class="chip" onclick="applyAlignment('left')">Left</button>
-              <button type="button" class="chip" onclick="applyAlignment('justify')">Justify</button>
-              <button type="button" class="chip" onclick="applyTextColor()">Color</button>
-              <button type="button" class="chip" onclick="toggleSjModal(true)">[sj]</button>
-              <button type="button" class="chip" onclick="toggleCssModal(true)">Preview CSS</button>
+              <button type="button" class="chip" onclick="insertHeading(1)">
+                H1
+              </button>
+              <button type="button" class="chip" onclick="insertHeading(2)">
+                H2
+              </button>
+              <button type="button" class="chip" onclick="insertHeading(3)">
+                H3
+              </button>
+              <button
+                type="button"
+                class="chip"
+                onclick="wrapSelection('**', '**')"
+              >
+                Bold
+              </button>
+              <button
+                type="button"
+                class="chip"
+                onclick="wrapSelection('*', '*')"
+              >
+                Italic
+              </button>
+              <button
+                type="button"
+                class="chip"
+                onclick="wrapSelection('~~', '~~')"
+              >
+                Strike
+              </button>
+              <button type="button" class="chip" onclick="insertParagraphTag()">
+                P
+              </button>
+              <button
+                type="button"
+                class="chip"
+                onclick="insertLinePrefix('- ')"
+              >
+                List
+              </button>
+              <button type="button" class="chip" onclick="insertNumberedList()">
+                Numbered
+              </button>
+              <button type="button" class="chip" onclick="insertQuoteBlock()">
+                Quote
+              </button>
+              <button type="button" class="chip" onclick="insertLink()">
+                Link
+              </button>
+              <button
+                type="button"
+                class="chip"
+                onclick="applyAlignment('right')"
+              >
+                Right
+              </button>
+              <button
+                type="button"
+                class="chip"
+                onclick="applyAlignment('center')"
+              >
+                Center
+              </button>
+              <button
+                type="button"
+                class="chip"
+                onclick="applyAlignment('left')"
+              >
+                Left
+              </button>
+              <button
+                type="button"
+                class="chip"
+                onclick="applyAlignment('justify')"
+              >
+                Justify
+              </button>
+              <button type="button" class="chip" onclick="applyTextColor()">
+                Color
+              </button>
+              <button type="button" class="chip" onclick="toggleSjModal(true)">
+                [sj]
+              </button>
+              <button type="button" class="chip" onclick="toggleCssModal(true)">
+                Preview CSS
+              </button>
             </div>
 
             <textarea
@@ -48,34 +120,9 @@
             ></textarea>
           </div>
 
-          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4">
-            <div class="flex flex-wrap gap-2 justify-center">
-              <button onclick="setPattern('sher')" class="chip">
-                <span class="material-symbols-outlined">format_align_center</span>
-                شعر
-              </button>
-              <button onclick="setPattern('sher2')" class="chip">دو کالم شعر</button>
-              <button onclick="setPattern('mukhammas')" class="chip">مخمس</button>
-              <button onclick="setPattern('mukhammas-3-2')" class="chip">۳+۲</button>
-              <button onclick="setPattern('mukhammas-mixed')" class="chip">۴+۱</button>
-              <button onclick="setPattern('musaddas')" class="chip">مسدس</button>
-              <button onclick="setPattern('musaddas-6')" class="chip">۶ مصرعے</button>
-              <button onclick="setPattern('musaddas-mixed')" class="chip">۴+۲</button>
-            </div>
-          </div>
-
-          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 flex gap-2">
-            <input
-              id="customPattern"
-              placeholder="جیسے ۴ یا ۳+۲"
-              class="flex-1 border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-purple-300 outline-none text-right"
-            />
-            <button onclick="applyCustomPattern()" class="icon-btn bg-purple-500">
-              <span class="material-symbols-outlined">auto_fix_high</span>
-            </button>
-          </div>
-
-          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3">
+          <div
+            class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3"
+          >
             <div class="flex gap-2">
               <input
                 id="bgInput"
@@ -111,39 +158,61 @@
             </div>
           </div>
 
-          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3">
+          <div
+            class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3"
+          >
             <div class="flex gap-2 flex-wrap">
               <input
                 id="poetryTitle"
                 placeholder="اس آئٹم کا نام"
                 class="flex-1 min-w-[200px] border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-pink-300 outline-none text-right"
               />
-              <button onclick="createNewPoetryItem()" class="icon-btn bg-sky-500">
+              <button
+                onclick="createNewPoetryItem()"
+                class="icon-btn bg-sky-500"
+              >
                 <span class="material-symbols-outlined">note_add</span>
               </button>
-              <button onclick="savePoetryItem()" class="icon-btn bg-emerald-500">
+              <button
+                onclick="savePoetryItem()"
+                class="icon-btn bg-emerald-500"
+              >
                 <span class="material-symbols-outlined">save</span>
               </button>
               <button onclick="deletePoetryItem()" class="icon-btn bg-rose-500">
                 <span class="material-symbols-outlined">delete</span>
               </button>
-              <button onclick="exportPoetryItems()" class="icon-btn bg-amber-500">
+              <button
+                onclick="exportPoetryItems()"
+                class="icon-btn bg-amber-500"
+              >
                 <span class="material-symbols-outlined">upload_file</span>
               </button>
               <button onclick="triggerImport()" class="icon-btn bg-cyan-600">
-                <span class="material-symbols-outlined">download_for_offline</span>
+                <span class="material-symbols-outlined"
+                  >download_for_offline</span
+                >
               </button>
             </div>
 
-            <input id="importFileInput" type="file" accept="application/json" class="hidden" />
+            <input
+              id="importFileInput"
+              type="file"
+              accept="application/json"
+              class="hidden"
+            />
 
             <div
               id="savedPoetryList"
               class="space-y-2 max-h-72 overflow-y-auto rounded-xl bg-white/60 p-2"
             ></div>
           </div>
+        </div>
 
-          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 flex justify-center gap-3">
+        <div class="flex flex-col items-start justify-start gap-6">
+          <div
+            class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 flex justify-center gap-3"
+          >
             <button onclick="downloadImage()" class="icon-btn bg-green-500">
               <span class="material-symbols-outlined">download</span>
             </button>
@@ -151,9 +220,6 @@
               <span class="material-symbols-outlined">print</span>
             </button>
           </div>
-        </div>
-
-        <div class="flex items-start justify-center">
           <div
             id="print-area"
             class="w-full bg-white/80 backdrop-blur rounded-3xl shadow-xl px-10 py-12 text-center text-xl leading-loose min-h-[300px] transition-all overflow-hidden"
@@ -162,16 +228,28 @@
       </div>
     </div>
 
-    <div id="cssModal" class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center p-4 z-50">
-      <div class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-5 space-y-4">
+    <div
+      id="cssModal"
+      class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center p-4 z-50"
+    >
+      <div
+        class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-5 space-y-4"
+      >
         <div class="flex items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold text-slate-800">Preview Custom CSS</h2>
-          <button type="button" class="icon-btn bg-slate-700" onclick="toggleCssModal(false)">
+          <h2 class="text-lg font-semibold text-slate-800">
+            Preview Custom CSS
+          </h2>
+          <button
+            type="button"
+            class="icon-btn bg-slate-700"
+            onclick="toggleCssModal(false)"
+          >
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
         <p class="text-sm text-slate-500 text-right">
-          صرف preview پر لگنے والے CSS declarations درج کریں۔ مثال: <code>border: 3px solid #111; border-radius: 24px;</code>
+          صرف preview پر لگنے والے CSS declarations درج کریں۔ مثال:
+          <code>border: 3px solid #111; border-radius: 24px;</code>
         </p>
         <textarea
           id="customCssInput"
@@ -180,24 +258,50 @@
           placeholder="border: 3px solid #111;`r`nbox-shadow: 0 15px 30px rgba(0,0,0,.12);"
         ></textarea>
         <div class="flex justify-end gap-2">
-          <button type="button" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700" onclick="toggleCssModal(false)">Close</button>
-          <button type="button" class="px-4 py-2 rounded-xl bg-pink-600 text-white" onclick="saveCustomCssFromModal()">Apply</button>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700"
+            onclick="toggleCssModal(false)"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl bg-pink-600 text-white"
+            onclick="saveCustomCssFromModal()"
+          >
+            Apply
+          </button>
         </div>
       </div>
     </div>
 
-    <div id="sjModal" class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center p-4 z-50">
-      <div class="w-full max-w-xl bg-white rounded-3xl shadow-2xl p-5 space-y-4">
+    <div
+      id="sjModal"
+      class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center p-4 z-50"
+    >
+      <div
+        class="w-full max-w-xl bg-white rounded-3xl shadow-2xl p-5 space-y-4"
+      >
         <div class="flex items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold text-slate-800">Insert Poetry Block</h2>
-          <button type="button" class="icon-btn bg-slate-700" onclick="toggleSjModal(false)">
+          <h2 class="text-lg font-semibold text-slate-800">
+            Insert Poetry Block
+          </h2>
+          <button
+            type="button"
+            class="icon-btn bg-slate-700"
+            onclick="toggleSjModal(false)"
+          >
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <label class="space-y-1 text-right">
             <span class="text-sm text-slate-600">Format</span>
-            <select id="sjFormatSelect" class="w-full border border-slate-200 rounded-xl p-3">
+            <select
+              id="sjFormatSelect"
+              class="w-full border border-slate-200 rounded-xl p-3"
+            >
               <option value="sher">شعر</option>
               <option value="sher2">دو کالم شعر</option>
               <option value="mukhammas">مخمس</option>
@@ -219,8 +323,20 @@
           </label>
         </div>
         <div class="flex justify-end gap-2">
-          <button type="button" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700" onclick="toggleSjModal(false)">Close</button>
-          <button type="button" class="px-4 py-2 rounded-xl bg-pink-600 text-white" onclick="insertPoetryBlockFromModal()">Insert</button>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700"
+            onclick="toggleSjModal(false)"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl bg-pink-600 text-white"
+            onclick="insertPoetryBlockFromModal()"
+          >
+            Insert
+          </button>
         </div>
       </div>
     </div>
@@ -296,17 +412,20 @@
 
       @font-face {
         font-family: "Mehr";
-        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/MehrNastaleeq@master/MehrNastaliqWeb.woff") format("woff");
+        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/MehrNastaleeq@master/MehrNastaliqWeb.woff")
+          format("woff");
       }
 
       @font-face {
         font-family: "Payami";
-        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/PayamiTest@master/Payami%20Nastaleeq_Fixed.woff2") format("woff2");
+        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/PayamiTest@master/Payami%20Nastaleeq_Fixed.woff2")
+          format("woff2");
       }
 
       @font-face {
         font-family: "Emaad";
-        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/EmaadNastaleeq@master/urduemadnastaleeqregular1.woff") format("woff");
+        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/EmaadNastaleeq@master/urduemadnastaleeqregular1.woff")
+          format("woff");
       }
 
       #print-area {
@@ -397,7 +516,9 @@
         const customCssInput = document.getElementById("customCssInput");
         const sjModalEl = document.getElementById("sjModal");
         const sjFormatSelect = document.getElementById("sjFormatSelect");
-        const sjCustomPatternInput = document.getElementById("sjCustomPatternInput");
+        const sjCustomPatternInput = document.getElementById(
+          "sjCustomPatternInput",
+        );
 
         if (window.marked) {
           marked.setOptions({ breaks: true, gfm: true });
@@ -415,7 +536,9 @@
 
         function getStorageItems() {
           try {
-            const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+            const parsed = JSON.parse(
+              localStorage.getItem(STORAGE_KEY) || "[]",
+            );
             return Array.isArray(parsed) ? parsed : [];
           } catch (error) {
             return [];
@@ -434,9 +557,11 @@
         function ensureCustomFontOption(fontName, fontLabel) {
           if (!fontSelector || !fontName) return;
 
-          const exists = Array.from(fontSelector.options).some(function (option) {
-            return option.value === fontName;
-          });
+          const exists = Array.from(fontSelector.options).some(
+            function (option) {
+              return option.value === fontName;
+            },
+          );
           if (exists) return;
 
           const option = document.createElement("option");
@@ -451,7 +576,12 @@
           if (!document.getElementById(fontName)) {
             const style = document.createElement("style");
             style.id = fontName;
-            style.innerHTML = "@font-face { font-family: '" + fontName + "'; src: url('" + url + "'); }";
+            style.innerHTML =
+              "@font-face { font-family: '" +
+              fontName +
+              "'; src: url('" +
+              url +
+              "'); }";
             document.head.appendChild(style);
           }
 
@@ -493,7 +623,8 @@
           sortedItems.forEach(function (item) {
             const button = document.createElement("button");
             button.type = "button";
-            button.className = "saved-item" + (item.id === activeItemId ? " active" : "");
+            button.className =
+              "saved-item" + (item.id === activeItemId ? " active" : "");
             button.onclick = function () {
               window.loadPoetryItem(item.id);
             };
@@ -504,7 +635,9 @@
 
             const itemMeta = document.createElement("div");
             itemMeta.className = "text-xs text-gray-500 mt-1";
-            itemMeta.textContent = new Date(item.updatedAt || Date.now()).toLocaleString();
+            itemMeta.textContent = new Date(
+              item.updatedAt || Date.now(),
+            ).toLocaleString();
 
             const itemPreview = document.createElement("div");
             itemPreview.className = "text-sm text-gray-600 mt-2 truncate";
@@ -526,8 +659,10 @@
         function getPreviewCssText() {
           const baseStyles = [];
           if (bgEl && bgEl.value) baseStyles.push("background: " + bgEl.value);
-          if (colorEl && colorEl.value) baseStyles.push("color: " + colorEl.value);
-          if (currentFont) baseStyles.push("font-family: '" + currentFont + "', serif");
+          if (colorEl && colorEl.value)
+            baseStyles.push("color: " + colorEl.value);
+          if (currentFont)
+            baseStyles.push("font-family: '" + currentFont + "', serif");
           if (customCssInput && customCssInput.value.trim()) {
             baseStyles.push(customCssInput.value.trim());
           }
@@ -593,17 +728,26 @@
 
         function buildPoetryHtml(lines, patternName, customPattern) {
           const classAttr = patternName ? ' class="' + patternName + '"' : "";
-          const patternAttr = !patternName && customPattern ? ' data-pattern="' + customPattern.replace(/"/g, "&quot;") + '"' : "";
+          const patternAttr =
+            !patternName && customPattern
+              ? ' data-pattern="' + customPattern.replace(/"/g, "&quot;") + '"'
+              : "";
           const poetryLines = lines
             .map(function (line) {
               if (line.trim() === "") {
                 return '<div class="poetry-empty-line">&nbsp;</div>';
               }
-              return "<div>" + line.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</div>";
+              return (
+                "<div>" +
+                line.replace(/</g, "&lt;").replace(/>/g, "&gt;") +
+                "</div>"
+              );
             })
             .join("");
 
-          return "<div" + classAttr + patternAttr + ">" + poetryLines + "</div>";
+          return (
+            "<div" + classAttr + patternAttr + ">" + poetryLines + "</div>"
+          );
         }
 
         function preprocessInput(rawText) {
@@ -660,7 +804,9 @@
                       : customPatternEl
                         ? customPatternEl.value
                         : "";
-                chunks.push(buildPoetryHtml(poetryBuffer, resolvedFormat, resolvedCustom));
+                chunks.push(
+                  buildPoetryHtml(poetryBuffer, resolvedFormat, resolvedCustom),
+                );
               }
               inPoetry = false;
               poetryBuffer = [];
@@ -692,7 +838,9 @@
                   : customPatternEl
                     ? customPatternEl.value
                     : "";
-            chunks.push(buildPoetryHtml(poetryBuffer, resolvedFormat, resolvedCustom));
+            chunks.push(
+              buildPoetryHtml(poetryBuffer, resolvedFormat, resolvedCustom),
+            );
           }
 
           return chunks.join("\n");
@@ -812,7 +960,8 @@
         function getExpandedLineSelection(state) {
           const lineStart = state.value.lastIndexOf("\n", state.start - 1) + 1;
           const lineEndIndex = state.value.indexOf("\n", state.end);
-          const lineEnd = lineEndIndex === -1 ? state.value.length : lineEndIndex;
+          const lineEnd =
+            lineEndIndex === -1 ? state.value.length : lineEndIndex;
 
           return {
             start: lineStart,
@@ -821,7 +970,12 @@
           };
         }
 
-        function replaceSelection(state, replacement, selectionStartOffset, selectionEndOffset) {
+        function replaceSelection(
+          state,
+          replacement,
+          selectionStartOffset,
+          selectionEndOffset,
+        ) {
           const updated =
             state.value.slice(0, state.start) +
             replacement +
@@ -829,7 +983,7 @@
           updateInput(
             updated,
             state.start + selectionStartOffset,
-            state.start + selectionEndOffset
+            state.start + selectionEndOffset,
           );
         }
 
@@ -841,7 +995,7 @@
             state,
             replacement,
             before.length,
-            before.length + selected.length
+            before.length + selected.length,
           );
         };
 
@@ -853,7 +1007,7 @@
             state,
             prefix + selected,
             prefix.length,
-            prefix.length + selected.length
+            prefix.length + selected.length,
           );
         };
 
@@ -866,43 +1020,70 @@
 
         window.insertLinePrefix = function (prefix) {
           const state = getSelectionState();
-          const target = state.selected ? state : getExpandedLineSelection(state);
-          const selected = state.selected ? state.selected : target.text || "آئٹم";
-          const lines = selected.split("\n").map(function (line) {
-            return prefix + line;
-          }).join("\n");
+          const target = state.selected
+            ? state
+            : getExpandedLineSelection(state);
+          const selected = state.selected
+            ? state.selected
+            : target.text || "آئٹم";
+          const lines = selected
+            .split("\n")
+            .map(function (line) {
+              return prefix + line;
+            })
+            .join("\n");
           updateInput(
-            state.value.slice(0, target.start) + lines + state.value.slice(target.end),
+            state.value.slice(0, target.start) +
+              lines +
+              state.value.slice(target.end),
             target.start,
-            target.start + lines.length
+            target.start + lines.length,
           );
         };
 
         window.insertNumberedList = function () {
           const state = getSelectionState();
-          const target = state.selected ? state : getExpandedLineSelection(state);
-          const selected = state.selected ? state.selected : target.text || "آئٹم";
-          const lines = selected.split("\n").map(function (line, index) {
-            return index + 1 + ". " + line;
-          }).join("\n");
+          const target = state.selected
+            ? state
+            : getExpandedLineSelection(state);
+          const selected = state.selected
+            ? state.selected
+            : target.text || "آئٹم";
+          const lines = selected
+            .split("\n")
+            .map(function (line, index) {
+              return index + 1 + ". " + line;
+            })
+            .join("\n");
           updateInput(
-            state.value.slice(0, target.start) + lines + state.value.slice(target.end),
+            state.value.slice(0, target.start) +
+              lines +
+              state.value.slice(target.end),
             target.start,
-            target.start + lines.length
+            target.start + lines.length,
           );
         };
 
         window.insertQuoteBlock = function () {
           const state = getSelectionState();
-          const target = state.selected ? state : getExpandedLineSelection(state);
-          const selected = state.selected ? state.selected : target.text || "اقتباس";
-          const lines = selected.split("\n").map(function (line) {
-            return line.trim() ? "> " + line : ">";
-          }).join("\n");
+          const target = state.selected
+            ? state
+            : getExpandedLineSelection(state);
+          const selected = state.selected
+            ? state.selected
+            : target.text || "اقتباس";
+          const lines = selected
+            .split("\n")
+            .map(function (line) {
+              return line.trim() ? "> " + line : ">";
+            })
+            .join("\n");
           updateInput(
-            state.value.slice(0, target.start) + lines + state.value.slice(target.end),
+            state.value.slice(0, target.start) +
+              lines +
+              state.value.slice(target.end),
             target.start,
-            target.start + lines.length
+            target.start + lines.length,
           );
         };
 
@@ -912,7 +1093,10 @@
           const url = prompt("URL درج کریں", "https://");
           if (url === null) return;
           const snippet = "[" + label + "](" + (url.trim() || "https://") + ")";
-          const updated = state.value.slice(0, state.start) + snippet + state.value.slice(state.end);
+          const updated =
+            state.value.slice(0, state.start) +
+            snippet +
+            state.value.slice(state.end);
           updateInput(updated, state.start, state.start + snippet.length);
         };
 
@@ -933,13 +1117,19 @@
           const selected = state.selected || "متن";
           const color = prompt("رنگ درج کریں", "#d62828");
           if (color === null) return;
-          const snippet = '<span style="color:' + (color.trim() || "#d62828") + ';">' + selected + "</span>";
-          const openingTag = '<span style="color:' + (color.trim() || "#d62828") + ';">';
+          const snippet =
+            '<span style="color:' +
+            (color.trim() || "#d62828") +
+            ';">' +
+            selected +
+            "</span>";
+          const openingTag =
+            '<span style="color:' + (color.trim() || "#d62828") + ';">';
           replaceSelection(
             state,
             snippet,
             openingTag.length,
-            openingTag.length + selected.length
+            openingTag.length + selected.length,
           );
         };
 
@@ -950,7 +1140,9 @@
               sjFormatSelect.value = currentPattern || "sher";
             }
             if (sjCustomPatternInput) {
-              sjCustomPatternInput.value = customPatternEl ? customPatternEl.value : "";
+              sjCustomPatternInput.value = customPatternEl
+                ? customPatternEl.value
+                : "";
             }
           }
           sjModalEl.classList.toggle("hidden", !show);
@@ -961,19 +1153,30 @@
           const state = getSelectionState();
           const selected = state.selected || "پہلا مصرع\nدوسرا مصرع";
           const formatValue = sjFormatSelect ? sjFormatSelect.value : "sher";
-          const customValue = sjCustomPatternInput ? sjCustomPatternInput.value.trim() : "";
+          const customValue = sjCustomPatternInput
+            ? sjCustomPatternInput.value.trim()
+            : "";
           const attributes = [];
 
           if (formatValue) {
             attributes.push('format="' + formatValue + '"');
           }
           if (formatValue === "custom" && customValue) {
-            attributes.push('custom="' + customValue.replace(/"/g, "&quot;") + '"');
+            attributes.push(
+              'custom="' + customValue.replace(/"/g, "&quot;") + '"',
+            );
           }
 
-          const openingTag = attributes.length ? "[sj " + attributes.join(" ") + "]" : "[sj]";
+          const openingTag = attributes.length
+            ? "[sj " + attributes.join(" ") + "]"
+            : "[sj]";
           const snippet = openingTag + "\n" + selected + "\n[/sj]";
-          replaceSelection(state, snippet, openingTag.length + 1, openingTag.length + 1 + selected.length);
+          replaceSelection(
+            state,
+            snippet,
+            openingTag.length + 1,
+            openingTag.length + 1 + selected.length,
+          );
           window.toggleSjModal(false);
         };
 
@@ -1026,13 +1229,21 @@
           if (!previewEl || !window.html2canvas) return;
 
           html2canvas(previewEl).then(function (canvas) {
-            const suggestedName = (titleEl && titleEl.value.trim()) || getDefaultTitle(inputEl ? inputEl.value : "");
+            const suggestedName =
+              (titleEl && titleEl.value.trim()) ||
+              getDefaultTitle(inputEl ? inputEl.value : "");
             const fileName = prompt("فائل کا نام درج کریں", suggestedName);
             if (fileName === null) return;
 
-            const safeName = (fileName.trim() || suggestedName || "poetry").replace(/[\\/:*?"<>|]/g, "_");
+            const safeName = (
+              fileName.trim() ||
+              suggestedName ||
+              "poetry"
+            ).replace(/[\\/:*?"<>|]/g, "_");
             const link = document.createElement("a");
-            link.download = safeName.endsWith(".png") ? safeName : safeName + ".png";
+            link.download = safeName.endsWith(".png")
+              ? safeName
+              : safeName + ".png";
             link.href = canvas.toDataURL();
             link.click();
           });
@@ -1109,14 +1320,22 @@
             items: savedItems,
           };
 
-          const suggestedName = "poetry-notes-" + new Date().toISOString().slice(0, 10);
+          const suggestedName =
+            "poetry-notes-" + new Date().toISOString().slice(0, 10);
           const fileName = prompt("Export file name", suggestedName);
           if (fileName === null) return;
 
-          const safeName = (fileName.trim() || suggestedName).replace(/[\\/:*?"<>|]/g, "_");
-          const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: "application/json" });
+          const safeName = (fileName.trim() || suggestedName).replace(
+            /[\\/:*?"<>|]/g,
+            "_",
+          );
+          const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
+            type: "application/json",
+          });
           const link = document.createElement("a");
-          link.download = safeName.endsWith(".json") ? safeName : safeName + ".json";
+          link.download = safeName.endsWith(".json")
+            ? safeName
+            : safeName + ".json";
           link.href = URL.createObjectURL(blob);
           link.click();
           setTimeout(function () {
@@ -1135,7 +1354,9 @@
           reader.onload = function (event) {
             try {
               const parsed = JSON.parse(event.target.result);
-              const importedItems = Array.isArray(parsed) ? parsed : parsed.items;
+              const importedItems = Array.isArray(parsed)
+                ? parsed
+                : parsed.items;
               if (!Array.isArray(importedItems)) {
                 alert("درست JSON فائل منتخب کریں");
                 return;
@@ -1146,7 +1367,8 @@
                   id: item.id || "poetry-import-" + Date.now() + "-" + index,
                   title: item.title || getDefaultTitle(item.inputText || ""),
                   inputText: item.inputText || "",
-                  pattern: typeof item.pattern === "undefined" ? "sher" : item.pattern,
+                  pattern:
+                    typeof item.pattern === "undefined" ? "sher" : item.pattern,
                   customPattern: item.customPattern || "",
                   background: item.background || "",
                   color: item.color || "",
@@ -1157,16 +1379,19 @@
                 };
               });
 
-              const nextActiveId = parsed.activeItemId || (savedItems[0] && savedItems[0].id);
+              const nextActiveId =
+                parsed.activeItemId || (savedItems[0] && savedItems[0].id);
               persistItems();
               if (nextActiveId) {
                 localStorage.setItem(ACTIVE_ITEM_KEY, nextActiveId);
               }
               renderSavedItems();
               if (savedItems.length) {
-                applyItemState(savedItems.find(function (item) {
-                  return item.id === nextActiveId;
-                }) || savedItems[0]);
+                applyItemState(
+                  savedItems.find(function (item) {
+                    return item.id === nextActiveId;
+                  }) || savedItems[0],
+                );
               }
             } catch (error) {
               alert("فائل import نہیں ہو سکی");
@@ -1184,9 +1409,10 @@
           }
 
           const storedActiveId = localStorage.getItem(ACTIVE_ITEM_KEY);
-          const initialItem = savedItems.find(function (item) {
-            return item.id === storedActiveId;
-          }) || savedItems[0];
+          const initialItem =
+            savedItems.find(function (item) {
+              return item.id === storedActiveId;
+            }) || savedItems[0];
 
           applyItemState(initialItem);
         }
