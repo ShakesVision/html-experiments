@@ -111,11 +111,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://tools.shakeeb.in/jibreel/index.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://tools.shakeeb.in/json-ui/index.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

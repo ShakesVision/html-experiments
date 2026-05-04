@@ -7,9 +7,7 @@
     "desc": "OCR try using Tesseract.js.",
     "category": "Readers & data",
     "status": "alpha",
-    "tags": [
-      "data"
-    ],
+    "tags": ["data"],
     "offlineSupport": "shell-cache",
     "external": false,
     "featured": false,
@@ -25,9 +23,7 @@
     "desc": "Asks you to select a folder and then lists its file for reading as HTML or plain text.",
     "category": "Readers & data",
     "status": "stable",
-    "tags": [
-      "reader"
-    ],
+    "tags": ["reader"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -43,11 +39,7 @@
     "desc": "Select images and convert them to PDF, offline.",
     "category": "Media & design",
     "status": "alpha",
-    "tags": [
-      "image",
-      "offline",
-      "pdf"
-    ],
+    "tags": ["image", "offline", "pdf"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -63,9 +55,7 @@
     "desc": "Resize images to multiple sizes.",
     "category": "Media & design",
     "status": "stable",
-    "tags": [
-      "image"
-    ],
+    "tags": ["image"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -81,9 +71,7 @@
     "desc": "Create logos using simple intuitive interface.",
     "category": "Media & design",
     "status": "beta",
-    "tags": [
-      "image"
-    ],
+    "tags": ["image"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -99,9 +87,7 @@
     "desc": "Write Urdu / English with your default keyboard.",
     "category": "Urdu & language",
     "status": "beta",
-    "tags": [
-      "urdu"
-    ],
+    "tags": ["urdu"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -117,10 +103,7 @@
     "desc": "Convert PDF to images with selected pages and resize options.",
     "category": "Media & design",
     "status": "stable",
-    "tags": [
-      "image",
-      "pdf"
-    ],
+    "tags": ["image", "pdf"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -136,9 +119,7 @@
     "desc": "A simple graphic designer which allows you to add image, text, pencil brush, colors, custom canvas size and png/svg exports in any size.",
     "category": "Media & design",
     "status": "alpha",
-    "tags": [
-      "image"
-    ],
+    "tags": ["image"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -170,11 +151,7 @@
     "desc": "Create beautiful social media images with Quranic Ayahs and translations in Arabic, English, and Urdu.",
     "category": "Urdu & language",
     "status": "stable",
-    "tags": [
-      "image",
-      "quran",
-      "urdu"
-    ],
+    "tags": ["image", "quran", "urdu"],
     "offlineSupport": "shell-cache",
     "external": false,
     "featured": false,
@@ -190,9 +167,7 @@
     "desc": "Extract text or HTML from web pages using custom selectors with GAS proxy.",
     "category": "Readers & data",
     "status": "stable",
-    "tags": [
-      "data"
-    ],
+    "tags": ["data"],
     "offlineSupport": "shell-cache",
     "external": false,
     "featured": false,
@@ -208,9 +183,7 @@
     "desc": "Tracks your stock profit and loss, with % profit targets.",
     "category": "Productivity",
     "status": "beta",
-    "tags": [
-      "finance"
-    ],
+    "tags": ["finance"],
     "offlineSupport": "shell-cache",
     "external": false,
     "featured": false,
@@ -242,10 +215,7 @@
     "desc": "Minimal Material-style feed reader with Blogger JSONP support, pagination, reader settings, and immersive reading mode.",
     "category": "Readers & data",
     "status": "beta",
-    "tags": [
-      "data",
-      "reader"
-    ],
+    "tags": ["data", "reader"],
     "offlineSupport": "shell-cache",
     "external": false,
     "featured": false,
@@ -277,9 +247,7 @@
     "desc": "Extract and browse Blogger archive data from a blog feed.",
     "category": "Readers & data",
     "status": "beta",
-    "tags": [
-      "data"
-    ],
+    "tags": ["data"],
     "offlineSupport": "shell-cache",
     "external": false,
     "featured": false,
@@ -295,9 +263,7 @@
     "desc": "Format Urdu poetry text into cleaner, presentation-ready layouts.",
     "category": "Urdu & language",
     "status": "alpha",
-    "tags": [
-      "urdu"
-    ],
+    "tags": ["urdu"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -313,10 +279,7 @@
     "desc": "A web tool for preparing and placing Naseem-style text over PDF pages.",
     "category": "Urdu & language",
     "status": "alpha",
-    "tags": [
-      "pdf",
-      "urdu"
-    ],
+    "tags": ["pdf", "urdu"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -332,10 +295,7 @@
     "desc": "Read and inspect InPage INP content directly in the browser.",
     "category": "Urdu & language",
     "status": "alpha",
-    "tags": [
-      "reader",
-      "urdu"
-    ],
+    "tags": ["reader", "urdu"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -351,10 +311,7 @@
     "desc": "Create quick offline mockups and export clean presentation images.",
     "category": "Media & design",
     "status": "beta",
-    "tags": [
-      "image",
-      "offline"
-    ],
+    "tags": ["image", "offline"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -370,9 +327,7 @@
     "desc": "Skew, tilt, and export interface mockups with a 3D presentation effect.",
     "category": "Media & design",
     "status": "alpha",
-    "tags": [
-      "image"
-    ],
+    "tags": ["image"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -388,9 +343,7 @@
     "desc": "Create clean quote graphics from short text snippets.",
     "category": "Media & design",
     "status": "beta",
-    "tags": [
-      "image"
-    ],
+    "tags": ["image"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -422,11 +375,7 @@
     "desc": "Load Rekhta book pages through a proxy, preview them lazily, and export a PDF when needed.",
     "category": "Urdu & language",
     "status": "alpha",
-    "tags": [
-      "pdf",
-      "reader",
-      "urdu"
-    ],
+    "tags": ["pdf", "reader", "urdu"],
     "offlineSupport": "shell-cache",
     "external": false,
     "featured": false,
@@ -442,12 +391,10 @@
     "desc": "A dedicated toolbox of Urdu-focused utilities hosted as its own full app.",
     "category": "Urdu & language",
     "status": "stable",
-    "tags": [
-      "urdu"
-    ],
+    "tags": ["urdu"],
     "offlineSupport": "online-required",
     "external": true,
-    "featured": false,
+    "featured": true,
     "lastReviewed": "2026-05-04",
     "img": "https://play-lh.googleusercontent.com/Dsjxk8LMkDOvIpjK-RYYaWm64P9zdBxLqbkMeA6ODnvqTo_RptHryPG9wzh_UB1B8A=w480-h960-rw",
     "link": "https://utools.shakeeb.in"
@@ -460,12 +407,10 @@
     "desc": "A focused tool for qaafiyah work, meter-adjacent analysis, and poetic assistance.",
     "category": "Urdu & language",
     "status": "stable",
-    "tags": [
-      "urdu"
-    ],
+    "tags": ["urdu"],
     "offlineSupport": "online-required",
     "external": true,
-    "featured": false,
+    "featured": true,
     "lastReviewed": "2026-05-04",
     "img": "https://lh3.googleusercontent.com/Zl1iGtSkUpSlTbRh3g8ps5KcYPqoTkVNGsvlbDVxwj3RoUN5z823HRz3dAPrSa0JjoHT=s180-rw",
     "link": "https://qaafiyah.sarbakaf.com"
@@ -478,12 +423,10 @@
     "desc": "A Quran memorization helper built as a standalone experience outside this tools host.",
     "category": "Urdu & language",
     "status": "stable",
-    "tags": [
-      "quran"
-    ],
+    "tags": ["quran"],
     "offlineSupport": "online-required",
     "external": true,
-    "featured": false,
+    "featured": true,
     "lastReviewed": "2026-05-04",
     "img": "https://play-lh.googleusercontent.com/TldXGOQXc8jfNNyFNWprbdMHg9ZhuIlmQD9idRPsEz3hY7uDcTXgVDIDu1ueN3vtAeYdAp7W9jsvZINz7fCNKw=s96-rw",
     "link": "https://quran.shakeeb.in"
@@ -496,9 +439,7 @@
     "desc": "Standalone browser tool hosted at bayaz-proto/index.html.",
     "category": "Urdu & language",
     "status": "alpha",
-    "tags": [
-      "urdu"
-    ],
+    "tags": ["urdu"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -514,9 +455,7 @@
     "desc": "Standalone browser tool hosted at epub-to-html/index.html.",
     "category": "Readers & data",
     "status": "alpha",
-    "tags": [
-      "reader"
-    ],
+    "tags": ["reader"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -557,24 +496,6 @@
     "link": "hindi-scansion/index.html"
   },
   {
-    "id": 32,
-    "slug": "jibreel",
-    "title": "MJBX Converter + Reader",
-    "description": "Standalone browser tool hosted at jibreel/index.html.",
-    "desc": "Standalone browser tool hosted at jibreel/index.html.",
-    "category": "Readers & data",
-    "status": "alpha",
-    "tags": [
-      "reader"
-    ],
-    "offlineSupport": "full",
-    "external": false,
-    "featured": false,
-    "lastReviewed": "2026-05-04",
-    "img": "assets/images/project.png",
-    "link": "jibreel/index.html"
-  },
-  {
     "id": 33,
     "slug": "json-ui",
     "title": "json-ui",
@@ -582,9 +503,7 @@
     "desc": "Standalone browser tool hosted at json-ui/index.html.",
     "category": "Readers & data",
     "status": "alpha",
-    "tags": [
-      "data"
-    ],
+    "tags": ["data"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -600,9 +519,7 @@
     "desc": "Standalone browser tool hosted at mushaf/index.html.",
     "category": "Urdu & language",
     "status": "alpha",
-    "tags": [
-      "quran"
-    ],
+    "tags": ["quran"],
     "offlineSupport": "shell-cache",
     "external": false,
     "featured": false,
@@ -618,9 +535,7 @@
     "desc": "Standalone browser tool hosted at super-scrape/index.html.",
     "category": "Readers & data",
     "status": "alpha",
-    "tags": [
-      "data"
-    ],
+    "tags": ["data"],
     "offlineSupport": "shell-cache",
     "external": false,
     "featured": false,
@@ -636,9 +551,7 @@
     "desc": "Standalone browser tool hosted at svg-theme/index.html.",
     "category": "Media & design",
     "status": "alpha",
-    "tags": [
-      "image"
-    ],
+    "tags": ["image"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -670,9 +583,7 @@
     "desc": "Standalone browser tool hosted at urdu-dashboard/index.html.",
     "category": "Urdu & language",
     "status": "alpha",
-    "tags": [
-      "urdu"
-    ],
+    "tags": ["urdu"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,
@@ -688,9 +599,7 @@
     "desc": "Standalone browser tool hosted at zip-editor/index.html.",
     "category": "Readers & data",
     "status": "alpha",
-    "tags": [
-      "data"
-    ],
+    "tags": ["data"],
     "offlineSupport": "full",
     "external": false,
     "featured": false,

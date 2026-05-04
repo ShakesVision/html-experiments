@@ -150,13 +150,6 @@
       "isRoot": false
     },
     {
-      "path": "jibreel/index.html",
-      "folder": "jibreel",
-      "isIndex": true,
-      "title": "MJBX Converter + Reader",
-      "isRoot": false
-    },
-    {
       "path": "json-ui/index.html",
       "folder": "json-ui",
       "isIndex": true,

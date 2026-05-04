@@ -25,6 +25,7 @@ https://ur.shakeeb.in
 ### Projects
 
 [Home page](https://tools.shakeeb.in/index.html)
+
 - [OCR](https://tools.shakeeb.in/ocr/index.html)
 - [Enhanced Folder Reader](https://tools.shakeeb.in/textRead/index.html)
 - [Image to PDF](https://tools.shakeeb.in/pdf-creator/index.html)
@@ -56,7 +57,6 @@ https://ur.shakeeb.in
 - [EPUB to One-Page HTML Converter](https://tools.shakeeb.in/epub-to-html/index.html)
 - [Devanagari Transliteration](https://tools.shakeeb.in/hin-en/index.html)
 - [Devanagari Taqti — Scansion & Metre Detection](https://tools.shakeeb.in/hindi-scansion/index.html)
-- [MJBX Converter + Reader](https://tools.shakeeb.in/jibreel/index.html)
 - [json-ui](https://tools.shakeeb.in/json-ui/index.html)
 - [Mushaf Page](https://tools.shakeeb.in/mushaf/index.html)
 - [Advanced Scraper WebApp](https://tools.shakeeb.in/super-scrape/index.html)
