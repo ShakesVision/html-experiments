@@ -1,344 +1,830 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>tools.shakeeb.in</title>
-    <meta name="description" content="An installable static hub of browser tools for reading, editing, conversion, Urdu workflows, design, data, and productivity.">
-    <link rel="canonical" href="https://tools.shakeeb.in/">
-    <link rel="manifest" href="./manifest.webmanifest">
-    <meta name="theme-color" content="#1b4965">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="tools.shakeeb.in">
-    <meta property="og:description" content="A production-grade static hub for browser-based tools.">
-    <meta property="og:url" content="https://tools.shakeeb.in/">
-    <meta property="og:image" content="https://tools.shakeeb.in/assets/images/project.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <link rel="icon" href="assets/images/icon.png" type="image/png">
+    <meta
+      name="description"
+      content="An installable static hub of browser tools for reading, editing, conversion, Urdu workflows, design, data, and productivity."
+    />
+    <link rel="canonical" href="https://tools.shakeeb.in/" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="theme-color" content="#1b4965" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="tools.shakeeb.in" />
+    <meta
+      property="og:description"
+      content="A production-grade static hub for browser-based tools."
+    />
+    <meta property="og:url" content="https://tools.shakeeb.in/" />
+    <meta
+      property="og:image"
+      content="https://tools.shakeeb.in/assets/images/project.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="assets/images/icon.png" type="image/png" />
     <link rel="stylesheet" href="./assets/css/tailwind.css" />
     <script defer src="./assets/js/shared-init.js"></script>
     <script type="application/ld+json" id="siteSchema"></script>
     <style>
-        :root {
-            color-scheme: light;
-            --bg: #f6f8fb;
-            --panel: #ffffff;
-            --ink: #172033;
-            --muted: #647084;
-            --line: #dce3ee;
-            --accent: #1b4965;
-            --accent-soft: #e8f3f8;
-            --ok: #176b4d;
-            --warn: #936316;
-            --danger: #963a3a;
-        }
+      :root {
+        color-scheme: light;
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --ink: #172033;
+        --muted: #647084;
+        --line: #dce3ee;
+        --accent: #1b4965;
+        --accent-soft: #e8f3f8;
+        --ok: #176b4d;
+        --warn: #936316;
+        --danger: #963a3a;
+      }
 
-        body {
-            min-height: 100vh;
-            background: var(--bg);
-            color: var(--ink);
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        }
+      body {
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
 
-        .shell {
-            width: min(1180px, calc(100% - 32px));
-            margin-inline: auto;
-        }
+      .shell {
+        width: min(1180px, calc(100% - 32px));
+        margin-inline: auto;
+      }
 
-        .panel {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            box-shadow: 0 16px 38px rgba(23, 32, 51, 0.06);
-        }
+      .panel {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: 0 16px 38px rgba(23, 32, 51, 0.06);
+      }
 
-        .chip,
-        .filter-button {
-            border: 1px solid var(--line);
-            background: #fff;
-            color: var(--muted);
-        }
+      .chip,
+      .filter-button {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--muted);
+      }
 
-        .filter-button[aria-pressed="true"] {
-            border-color: rgba(27, 73, 101, 0.28);
-            background: var(--accent-soft);
-            color: var(--accent);
-        }
+      .filter-button[aria-pressed="true"] {
+        border-color: rgba(27, 73, 101, 0.28);
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
 
-        .tool-card {
-            border: 1px solid var(--line);
-            background: #fff;
-            transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
-        }
+      .tool-card {
+        border: 1px solid var(--line);
+        background: #fff;
+        transition:
+          border-color 160ms ease,
+          box-shadow 160ms ease,
+          transform 160ms ease;
+      }
 
-        .tool-card:hover,
-        .tool-card:focus-within {
-            border-color: rgba(27, 73, 101, 0.38);
-            box-shadow: 0 18px 42px rgba(23, 32, 51, 0.1);
-            transform: translateY(-2px);
-        }
+      .tool-card:hover,
+      .tool-card:focus-within {
+        border-color: rgba(27, 73, 101, 0.38);
+        box-shadow: 0 18px 42px rgba(23, 32, 51, 0.1);
+        transform: translateY(-2px);
+      }
 
-        .status-alpha { color: var(--warn); background: #fff7e8; border-color: #f4d8a8; }
-        .status-beta { color: #275f9f; background: #edf6ff; border-color: #c9ddf5; }
-        .status-stable { color: var(--ok); background: #eaf7f1; border-color: #c8e7d9; }
-        .offline-full { color: var(--ok); background: #eaf7f1; border-color: #c8e7d9; }
-        .offline-shell-cache { color: #275f9f; background: #edf6ff; border-color: #c9ddf5; }
-        .offline-online-required { color: var(--danger); background: #fff0f0; border-color: #f0c4c4; }
+      .status-alpha {
+        color: var(--warn);
+        background: #fff7e8;
+        border-color: #f4d8a8;
+      }
+      .status-beta {
+        color: #275f9f;
+        background: #edf6ff;
+        border-color: #c9ddf5;
+      }
+      .status-stable {
+        color: var(--ok);
+        background: #eaf7f1;
+        border-color: #c8e7d9;
+      }
+      .offline-full {
+        color: var(--ok);
+        background: #eaf7f1;
+        border-color: #c8e7d9;
+      }
+      .offline-shell-cache {
+        color: #275f9f;
+        background: #edf6ff;
+        border-color: #c9ddf5;
+      }
+      .offline-online-required {
+        color: var(--danger);
+        background: #fff0f0;
+        border-color: #f0c4c4;
+      }
 
-        .icon-button {
-            display: inline-flex;
-            height: 2.5rem;
-            width: 2.5rem;
-            align-items: center;
-            justify-content: center;
-            border-radius: 999px;
-            border: 1px solid var(--line);
-            background: #fff;
-            color: var(--muted);
-        }
+      .icon-button {
+        display: inline-flex;
+        height: 2.5rem;
+        width: 2.5rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--muted);
+      }
 
-        .icon-button[aria-pressed="true"] {
-            color: #b7791f;
-            background: #fff7e8;
-            border-color: #f4d8a8;
-        }
+      .icon-button[aria-pressed="true"] {
+        color: #b7791f;
+        background: #fff7e8;
+        border-color: #f4d8a8;
+      }
 
-        .line-clamp-3 {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+      .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      #featuredContainer {
+        scrollbar-width: thin;
+        scrollbar-color: var(--line) transparent;
+      }
+
+      #featuredContainer::-webkit-scrollbar {
+        height: 4px;
+      }
+
+      #featuredContainer::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      #featuredContainer::-webkit-scrollbar-thumb {
+        background: var(--line);
+        border-radius: 2px;
+      }
+
+      #featuredInternalContainer {
+        scrollbar-width: thin;
+        scrollbar-color: var(--line) transparent;
+      }
+
+      #featuredInternalContainer::-webkit-scrollbar {
+        height: 4px;
+      }
+
+      #featuredInternalContainer::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      #featuredInternalContainer::-webkit-scrollbar-thumb {
+        background: var(--line);
+        border-radius: 2px;
+      }
+
+      #featuredExternalContainer {
+        scrollbar-width: thin;
+        scrollbar-color: var(--line) transparent;
+      }
+
+      #featuredExternalContainer::-webkit-scrollbar {
+        height: 4px;
+      }
+
+      #featuredExternalContainer::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      #featuredExternalContainer::-webkit-scrollbar-thumb {
+        background: var(--line);
+        border-radius: 2px;
+      }
+
+      .featured-internal-card {
+        flex: 0 0 320px;
+        display: flex;
+        flex-direction: column;
+        border-radius: 0.75rem;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        overflow: hidden;
+        transition: all 160ms ease;
+        box-shadow: 0 4px 12px rgba(27, 73, 101, 0.08);
+        position: relative;
+      }
+
+      .featured-internal-card:hover {
+        box-shadow: 0 8px 24px rgba(27, 73, 101, 0.12);
+        transform: translateY(-2px);
+        border-color: var(--accent);
+      }
+
+      .featured-external-card {
+        flex: 0 0 320px;
+        display: flex;
+        flex-direction: column;
+        border-radius: 0.75rem;
+        border: 2px solid var(--accent);
+        background: linear-gradient(
+          135deg,
+          var(--accent-soft) 0%,
+          var(--panel) 100%
+        );
+        overflow: hidden;
+        transition: all 160ms ease;
+        box-shadow: 0 4px 12px rgba(27, 73, 101, 0.1);
+        position: relative;
+      }
+
+      .featured-external-card::before {
+        content: "◆";
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        font-size: 1rem;
+        opacity: 0.4;
+        color: var(--accent);
+      }
+
+      .featured-external-card:hover {
+        box-shadow: 0 8px 24px rgba(27, 73, 101, 0.15);
+        transform: translateY(-2px);
+        border-color: var(--accent);
+      }
+
+      .featured-card {
+        flex: 0 0 320px;
+        display: flex;
+        flex-direction: column;
+        border-radius: 0.75rem;
+        border: 2px solid var(--accent);
+        background: linear-gradient(
+          135deg,
+          var(--accent-soft) 0%,
+          var(--panel) 100%
+        );
+        overflow: hidden;
+        transition: all 160ms ease;
+        box-shadow: 0 4px 12px rgba(27, 73, 101, 0.1);
+        position: relative;
+      }
+
+      .featured-card::before {
+        content: "✨";
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        font-size: 1.2rem;
+        opacity: 0.6;
+      }
+
+      .featured-card:hover {
+        box-shadow: 0 8px 24px rgba(27, 73, 101, 0.15);
+        transform: translateY(-2px);
+        border-color: var(--accent);
+      }
+
+      .featured-card-content {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+      }
+
+      .featured-card-header {
+        display: flex;
+        align-items: start;
+        gap: 0.75rem;
+      }
+
+      .featured-card-image {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.5rem;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 1px solid var(--line);
+      }
+
+      .featured-card-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--ink);
+        line-height: 1.2;
+      }
+
+      .featured-card-meta {
+        font-size: 0.7rem;
+        color: var(--muted);
+        margin-top: 0.25rem;
+      }
+
+      .featured-card-desc {
+        font-size: 0.8rem;
+        line-height: 1.4;
+        color: var(--muted);
+        margin-top: 0.5rem;
+        flex: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .featured-card-footer {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .featured-badge {
+        font-size: 0.65rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        background: rgba(27, 73, 101, 0.1);
+        color: var(--accent);
+      }
+
+      .featured-card-button {
+        margin-top: auto;
+        padding: 0.5rem 1rem;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        transition: background 160ms ease;
+      }
+
+      .featured-card-button:hover {
+        background: #153d52;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <header class="border-b border-[var(--line)] bg-white/88 backdrop-blur">
-        <div class="shell py-5">
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                    <div class="flex items-center gap-3">
-                        <img src="assets/images/icon.png" alt="" class="h-11 w-11 rounded-xl">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">Production tools hub</p>
-                            <h1 class="text-3xl font-bold tracking-tight">tools.shakeeb.in</h1>
-                        </div>
-                    </div>
-                    <p class="mt-3 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-                        Browser tools for reading, editing, conversion, Urdu workflows, design, data, and small practical utilities.
-                    </p>
-                </div>
-                <div class="grid grid-cols-3 gap-3 text-center sm:min-w-[360px]">
-                    <div class="panel rounded-lg px-3 py-3">
-                        <p class="text-xs text-[var(--muted)]">Tools</p>
-                        <p class="mt-1 text-2xl font-bold" id="statTools">0</p>
-                    </div>
-                    <div class="panel rounded-lg px-3 py-3">
-                        <p class="text-xs text-[var(--muted)]">Offline</p>
-                        <p class="mt-1 text-2xl font-bold" id="statOffline">0</p>
-                    </div>
-                    <div class="panel rounded-lg px-3 py-3">
-                        <p class="text-xs text-[var(--muted)]">Categories</p>
-                        <p class="mt-1 text-2xl font-bold" id="statCategories">0</p>
-                    </div>
-                </div>
+      <div class="shell py-5">
+        <div
+          class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"
+        >
+          <div>
+            <div class="flex items-center gap-3">
+              <img
+                src="assets/images/icon.png"
+                alt=""
+                class="h-11 w-11 rounded-xl"
+              />
+              <div>
+                <p
+                  class="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]"
+                >
+                  Production tools hub
+                </p>
+                <h1 class="text-3xl font-bold tracking-tight">
+                  tools.shakeeb.in
+                </h1>
+              </div>
             </div>
+            <p class="mt-3 max-w-3xl text-sm leading-6 text-[var(--muted)]">
+              Browser tools for reading, editing, conversion, Urdu workflows,
+              design, data, and small practical utilities.
+            </p>
+          </div>
+          <div class="grid grid-cols-3 gap-3 text-center sm:min-w-[360px]">
+            <div class="panel rounded-lg px-3 py-3">
+              <p class="text-xs text-[var(--muted)]">Tools</p>
+              <p class="mt-1 text-2xl font-bold" id="statTools">0</p>
+            </div>
+            <div class="panel rounded-lg px-3 py-3">
+              <p class="text-xs text-[var(--muted)]">Offline</p>
+              <p class="mt-1 text-2xl font-bold" id="statOffline">0</p>
+            </div>
+            <div class="panel rounded-lg px-3 py-3">
+              <p class="text-xs text-[var(--muted)]">Categories</p>
+              <p class="mt-1 text-2xl font-bold" id="statCategories">0</p>
+            </div>
+          </div>
         </div>
+      </div>
     </header>
 
     <main class="shell py-6">
-        <section class="panel rounded-xl p-4">
-            <div class="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-                <label class="block">
-                    <span class="sr-only">Search tools</span>
-                    <input id="searchBox" class="w-full rounded-lg border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-sky-100" type="search" placeholder="Search by name, tag, category, status, or path">
-                </label>
-                <div class="flex flex-wrap gap-2">
-                    <button class="filter-button rounded-lg px-3 py-2 text-sm font-semibold" id="showFavorites" type="button" aria-pressed="false">Favorites</button>
-                    <button class="filter-button rounded-lg px-3 py-2 text-sm font-semibold" id="showRecent" type="button" aria-pressed="false">Recent</button>
-                    <button class="filter-button rounded-lg px-3 py-2 text-sm font-semibold" id="openPages" type="button">All pages</button>
-                </div>
-            </div>
-            <div class="mt-4 grid gap-3 md:grid-cols-3">
-                <div>
-                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Category</p>
-                    <div class="flex flex-wrap gap-2" id="categoryFilters"></div>
-                </div>
-                <div>
-                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Status</p>
-                    <div class="flex flex-wrap gap-2" id="statusFilters"></div>
-                </div>
-                <div>
-                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Offline support</p>
-                    <div class="flex flex-wrap gap-2" id="offlineFilters"></div>
-                </div>
-            </div>
-            <p class="mt-4 text-sm text-[var(--muted)]" id="resultSummary">Loading registry...</p>
-        </section>
+      <!-- Featured Tools Section -->
+      <section id="featuredInternalSection" class="mb-6 hidden">
+        <div class="mb-3 flex items-center justify-between">
+          <h2
+            class="text-sm font-bold uppercase tracking-[0.18em] text-[var(--accent)]"
+          >
+            Featured Tools
+          </h2>
+          <div class="flex gap-2">
+            <button
+              id="featuredInternalScrollLeft"
+              class="icon-button"
+              type="button"
+              aria-label="Scroll left"
+              style="opacity: 0.5"
+            >
+              ‹
+            </button>
+            <button
+              id="featuredInternalScrollRight"
+              class="icon-button"
+              type="button"
+              aria-label="Scroll right"
+            >
+              ›
+            </button>
+          </div>
+        </div>
+        <div
+          id="featuredInternalContainer"
+          class="flex gap-3 overflow-x-auto scroll-smooth pb-2"
+          style="scroll-behavior: smooth; scrollbar-width: thin"
+        >
+          <!-- Featured internal tools will be inserted here -->
+        </div>
+      </section>
 
-        <section class="mt-6">
-            <div id="projectsContainer" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
-        </section>
+      <!-- External Featured Tools Section -->
+      <section id="featuredExternalSection" class="mb-6 hidden">
+        <div class="mb-3 flex items-center justify-between">
+          <h2
+            class="text-sm font-bold uppercase tracking-[0.18em] text-[var(--accent)]"
+          >
+            Partner Tools
+          </h2>
+          <div class="flex gap-2">
+            <button
+              id="featuredExternalScrollLeft"
+              class="icon-button"
+              type="button"
+              aria-label="Scroll left"
+              style="opacity: 0.5"
+            >
+              ‹
+            </button>
+            <button
+              id="featuredExternalScrollRight"
+              class="icon-button"
+              type="button"
+              aria-label="Scroll right"
+            >
+              ›
+            </button>
+          </div>
+        </div>
+        <div
+          id="featuredExternalContainer"
+          class="flex gap-3 overflow-x-auto scroll-smooth pb-2"
+          style="scroll-behavior: smooth; scrollbar-width: thin"
+        >
+          <!-- Featured external tools will be inserted here -->
+        </div>
+      </section>
+
+      <section class="panel rounded-xl p-4">
+        <div class="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+          <label class="block">
+            <span class="sr-only">Search tools</span>
+            <input
+              id="searchBox"
+              class="w-full rounded-lg border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-sky-100"
+              type="search"
+              placeholder="Search by name, tag, category, status, or path"
+            />
+          </label>
+          <div class="flex flex-wrap gap-2">
+            <button
+              class="filter-button rounded-lg px-3 py-2 text-sm font-semibold"
+              id="showFavorites"
+              type="button"
+              aria-pressed="false"
+            >
+              Favorites
+            </button>
+            <button
+              class="filter-button rounded-lg px-3 py-2 text-sm font-semibold"
+              id="showRecent"
+              type="button"
+              aria-pressed="false"
+            >
+              Recent
+            </button>
+          </div>
+        </div>
+        <div class="mt-4 grid gap-3 md:grid-cols-3">
+          <div>
+            <p
+              class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]"
+            >
+              Category
+            </p>
+            <div class="flex flex-wrap gap-2" id="categoryFilters"></div>
+          </div>
+          <div>
+            <p
+              class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]"
+            >
+              Status
+            </p>
+            <div class="flex flex-wrap gap-2" id="statusFilters"></div>
+          </div>
+          <div>
+            <p
+              class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]"
+            >
+              Offline support
+            </p>
+            <div class="flex flex-wrap gap-2" id="offlineFilters"></div>
+          </div>
+        </div>
+        <p class="mt-4 text-sm text-[var(--muted)]" id="resultSummary">
+          Loading registry...
+        </p>
+      </section>
+
+      <section class="mt-6">
+        <div
+          id="projectsContainer"
+          class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+        ></div>
+      </section>
     </main>
 
-    <div id="allPagesModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/50 p-4">
-        <section class="panel max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-xl">
-            <div class="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
-                <div>
-                    <h2 class="text-lg font-bold">All HTML pages</h2>
-                    <p class="text-xs text-[var(--muted)]" id="pagesSourceLabel"></p>
-                </div>
-                <button id="closePagesModal" class="icon-button" type="button" aria-label="Close pages list">&times;</button>
-            </div>
-            <div class="border-b border-[var(--line)] p-4">
-                <input id="pagesSearchBox" class="w-full rounded-lg border border-[var(--line)] px-4 py-3 text-sm outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-sky-100" type="search" placeholder="Filter pages">
-            </div>
-            <div id="pagesContainer" class="max-h-[64vh] overflow-y-auto p-4"></div>
-        </section>
+    <div
+      id="allPagesModal"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/50 p-4"
+    >
+      <section
+        class="panel max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-xl"
+      >
+        <div
+          class="flex items-center justify-between border-b border-[var(--line)] px-5 py-4"
+        >
+          <div>
+            <h2 class="text-lg font-bold">All HTML pages</h2>
+            <p class="text-xs text-[var(--muted)]" id="pagesSourceLabel"></p>
+          </div>
+          <button
+            id="closePagesModal"
+            class="icon-button"
+            type="button"
+            aria-label="Close pages list"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="border-b border-[var(--line)] p-4">
+          <input
+            id="pagesSearchBox"
+            class="w-full rounded-lg border border-[var(--line)] px-4 py-3 text-sm outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-sky-100"
+            type="search"
+            placeholder="Filter pages"
+          />
+        </div>
+        <div id="pagesContainer" class="max-h-[64vh] overflow-y-auto p-4"></div>
+      </section>
     </div>
 
     <script>
-        const state = {
-            projects: [],
-            pages: [],
-            pagesLoaded: false,
-            query: "",
-            category: "all",
-            status: "all",
-            offline: "all",
-            favoritesOnly: false,
-            recentOnly: false,
-            favorites: readList("tools:favorites"),
-            recent: readList("tools:recent")
+      const state = {
+        projects: [],
+        pages: [],
+        pagesLoaded: false,
+        query: "",
+        category: "all",
+        status: "all",
+        offline: "all",
+        favoritesOnly: false,
+        recentOnly: false,
+        favorites: readList("tools:favorites"),
+        recent: readList("tools:recent"),
+      };
+
+      const labels = {
+        alpha: "Alpha",
+        beta: "Beta",
+        stable: "Stable",
+        full: "Full offline",
+        "shell-cache": "Cached shell",
+        "online-required": "Online required",
+      };
+
+      const el = {
+        searchBox: document.getElementById("searchBox"),
+        categoryFilters: document.getElementById("categoryFilters"),
+        statusFilters: document.getElementById("statusFilters"),
+        offlineFilters: document.getElementById("offlineFilters"),
+        showFavorites: document.getElementById("showFavorites"),
+        showRecent: document.getElementById("showRecent"),
+        projectsContainer: document.getElementById("projectsContainer"),
+        resultSummary: document.getElementById("resultSummary"),
+        statTools: document.getElementById("statTools"),
+        statOffline: document.getElementById("statOffline"),
+        statCategories: document.getElementById("statCategories"),
+        allPagesModal: document.getElementById("allPagesModal"),
+        closePagesModal: document.getElementById("closePagesModal"),
+        pagesSearchBox: document.getElementById("pagesSearchBox"),
+        pagesContainer: document.getElementById("pagesContainer"),
+        pagesSourceLabel: document.getElementById("pagesSourceLabel"),
+        featuredInternalSection: document.getElementById(
+          "featuredInternalSection",
+        ),
+        featuredInternalContainer: document.getElementById(
+          "featuredInternalContainer",
+        ),
+        featuredInternalScrollLeft: document.getElementById(
+          "featuredInternalScrollLeft",
+        ),
+        featuredInternalScrollRight: document.getElementById(
+          "featuredInternalScrollRight",
+        ),
+        featuredExternalSection: document.getElementById(
+          "featuredExternalSection",
+        ),
+        featuredExternalContainer: document.getElementById(
+          "featuredExternalContainer",
+        ),
+        featuredExternalScrollLeft: document.getElementById(
+          "featuredExternalScrollLeft",
+        ),
+        featuredExternalScrollRight: document.getElementById(
+          "featuredExternalScrollRight",
+        ),
+      };
+
+      function readList(key) {
+        try {
+          const value = JSON.parse(localStorage.getItem(key) || "[]");
+          return Array.isArray(value) ? value : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function writeList(key, value) {
+        try {
+          localStorage.setItem(key, JSON.stringify(value.slice(0, 24)));
+        } catch {}
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function normalizeProject(project) {
+        return {
+          ...project,
+          description: project.description || project.desc || "",
+          tags: Array.isArray(project.tags) ? project.tags : [],
+          status: project.status || "stable",
+          offlineSupport:
+            project.offlineSupport ||
+            (project.external ? "online-required" : "shell-cache"),
         };
+      }
 
-        const labels = {
-            alpha: "Alpha",
-            beta: "Beta",
-            stable: "Stable",
-            full: "Full offline",
-            "shell-cache": "Cached shell",
-            "online-required": "Online required"
-        };
+      function button(label, value, active, group) {
+        return `<button class="filter-button rounded-lg px-3 py-2 text-xs font-semibold" data-group="${group}" data-value="${escapeHtml(value)}" type="button" aria-pressed="${String(active)}">${escapeHtml(label)}</button>`;
+      }
 
-        const el = {
-            searchBox: document.getElementById("searchBox"),
-            categoryFilters: document.getElementById("categoryFilters"),
-            statusFilters: document.getElementById("statusFilters"),
-            offlineFilters: document.getElementById("offlineFilters"),
-            showFavorites: document.getElementById("showFavorites"),
-            showRecent: document.getElementById("showRecent"),
-            openPages: document.getElementById("openPages"),
-            projectsContainer: document.getElementById("projectsContainer"),
-            resultSummary: document.getElementById("resultSummary"),
-            statTools: document.getElementById("statTools"),
-            statOffline: document.getElementById("statOffline"),
-            statCategories: document.getElementById("statCategories"),
-            allPagesModal: document.getElementById("allPagesModal"),
-            closePagesModal: document.getElementById("closePagesModal"),
-            pagesSearchBox: document.getElementById("pagesSearchBox"),
-            pagesContainer: document.getElementById("pagesContainer"),
-            pagesSourceLabel: document.getElementById("pagesSourceLabel")
-        };
+      function renderFilters() {
+        const categories = [
+          "all",
+          ...new Set(
+            state.projects
+              .map((project) => project.category)
+              .filter(Boolean)
+              .sort(),
+          ),
+        ];
+        const statuses = ["all", "stable", "beta", "alpha"];
+        const offline = ["all", "full", "shell-cache", "online-required"];
 
-        function readList(key) {
-            try {
-                const value = JSON.parse(localStorage.getItem(key) || "[]");
-                return Array.isArray(value) ? value : [];
-            } catch {
-                return [];
-            }
+        el.categoryFilters.innerHTML = categories
+          .map((item) =>
+            button(
+              item === "all" ? "All" : item,
+              item,
+              state.category === item,
+              "category",
+            ),
+          )
+          .join("");
+        el.statusFilters.innerHTML = statuses
+          .map((item) =>
+            button(
+              item === "all" ? "All" : labels[item],
+              item,
+              state.status === item,
+              "status",
+            ),
+          )
+          .join("");
+        el.offlineFilters.innerHTML = offline
+          .map((item) =>
+            button(
+              item === "all" ? "All" : labels[item],
+              item,
+              state.offline === item,
+              "offline",
+            ),
+          )
+          .join("");
+      }
+
+      function filteredProjects() {
+        const query = state.query.trim().toLowerCase();
+        return state.projects.filter((project) => {
+          const haystack = [
+            project.title,
+            project.description,
+            project.category,
+            project.status,
+            project.offlineSupport,
+            project.link,
+            project.tags.join(" "),
+          ]
+            .join(" ")
+            .toLowerCase();
+
+          // Exclude external tools from main list
+          if (project.external) return false;
+
+          if (query && !haystack.includes(query)) return false;
+          if (state.category !== "all" && project.category !== state.category)
+            return false;
+          if (state.status !== "all" && project.status !== state.status)
+            return false;
+          if (
+            state.offline !== "all" &&
+            project.offlineSupport !== state.offline
+          )
+            return false;
+          if (state.favoritesOnly && !state.favorites.includes(project.slug))
+            return false;
+          if (state.recentOnly && !state.recent.includes(project.slug))
+            return false;
+          return true;
+        });
+      }
+
+      function markRecent(slug) {
+        state.recent = [slug, ...state.recent.filter((item) => item !== slug)];
+        writeList("tools:recent", state.recent);
+      }
+
+      function toggleFavorite(slug) {
+        state.favorites = state.favorites.includes(slug)
+          ? state.favorites.filter((item) => item !== slug)
+          : [slug, ...state.favorites];
+        writeList("tools:favorites", state.favorites);
+        renderProjects();
+      }
+
+      function renderProjects() {
+        const projects = filteredProjects();
+        el.showFavorites.setAttribute(
+          "aria-pressed",
+          String(state.favoritesOnly),
+        );
+        el.showRecent.setAttribute("aria-pressed", String(state.recentOnly));
+        el.resultSummary.textContent = `${projects.length} of ${state.projects.length} tools shown`;
+
+        if (!projects.length) {
+          el.projectsContainer.innerHTML =
+            '<div class="panel rounded-xl p-6 text-sm text-[var(--muted)] md:col-span-2 xl:col-span-3">No tools match the current filters.</div>';
+          return;
         }
 
-        function writeList(key, value) {
-            try {
-                localStorage.setItem(key, JSON.stringify(value.slice(0, 24)));
-            } catch {
-            }
-        }
-
-        function escapeHtml(value) {
-            return String(value ?? "")
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll('"', "&quot;")
-                .replaceAll("'", "&#39;");
-        }
-
-        function normalizeProject(project) {
-            return {
-                ...project,
-                description: project.description || project.desc || "",
-                tags: Array.isArray(project.tags) ? project.tags : [],
-                status: project.status || "stable",
-                offlineSupport: project.offlineSupport || (project.external ? "online-required" : "shell-cache")
-            };
-        }
-
-        function button(label, value, active, group) {
-            return `<button class="filter-button rounded-lg px-3 py-2 text-xs font-semibold" data-group="${group}" data-value="${escapeHtml(value)}" type="button" aria-pressed="${String(active)}">${escapeHtml(label)}</button>`;
-        }
-
-        function renderFilters() {
-            const categories = ["all", ...new Set(state.projects.map((project) => project.category).filter(Boolean).sort())];
-            const statuses = ["all", "stable", "beta", "alpha"];
-            const offline = ["all", "full", "shell-cache", "online-required"];
-
-            el.categoryFilters.innerHTML = categories.map((item) => button(item === "all" ? "All" : item, item, state.category === item, "category")).join("");
-            el.statusFilters.innerHTML = statuses.map((item) => button(item === "all" ? "All" : labels[item], item, state.status === item, "status")).join("");
-            el.offlineFilters.innerHTML = offline.map((item) => button(item === "all" ? "All" : labels[item], item, state.offline === item, "offline")).join("");
-        }
-
-        function filteredProjects() {
-            const query = state.query.trim().toLowerCase();
-            return state.projects.filter((project) => {
-                const haystack = [
-                    project.title,
-                    project.description,
-                    project.category,
-                    project.status,
-                    project.offlineSupport,
-                    project.link,
-                    project.tags.join(" ")
-                ].join(" ").toLowerCase();
-
-                if (query && !haystack.includes(query)) return false;
-                if (state.category !== "all" && project.category !== state.category) return false;
-                if (state.status !== "all" && project.status !== state.status) return false;
-                if (state.offline !== "all" && project.offlineSupport !== state.offline) return false;
-                if (state.favoritesOnly && !state.favorites.includes(project.slug)) return false;
-                if (state.recentOnly && !state.recent.includes(project.slug)) return false;
-                return true;
-            });
-        }
-
-        function markRecent(slug) {
-            state.recent = [slug, ...state.recent.filter((item) => item !== slug)];
-            writeList("tools:recent", state.recent);
-        }
-
-        function toggleFavorite(slug) {
-            state.favorites = state.favorites.includes(slug)
-                ? state.favorites.filter((item) => item !== slug)
-                : [slug, ...state.favorites];
-            writeList("tools:favorites", state.favorites);
-            renderProjects();
-        }
-
-        function renderProjects() {
-            const projects = filteredProjects();
-            el.showFavorites.setAttribute("aria-pressed", String(state.favoritesOnly));
-            el.showRecent.setAttribute("aria-pressed", String(state.recentOnly));
-            el.resultSummary.textContent = `${projects.length} of ${state.projects.length} tools shown`;
-
-            if (!projects.length) {
-                el.projectsContainer.innerHTML = '<div class="panel rounded-xl p-6 text-sm text-[var(--muted)] md:col-span-2 xl:col-span-3">No tools match the current filters.</div>';
-                return;
-            }
-
-            el.projectsContainer.innerHTML = projects.map((project) => {
-                const isFavorite = state.favorites.includes(project.slug);
-                const target = project.external ? ' target="_blank" rel="noreferrer"' : "";
-                return `
+        el.projectsContainer.innerHTML = projects
+          .map((project) => {
+            const isFavorite = state.favorites.includes(project.slug);
+            const target = project.external
+              ? ' target="_blank" rel="noreferrer"'
+              : "";
+            return `
                     <article class="tool-card rounded-xl p-4">
                         <div class="flex gap-4">
                             <img class="h-14 w-14 shrink-0 rounded-lg border border-[var(--line)] object-cover" src="${escapeHtml(project.img)}" alt="" loading="lazy" decoding="async">
@@ -355,155 +841,357 @@
                                     <span class="chip status-${escapeHtml(project.status)} rounded-full px-2.5 py-1 text-xs font-semibold">${escapeHtml(labels[project.status] || project.status)}</span>
                                     <span class="chip offline-${escapeHtml(project.offlineSupport)} rounded-full px-2.5 py-1 text-xs font-semibold">${escapeHtml(labels[project.offlineSupport] || project.offlineSupport)}</span>
                                     ${project.external ? '<span class="chip rounded-full px-2.5 py-1 text-xs font-semibold">External</span>' : ""}
-                                    ${project.tags.slice(0, 3).map((tag) => `<span class="chip rounded-full px-2.5 py-1 text-xs font-semibold">${escapeHtml(tag)}</span>`).join("")}
+                                    ${project.tags
+                                      .slice(0, 3)
+                                      .map(
+                                        (tag) =>
+                                          `<span class="chip rounded-full px-2.5 py-1 text-xs font-semibold">${escapeHtml(tag)}</span>`,
+                                      )
+                                      .join("")}
                                 </div>
                                 <a class="mt-4 inline-flex rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white" href="${escapeHtml(project.link)}" data-open-slug="${escapeHtml(project.slug)}"${target}>Open tool</a>
                             </div>
                         </div>
                     </article>
                 `;
-            }).join("");
+          })
+          .join("");
+      }
+
+      function renderFeaturedTools() {
+        const featuredInternal = state.projects.filter(
+          (project) => project.featured,
+        );
+        const featuredExternal = state.projects.filter(
+          (project) => project.external,
+        );
+
+        // Render internal featured tools
+        if (featuredInternal.length) {
+          el.featuredInternalSection.classList.remove("hidden");
+          el.featuredInternalContainer.innerHTML = featuredInternal
+            .map((project) => {
+              return `
+                    <a href="${escapeHtml(project.link)}" class="featured-internal-card group" data-featured-slug="${escapeHtml(project.slug)}">
+                        <div class="featured-card-content">
+                            <div class="featured-card-header">
+                                <img class="featured-card-image" src="${escapeHtml(project.img)}" alt="${escapeHtml(project.title)}" loading="lazy" decoding="async">
+                                <div>
+                                    <div class="featured-card-title">${escapeHtml(project.title)}</div>
+                                    <div class="featured-card-meta">${escapeHtml(project.category)}</div>
+                                </div>
+                            </div>
+                            <p class="featured-card-desc">${escapeHtml(project.description)}</p>
+                            <div class="featured-card-footer">
+                                <span class="featured-badge">${escapeHtml(labels[project.status] || project.status)}</span>
+                                <span class="featured-badge">${escapeHtml(labels[project.offlineSupport] || project.offlineSupport)}</span>
+                            </div>
+                            <div class="featured-card-button">Open →</div>
+                        </div>
+                    </a>
+                `;
+            })
+            .join("");
+        } else {
+          el.featuredInternalSection.classList.add("hidden");
         }
 
-        function renderStats() {
-            const localProjects = state.projects.filter((project) => !project.external);
-            el.statTools.textContent = localProjects.length;
-            el.statOffline.textContent = localProjects.filter((project) => project.offlineSupport === "full").length;
-            el.statCategories.textContent = new Set(state.projects.map((project) => project.category)).size;
+        // Render external featured tools
+        if (featuredExternal.length) {
+          el.featuredExternalSection.classList.remove("hidden");
+          el.featuredExternalContainer.innerHTML = featuredExternal
+            .map((project) => {
+              return `
+                    <a href="${escapeHtml(project.link)}" target="_blank" rel="noreferrer" class="featured-external-card group" data-featured-slug="${escapeHtml(project.slug)}">
+                        <div class="featured-card-content">
+                            <div class="featured-card-header">
+                                <img class="featured-card-image" src="${escapeHtml(project.img)}" alt="${escapeHtml(project.title)}" loading="lazy" decoding="async">
+                                <div>
+                                    <div class="featured-card-title">${escapeHtml(project.title)}</div>
+                                    <div class="featured-card-meta">${escapeHtml(project.category)}</div>
+                                </div>
+                            </div>
+                            <p class="featured-card-desc">${escapeHtml(project.description)}</p>
+                            <div class="featured-card-footer">
+                                <span class="featured-badge">${escapeHtml(labels[project.status] || project.status)}</span>
+                                <span class="featured-badge">${escapeHtml(labels[project.offlineSupport] || project.offlineSupport)}</span>
+                            </div>
+                            <div class="featured-card-button">Visit →</div>
+                        </div>
+                    </a>
+                `;
+            })
+            .join("");
+        } else {
+          el.featuredExternalSection.classList.add("hidden");
+        }
+      }
+
+      function updateScrollButtons() {
+        // Internal carousel
+        const internalContainer = el.featuredInternalContainer;
+        if (internalContainer) {
+          const canScrollLeftInternal = internalContainer.scrollLeft > 0;
+          const canScrollRightInternal =
+            internalContainer.scrollLeft <
+            internalContainer.scrollWidth - internalContainer.clientWidth - 10;
+
+          el.featuredInternalScrollLeft.style.opacity = canScrollLeftInternal
+            ? "1"
+            : "0.5";
+          el.featuredInternalScrollLeft.disabled = !canScrollLeftInternal;
+          el.featuredInternalScrollRight.style.opacity = canScrollRightInternal
+            ? "1"
+            : "0.5";
+          el.featuredInternalScrollRight.disabled = !canScrollRightInternal;
         }
 
-        function renderSchema() {
-            const schema = {
-                "@context": "https://schema.org",
-                "@type": "WebSite",
-                name: "tools.shakeeb.in",
-                url: "https://tools.shakeeb.in/",
-                hasPart: state.projects.slice(0, 40).map((project) => ({
-                    "@type": "WebApplication",
-                    name: project.title,
-                    applicationCategory: project.category,
-                    url: project.external ? project.link : `https://tools.shakeeb.in/${project.link}`
-                }))
-            };
-            document.getElementById("siteSchema").textContent = JSON.stringify(schema);
-        }
+        // External carousel
+        const externalContainer = el.featuredExternalContainer;
+        if (externalContainer) {
+          const canScrollLeftExternal = externalContainer.scrollLeft > 0;
+          const canScrollRightExternal =
+            externalContainer.scrollLeft <
+            externalContainer.scrollWidth - externalContainer.clientWidth - 10;
 
-        async function loadProjects() {
-            try {
-                const response = await fetch("projects.json", { cache: "no-store" });
-                if (!response.ok) throw new Error(`projects.json failed with ${response.status}`);
-                state.projects = (await response.json()).map(normalizeProject);
-                renderStats();
-                renderFilters();
-                renderProjects();
-                renderSchema();
-            } catch (error) {
-                el.resultSummary.textContent = navigator.onLine
-                    ? "The tool registry could not be loaded."
-                    : "The tool registry is not cached yet. Reconnect once to install it.";
-                console.error(error);
-            }
+          el.featuredExternalScrollLeft.style.opacity = canScrollLeftExternal
+            ? "1"
+            : "0.5";
+          el.featuredExternalScrollLeft.disabled = !canScrollLeftExternal;
+          el.featuredExternalScrollRight.style.opacity = canScrollRightExternal
+            ? "1"
+            : "0.5";
+          el.featuredExternalScrollRight.disabled = !canScrollRightExternal;
         }
+      }
 
-        function groupByFolder(entries) {
-            const groups = {};
-            entries.forEach((entry) => {
-                const folder = entry.folder || "(root)";
-                groups[folder] ||= [];
-                groups[folder].push(entry);
-            });
-            return Object.keys(groups).sort().map((folder) => ({ folder, entries: groups[folder].sort((a, b) => a.path.localeCompare(b.path)) }));
+      function renderStats() {
+        const localProjects = state.projects.filter(
+          (project) => !project.external,
+        );
+        el.statTools.textContent = localProjects.length;
+        el.statOffline.textContent = localProjects.filter(
+          (project) => project.offlineSupport === "full",
+        ).length;
+        el.statCategories.textContent = new Set(
+          state.projects.map((project) => project.category),
+        ).size;
+      }
+
+      function renderSchema() {
+        const schema = {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "tools.shakeeb.in",
+          url: "https://tools.shakeeb.in/",
+          hasPart: state.projects.slice(0, 40).map((project) => ({
+            "@type": "WebApplication",
+            name: project.title,
+            applicationCategory: project.category,
+            url: project.external
+              ? project.link
+              : `https://tools.shakeeb.in/${project.link}`,
+          })),
+        };
+        document.getElementById("siteSchema").textContent =
+          JSON.stringify(schema);
+      }
+
+      async function loadProjects() {
+        try {
+          const response = await fetch("projects.json", { cache: "no-store" });
+          if (!response.ok)
+            throw new Error(`projects.json failed with ${response.status}`);
+          state.projects = (await response.json()).map(normalizeProject);
+          renderFeaturedTools();
+          renderStats();
+          renderFilters();
+          renderProjects();
+          renderSchema();
+          updateScrollButtons();
+        } catch (error) {
+          el.resultSummary.textContent = navigator.onLine
+            ? "The tool registry could not be loaded."
+            : "The tool registry is not cached yet. Reconnect once to install it.";
+          console.error(error);
         }
+      }
 
-        function renderPages() {
-            const query = el.pagesSearchBox.value.trim().toLowerCase();
-            const pages = state.pages.filter((page) => [page.path, page.title, page.folder].join(" ").toLowerCase().includes(query));
-            el.pagesContainer.innerHTML = groupByFolder(pages).map((group) => `
+      function groupByFolder(entries) {
+        const groups = {};
+        entries.forEach((entry) => {
+          const folder = entry.folder || "(root)";
+          groups[folder] ||= [];
+          groups[folder].push(entry);
+        });
+        return Object.keys(groups)
+          .sort()
+          .map((folder) => ({
+            folder,
+            entries: groups[folder].sort((a, b) =>
+              a.path.localeCompare(b.path),
+            ),
+          }));
+      }
+
+      function renderPages() {
+        const query = el.pagesSearchBox.value.trim().toLowerCase();
+        const pages = state.pages.filter((page) =>
+          [page.path, page.title, page.folder]
+            .join(" ")
+            .toLowerCase()
+            .includes(query),
+        );
+        el.pagesContainer.innerHTML =
+          groupByFolder(pages)
+            .map(
+              (group) => `
                 <section class="mb-4 rounded-lg border border-[var(--line)] bg-white p-4">
                     <h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">${escapeHtml(group.folder)} (${group.entries.length})</h3>
                     <div class="mt-3 grid gap-2 sm:grid-cols-2">
                         ${group.entries.map((entry) => `<a class="break-all text-sm text-[var(--accent)] hover:underline" href="${escapeHtml(entry.path)}">${escapeHtml(entry.path)}</a>`).join("")}
                     </div>
                 </section>
-            `).join("") || '<p class="text-sm text-[var(--muted)]">No pages match.</p>';
+            `,
+            )
+            .join("") ||
+          '<p class="text-sm text-[var(--muted)]">No pages match.</p>';
+      }
+
+      async function openPagesModal() {
+        el.allPagesModal.classList.remove("hidden");
+        el.allPagesModal.classList.add("flex");
+        if (!state.pagesLoaded) {
+          el.pagesContainer.innerHTML =
+            '<p class="text-sm text-[var(--muted)]">Loading pages...</p>';
+          try {
+            const response = await fetch("assets/data/tools-manifest.json", {
+              cache: "no-store",
+            });
+            if (!response.ok)
+              throw new Error(`tools-manifest failed with ${response.status}`);
+            const data = await response.json();
+            state.pages = Array.isArray(data.entries) ? data.entries : [];
+            state.pagesLoaded = true;
+            el.pagesSourceLabel.textContent = `${state.pages.length} cached page entries`;
+            renderPages();
+          } catch (error) {
+            el.pagesContainer.innerHTML =
+              '<p class="text-sm text-[var(--danger)]">Could not load the page inventory.</p>';
+            console.error(error);
+          }
+        }
+        el.pagesSearchBox.focus();
+      }
+
+      document.addEventListener("click", (event) => {
+        const filter = event.target.closest("[data-group]");
+        if (filter) {
+          state[filter.dataset.group] = filter.dataset.value;
+          renderFilters();
+          renderProjects();
+          return;
         }
 
-        async function openPagesModal() {
-            el.allPagesModal.classList.remove("hidden");
-            el.allPagesModal.classList.add("flex");
-            if (!state.pagesLoaded) {
-                el.pagesContainer.innerHTML = '<p class="text-sm text-[var(--muted)]">Loading pages...</p>';
-                try {
-                    const response = await fetch("assets/data/tools-manifest.json", { cache: "no-store" });
-                    if (!response.ok) throw new Error(`tools-manifest failed with ${response.status}`);
-                    const data = await response.json();
-                    state.pages = Array.isArray(data.entries) ? data.entries : [];
-                    state.pagesLoaded = true;
-                    el.pagesSourceLabel.textContent = `${state.pages.length} cached page entries`;
-                    renderPages();
-                } catch (error) {
-                    el.pagesContainer.innerHTML = '<p class="text-sm text-[var(--danger)]">Could not load the page inventory.</p>';
-                    console.error(error);
-                }
-            }
-            el.pagesSearchBox.focus();
+        const favorite = event.target.closest(".favorite-button");
+        if (favorite) {
+          toggleFavorite(favorite.dataset.slug);
+          return;
         }
 
-        document.addEventListener("click", (event) => {
-            const filter = event.target.closest("[data-group]");
-            if (filter) {
-                state[filter.dataset.group] = filter.dataset.value;
-                renderFilters();
-                renderProjects();
-                return;
-            }
+        const opener = event.target.closest("[data-open-slug]");
+        if (opener) {
+          markRecent(opener.dataset.openSlug);
+        }
+      });
 
-            const favorite = event.target.closest(".favorite-button");
-            if (favorite) {
-                toggleFavorite(favorite.dataset.slug);
-                return;
-            }
+      el.searchBox.addEventListener("input", () => {
+        state.query = el.searchBox.value;
+        // Check for :pages command
+        if (state.query === ":pages") {
+          state.query = "";
+          el.searchBox.value = "";
+          openPagesModal();
+          return;
+        }
+        renderProjects();
+      });
+      el.showFavorites.addEventListener("click", () => {
+        state.favoritesOnly = !state.favoritesOnly;
+        renderProjects();
+      });
+      el.showRecent.addEventListener("click", () => {
+        state.recentOnly = !state.recentOnly;
+        renderProjects();
+      });
+      el.closePagesModal.addEventListener("click", () => {
+        el.allPagesModal.classList.add("hidden");
+        el.allPagesModal.classList.remove("flex");
+      });
+      el.pagesSearchBox.addEventListener("input", renderPages);
+      el.allPagesModal.addEventListener("click", (event) => {
+        if (event.target === el.allPagesModal) {
+          el.closePagesModal.click();
+        }
+      });
+      document.addEventListener("keydown", (event) => {
+        if (
+          event.key === "Escape" &&
+          !el.allPagesModal.classList.contains("hidden")
+        ) {
+          el.closePagesModal.click();
+        }
+        if (
+          event.ctrlKey &&
+          event.shiftKey &&
+          event.key.toLowerCase() === "p"
+        ) {
+          event.preventDefault();
+          openPagesModal();
+        }
+      });
 
-            const opener = event.target.closest("[data-open-slug]");
-            if (opener) {
-                markRecent(opener.dataset.openSlug);
-            }
+      // Featured internal tools scroll handlers
+      el.featuredInternalScrollLeft.addEventListener("click", () => {
+        el.featuredInternalContainer.scrollBy({
+          left: -340,
+          behavior: "smooth",
         });
+      });
 
-        el.searchBox.addEventListener("input", () => {
-            state.query = el.searchBox.value;
-            renderProjects();
+      el.featuredInternalScrollRight.addEventListener("click", () => {
+        el.featuredInternalContainer.scrollBy({
+          left: 340,
+          behavior: "smooth",
         });
-        el.showFavorites.addEventListener("click", () => {
-            state.favoritesOnly = !state.favoritesOnly;
-            renderProjects();
-        });
-        el.showRecent.addEventListener("click", () => {
-            state.recentOnly = !state.recentOnly;
-            renderProjects();
-        });
-        el.openPages.addEventListener("click", openPagesModal);
-        el.closePagesModal.addEventListener("click", () => {
-            el.allPagesModal.classList.add("hidden");
-            el.allPagesModal.classList.remove("flex");
-        });
-        el.pagesSearchBox.addEventListener("input", renderPages);
-        el.allPagesModal.addEventListener("click", (event) => {
-            if (event.target === el.allPagesModal) {
-                el.closePagesModal.click();
-            }
-        });
-        document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape" && !el.allPagesModal.classList.contains("hidden")) {
-                el.closePagesModal.click();
-            }
-            if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "p") {
-                event.preventDefault();
-                openPagesModal();
-            }
-        });
+      });
 
-        loadProjects();
+      // Featured external tools scroll handlers
+      el.featuredExternalScrollLeft.addEventListener("click", () => {
+        el.featuredExternalContainer.scrollBy({
+          left: -340,
+          behavior: "smooth",
+        });
+      });
+
+      el.featuredExternalScrollRight.addEventListener("click", () => {
+        el.featuredExternalContainer.scrollBy({
+          left: 340,
+          behavior: "smooth",
+        });
+      });
+
+      el.featuredInternalContainer.addEventListener(
+        "scroll",
+        updateScrollButtons,
+      );
+      el.featuredExternalContainer.addEventListener(
+        "scroll",
+        updateScrollButtons,
+      );
+      window.addEventListener("resize", updateScrollButtons);
+
+      loadProjects();
     </script>
-</body>
+  </body>
 </html>

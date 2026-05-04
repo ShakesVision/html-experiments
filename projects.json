@@ -266,7 +266,7 @@
     "tags": ["urdu"],
     "offlineSupport": "full",
     "external": false,
-    "featured": false,
+    "featured": true,
     "lastReviewed": "2026-05-04",
     "img": "editor/urdu-editor.png",
     "link": "editor/poetry2.html"
@@ -346,7 +346,7 @@
     "tags": ["image"],
     "offlineSupport": "full",
     "external": false,
-    "featured": false,
+    "featured": true,
     "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
     "link": "quoter/index.html"
@@ -378,7 +378,7 @@
     "tags": ["pdf", "reader", "urdu"],
     "offlineSupport": "shell-cache",
     "external": false,
-    "featured": false,
+    "featured": true,
     "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
     "link": "rekhta-reader/index.html"
@@ -394,7 +394,7 @@
     "tags": ["urdu"],
     "offlineSupport": "online-required",
     "external": true,
-    "featured": true,
+    "featured": false,
     "lastReviewed": "2026-05-04",
     "img": "https://play-lh.googleusercontent.com/Dsjxk8LMkDOvIpjK-RYYaWm64P9zdBxLqbkMeA6ODnvqTo_RptHryPG9wzh_UB1B8A=w480-h960-rw",
     "link": "https://utools.shakeeb.in"
@@ -410,7 +410,7 @@
     "tags": ["urdu"],
     "offlineSupport": "online-required",
     "external": true,
-    "featured": true,
+    "featured": false,
     "lastReviewed": "2026-05-04",
     "img": "https://lh3.googleusercontent.com/Zl1iGtSkUpSlTbRh3g8ps5KcYPqoTkVNGsvlbDVxwj3RoUN5z823HRz3dAPrSa0JjoHT=s180-rw",
     "link": "https://qaafiyah.sarbakaf.com"
@@ -426,7 +426,7 @@
     "tags": ["quran"],
     "offlineSupport": "online-required",
     "external": true,
-    "featured": true,
+    "featured": false,
     "lastReviewed": "2026-05-04",
     "img": "https://play-lh.googleusercontent.com/TldXGOQXc8jfNNyFNWprbdMHg9ZhuIlmQD9idRPsEz3hY7uDcTXgVDIDu1ueN3vtAeYdAp7W9jsvZINz7fCNKw=s96-rw",
     "link": "https://quran.shakeeb.in"
