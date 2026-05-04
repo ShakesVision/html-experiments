@@ -3,344 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="assets/images/icon.png" type="image/png" sizes="16x16">
     <title>tools.shakeeb.in</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Manrope:wght@500;700&display=swap" rel="stylesheet">
+    <meta name="description" content="An installable static hub of browser tools for reading, editing, conversion, Urdu workflows, design, data, and productivity.">
+    <link rel="canonical" href="https://tools.shakeeb.in/">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <meta name="theme-color" content="#1b4965">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="tools.shakeeb.in">
+    <meta property="og:description" content="A production-grade static hub for browser-based tools.">
+    <meta property="og:url" content="https://tools.shakeeb.in/">
+    <meta property="og:image" content="https://tools.shakeeb.in/assets/images/project.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="assets/images/icon.png" type="image/png">
     <link rel="stylesheet" href="./assets/css/tailwind.css" />
     <script defer src="./assets/js/shared-init.js"></script>
+    <script type="application/ld+json" id="siteSchema"></script>
     <style>
         :root {
             color-scheme: light;
-            --bg-1: #edf2ff;
-            --bg-2: #f8fbff;
-            --ink-1: #19233b;
-            --ink-2: #5d6882;
-            --line: rgba(145, 163, 204, 0.22);
-            --glass-fill: rgba(255, 255, 255, 0.36);
-            --glass-fill-strong: rgba(255, 255, 255, 0.56);
-            --glass-stroke: rgba(255, 255, 255, 0.82);
-            --shadow-lg: 0 22px 56px rgba(99, 117, 158, 0.18);
-            --shadow-md: 0 14px 34px rgba(99, 117, 158, 0.14);
-            --blue-glow: rgba(94, 174, 255, 0.45);
-            --amber-glow: rgba(255, 182, 115, 0.35);
-            --mint-glow: rgba(120, 241, 212, 0.28);
-        }
-
-        html {
-            min-height: 100%;
-            background:
-                radial-gradient(circle at 14% 10%, var(--amber-glow), transparent 20%),
-                radial-gradient(circle at 86% 12%, var(--blue-glow), transparent 22%),
-                radial-gradient(circle at 50% 72%, rgba(155, 173, 255, 0.16), transparent 26%),
-                linear-gradient(180deg, var(--bg-1), var(--bg-2));
+            --bg: #f6f8fb;
+            --panel: #ffffff;
+            --ink: #172033;
+            --muted: #647084;
+            --line: #dce3ee;
+            --accent: #1b4965;
+            --accent-soft: #e8f3f8;
+            --ok: #176b4d;
+            --warn: #936316;
+            --danger: #963a3a;
         }
 
         body {
             min-height: 100vh;
-            background: transparent;
-            color: var(--ink-1);
-            font-family: "Plus Jakarta Sans", sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
-        .display-face {
-            font-family: "Manrope", sans-serif;
+        .shell {
+            width: min(1180px, calc(100% - 32px));
+            margin-inline: auto;
         }
 
-        .glass-panel {
-            position: relative;
-            overflow: hidden;
-            border: 1px solid var(--glass-stroke);
-            background:
-                linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.24)),
-                linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.08));
-            box-shadow: var(--shadow-lg);
-            backdrop-filter: blur(26px) saturate(175%);
-            -webkit-backdrop-filter: blur(26px) saturate(175%);
+        .panel {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            box-shadow: 0 16px 38px rgba(23, 32, 51, 0.06);
         }
 
-        .glass-panel::before {
-            content: "";
-            position: absolute;
-            inset: 1px;
-            border-radius: inherit;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.04));
-            pointer-events: none;
+        .chip,
+        .filter-button {
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--muted);
         }
 
-        .glass-pill {
-            border: 1px solid rgba(255, 255, 255, 0.86);
-            background: var(--glass-fill-strong);
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.88),
-                0 10px 24px rgba(99, 117, 158, 0.1);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
+        .filter-button[aria-pressed="true"] {
+            border-color: rgba(27, 73, 101, 0.28);
+            background: var(--accent-soft);
+            color: var(--accent);
         }
 
-        .glass-card {
-            position: relative;
-            overflow: hidden;
-            border: 1px solid var(--glass-stroke);
-            background:
-                linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.22)),
-                linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08));
-            box-shadow: var(--shadow-md);
-            backdrop-filter: blur(24px) saturate(165%);
-            -webkit-backdrop-filter: blur(24px) saturate(165%);
-            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+        .tool-card {
+            border: 1px solid var(--line);
+            background: #fff;
+            transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
         }
 
-        .glass-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 22px 44px rgba(99, 117, 158, 0.2);
-            border-color: rgba(255, 255, 255, 0.94);
+        .tool-card:hover,
+        .tool-card:focus-within {
+            border-color: rgba(27, 73, 101, 0.38);
+            box-shadow: 0 18px 42px rgba(23, 32, 51, 0.1);
+            transform: translateY(-2px);
         }
 
-        .glass-card::before {
-            content: "";
-            position: absolute;
-            inset: 1px;
-            border-radius: inherit;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.05));
-            pointer-events: none;
-        }
+        .status-alpha { color: var(--warn); background: #fff7e8; border-color: #f4d8a8; }
+        .status-beta { color: #275f9f; background: #edf6ff; border-color: #c9ddf5; }
+        .status-stable { color: var(--ok); background: #eaf7f1; border-color: #c8e7d9; }
+        .offline-full { color: var(--ok); background: #eaf7f1; border-color: #c8e7d9; }
+        .offline-shell-cache { color: #275f9f; background: #edf6ff; border-color: #c9ddf5; }
+        .offline-online-required { color: var(--danger); background: #fff0f0; border-color: #f0c4c4; }
 
-        .card-media {
-            position: relative;
-            min-height: 168px;
-            overflow: hidden;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.58);
-            background:
-                radial-gradient(circle at 18% 15%, rgba(255, 188, 118, 0.46), transparent 28%),
-                radial-gradient(circle at 84% 22%, rgba(103, 207, 255, 0.42), transparent 30%),
-                radial-gradient(circle at 74% 78%, rgba(120, 241, 212, 0.24), transparent 24%),
-                linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(234, 243, 255, 0.76));
-        }
-
-        .card-media::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.38), transparent 52%);
-            pointer-events: none;
-        }
-
-        .media-icon-wrap {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            height: 100%;
+        .icon-button {
+            display: inline-flex;
+            height: 2.5rem;
+            width: 2.5rem;
             align-items: center;
             justify-content: center;
-            padding: 1.5rem;
-        }
-
-        .media-icon {
-            height: 6.5rem;
-            width: 6.5rem;
             border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.86);
-            object-fit: cover;
-            background: rgba(255, 255, 255, 0.62);
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.92),
-                0 16px 34px rgba(110, 131, 178, 0.16);
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--muted);
         }
 
-        .search-shell {
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.88);
-            background: rgba(255, 255, 255, 0.48);
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.94),
-                0 18px 38px rgba(99, 117, 158, 0.12);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
+        .icon-button[aria-pressed="true"] {
+            color: #b7791f;
+            background: #fff7e8;
+            border-color: #f4d8a8;
         }
 
-        .search-shell:focus-within {
-            border-color: rgba(121, 208, 255, 0.98);
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.95),
-                0 0 0 4px rgba(100, 199, 255, 0.14),
-                0 22px 42px rgba(99, 117, 158, 0.16);
-        }
-
-        .search-shell input {
-            background: transparent;
-            outline: none;
-        }
-
-        .hero-spot {
-            position: absolute;
-            inset: auto -2rem -2rem auto;
-            height: 8rem;
-            width: 8rem;
-            border-radius: 999px;
-            background: radial-gradient(circle, rgba(98, 205, 255, 0.45), transparent 64%);
-            filter: blur(10px);
-            pointer-events: none;
-        }
-
-        .subtle-grid {
-            background-image:
-                linear-gradient(rgba(143, 160, 199, 0.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(143, 160, 199, 0.08) 1px, transparent 1px);
-            background-size: 34px 34px;
-            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92), transparent 92%);
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
-    <div class="pointer-events-none absolute inset-0 subtle-grid"></div>
-
-    <header class="px-4 pt-6 sm:px-6 sm:pt-8">
-        <div class="glass-panel mx-auto max-w-6xl rounded-[2rem] px-5 py-6 sm:px-7 sm:py-7">
-            <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div class="min-w-0 flex-1">
-                    <div class="mb-4 flex flex-wrap gap-3">
-                        <span class="glass-pill inline-flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">
-                            <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(74,222,128,0.8)]"></span>
-                            Live directory
-                        </span>
-                        <span class="glass-pill inline-flex items-center rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">
-                            Experimental tools
-                        </span>
+    <header class="border-b border-[var(--line)] bg-white/88 backdrop-blur">
+        <div class="shell py-5">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <img src="assets/images/icon.png" alt="" class="h-11 w-11 rounded-xl">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">Production tools hub</p>
+                            <h1 class="text-3xl font-bold tracking-tight">tools.shakeeb.in</h1>
+                        </div>
                     </div>
-
-                    <div class="flex items-center gap-4 sm:gap-5">
-                        <div class="glass-pill flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.5rem] sm:h-20 sm:w-20">
-                            <img class="h-9 w-9 sm:h-11 sm:w-11" src="assets/images/icon.png" alt="tools logo">
-                        </div>
-                        <div class="min-w-0">
-                            <h1 class="display-face text-3xl font-extrabold tracking-tight text-[var(--ink-1)] sm:text-5xl">
-                                tools.shakeeb.in
-                            </h1>
-                            <p class="mt-3 max-w-2xl text-sm leading-7 text-[var(--ink-2)] sm:text-base">
-                                A quiet shelf of useful experiments: editors, readers, converters, Urdu tools, small workflow helpers, and strange useful web things.
-                            </p>
-                            <div class="mt-4 flex flex-wrap gap-3 text-sm text-[var(--ink-2)]">
-                                <a class="glass-pill inline-flex items-center rounded-full px-4 py-2 transition hover:bg-white/80 hover:text-[var(--ink-1)]" href="https://www.shakeeb.in">www.shakeeb.in</a>
-                                <a class="glass-pill inline-flex items-center rounded-full px-4 py-2 transition hover:bg-white/80 hover:text-[var(--ink-1)]" href="https://ur.shakeeb.in">ur.shakeeb.in</a>
-                            </div>
-                        </div>
+                    <p class="mt-3 max-w-3xl text-sm leading-6 text-[var(--muted)]">
+                        Browser tools for reading, editing, conversion, Urdu workflows, design, data, and small practical utilities.
+                    </p>
+                </div>
+                <div class="grid grid-cols-3 gap-3 text-center sm:min-w-[360px]">
+                    <div class="panel rounded-lg px-3 py-3">
+                        <p class="text-xs text-[var(--muted)]">Tools</p>
+                        <p class="mt-1 text-2xl font-bold" id="statTools">0</p>
+                    </div>
+                    <div class="panel rounded-lg px-3 py-3">
+                        <p class="text-xs text-[var(--muted)]">Offline</p>
+                        <p class="mt-1 text-2xl font-bold" id="statOffline">0</p>
+                    </div>
+                    <div class="panel rounded-lg px-3 py-3">
+                        <p class="text-xs text-[var(--muted)]">Categories</p>
+                        <p class="mt-1 text-2xl font-bold" id="statCategories">0</p>
                     </div>
                 </div>
-
-                <aside class="grid min-w-[200px] gap-3 sm:grid-cols-3 lg:w-[320px] lg:grid-cols-1">
-                    <div class="glass-pill rounded-[1.4rem] px-4 py-4">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">Hosted</p>
-                        <p class="mt-2 text-2xl font-extrabold text-[var(--ink-1)]" id="heroProjectCount">0</p>
-                    </div>
-                    <div class="glass-pill rounded-[1.4rem] px-4 py-4">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">Alpha</p>
-                        <p class="mt-2 text-2xl font-extrabold text-[var(--ink-1)]" id="heroAlphaCount">0</p>
-                    </div>
-                    <div class="glass-pill rounded-[1.4rem] px-4 py-4">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">Beta</p>
-                        <p class="mt-2 text-2xl font-extrabold text-[var(--ink-1)]" id="heroBetaCount">0</p>
-                    </div>
-                </aside>
             </div>
-            <div class="hero-spot"></div>
         </div>
     </header>
 
-    <section class="px-4 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6">
-        <div class="mx-auto max-w-6xl">
-            <div id="externalProjectsSection" class="hidden">
-                <div class="mb-4 flex items-center justify-between gap-4">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">Elsewhere</p>
-                        <h2 class="display-face mt-2 text-2xl font-bold text-[var(--ink-1)]">Standalone projects worth visiting</h2>
-                    </div>
+    <main class="shell py-6">
+        <section class="panel rounded-xl p-4">
+            <div class="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+                <label class="block">
+                    <span class="sr-only">Search tools</span>
+                    <input id="searchBox" class="w-full rounded-lg border border-[var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-sky-100" type="search" placeholder="Search by name, tag, category, status, or path">
+                </label>
+                <div class="flex flex-wrap gap-2">
+                    <button class="filter-button rounded-lg px-3 py-2 text-sm font-semibold" id="showFavorites" type="button" aria-pressed="false">Favorites</button>
+                    <button class="filter-button rounded-lg px-3 py-2 text-sm font-semibold" id="showRecent" type="button" aria-pressed="false">Recent</button>
+                    <button class="filter-button rounded-lg px-3 py-2 text-sm font-semibold" id="openPages" type="button">All pages</button>
                 </div>
-                <div id="externalProjectsContainer" class="grid grid-cols-1 gap-4 lg:grid-cols-3"></div>
             </div>
-        </div>
-    </section>
+            <div class="mt-4 grid gap-3 md:grid-cols-3">
+                <div>
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Category</p>
+                    <div class="flex flex-wrap gap-2" id="categoryFilters"></div>
+                </div>
+                <div>
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Status</p>
+                    <div class="flex flex-wrap gap-2" id="statusFilters"></div>
+                </div>
+                <div>
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Offline support</p>
+                    <div class="flex flex-wrap gap-2" id="offlineFilters"></div>
+                </div>
+            </div>
+            <p class="mt-4 text-sm text-[var(--muted)]" id="resultSummary">Loading registry...</p>
+        </section>
 
-    <section class="px-4 pb-5 pt-1 sm:px-6 sm:pb-6">
-        <div class="mx-auto max-w-6xl">
-            <div class="search-shell flex items-center gap-3 rounded-[1.9rem] px-4 py-3 sm:px-5">
-                <div class="glass-pill inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-[var(--ink-2)]">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" class="h-5 w-5">
-                        <path d="M10.5 4a6.5 6.5 0 1 0 3.98 11.64l4.94 4.94 1.41-1.41-4.94-4.94A6.5 6.5 0 0 0 10.5 4Zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z" fill="currentColor"/>
-                    </svg>
-                </div>
-                <input id="searchBox" type="text" placeholder="Search hosted tools, statuses, or paths..."
-                    class="min-w-0 flex-1 border-none p-0 text-base text-[var(--ink-1)] placeholder:text-[var(--ink-2)] sm:text-lg">
-                <div class="hidden rounded-full border border-white/80 bg-white/44 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)] sm:block">
-                    hosted only
-                </div>
-            </div>
-            <p id="statusMessage" class="mt-3 px-1 text-sm text-[var(--ink-2)]"></p>
-        </div>
-    </section>
-
-    <main class="px-4 pb-10 sm:px-6 sm:pb-12">
-        <div class="mx-auto max-w-6xl">
-            <div class="mb-4">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">Hosted on this domain</p>
-                <h2 class="display-face mt-2 text-2xl font-bold text-[var(--ink-1)]">Tool library</h2>
-            </div>
-            <div id="projectsContainer" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
-        </div>
+        <section class="mt-6">
+            <div id="projectsContainer" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+        </section>
     </main>
 
-    <div id="allPagesModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/45 p-4 backdrop-blur">
-        <div class="glass-panel relative w-full max-w-4xl rounded-[2rem]">
-            <div class="relative z-10 flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
-                <h2 class="display-face text-xl font-bold text-[var(--ink-1)]">All HTML Pages</h2>
-                <button id="closePagesModal" class="glass-pill inline-flex h-11 w-11 items-center justify-center rounded-full text-xl leading-none text-[var(--ink-2)] transition hover:text-[var(--ink-1)]">&times;</button>
-            </div>
-            <div class="relative z-10 border-b border-[var(--line)] px-5 py-4">
-                <div class="search-shell flex items-center gap-3 rounded-[1.4rem] px-4 py-3">
-                    <input id="pagesSearchBox" type="text" placeholder="Filter pages by name or path..."
-                        class="min-w-0 flex-1 border-none bg-transparent p-0 text-sm text-[var(--ink-1)] placeholder:text-[var(--ink-2)]">
+    <div id="allPagesModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/50 p-4">
+        <section class="panel max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-xl">
+            <div class="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+                <div>
+                    <h2 class="text-lg font-bold">All HTML pages</h2>
+                    <p class="text-xs text-[var(--muted)]" id="pagesSourceLabel"></p>
                 </div>
-                <p id="pagesSourceLabel" class="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]"></p>
+                <button id="closePagesModal" class="icon-button" type="button" aria-label="Close pages list">&times;</button>
             </div>
-            <div id="pagesContainer" class="relative z-10 max-h-[70vh] space-y-4 overflow-y-auto px-5 py-5"></div>
-        </div>
+            <div class="border-b border-[var(--line)] p-4">
+                <input id="pagesSearchBox" class="w-full rounded-lg border border-[var(--line)] px-4 py-3 text-sm outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-sky-100" type="search" placeholder="Filter pages">
+            </div>
+            <div id="pagesContainer" class="max-h-[64vh] overflow-y-auto p-4"></div>
+        </section>
     </div>
 
     <script>
-        const GITHUB_CONFIG = {
-            owner: "shakesvision",
-            repo: "html-experiments",
-            branch: "main",
-            cacheKey: "all-html-pages-cache-v1",
-            cacheExpiryMs: 24 * 60 * 60 * 1000
-        };
-
         const state = {
             projects: [],
-            externalProjects: [],
-            projectQuery: "",
             pages: [],
-            pagesLoaded: false
+            pagesLoaded: false,
+            query: "",
+            category: "all",
+            status: "all",
+            offline: "all",
+            favoritesOnly: false,
+            recentOnly: false,
+            favorites: readList("tools:favorites"),
+            recent: readList("tools:recent")
         };
 
-        const searchBox = document.getElementById("searchBox");
-        const projectsContainer = document.getElementById("projectsContainer");
-        const externalProjectsSection = document.getElementById("externalProjectsSection");
-        const externalProjectsContainer = document.getElementById("externalProjectsContainer");
-        const statusMessage = document.getElementById("statusMessage");
-        const heroProjectCount = document.getElementById("heroProjectCount");
-        const heroAlphaCount = document.getElementById("heroAlphaCount");
-        const heroBetaCount = document.getElementById("heroBetaCount");
+        const labels = {
+            alpha: "Alpha",
+            beta: "Beta",
+            stable: "Stable",
+            full: "Full offline",
+            "shell-cache": "Cached shell",
+            "online-required": "Online required"
+        };
 
-        const allPagesModal = document.getElementById("allPagesModal");
-        const closePagesModal = document.getElementById("closePagesModal");
-        const pagesSearchBox = document.getElementById("pagesSearchBox");
-        const pagesContainer = document.getElementById("pagesContainer");
-        const pagesSourceLabel = document.getElementById("pagesSourceLabel");
+        const el = {
+            searchBox: document.getElementById("searchBox"),
+            categoryFilters: document.getElementById("categoryFilters"),
+            statusFilters: document.getElementById("statusFilters"),
+            offlineFilters: document.getElementById("offlineFilters"),
+            showFavorites: document.getElementById("showFavorites"),
+            showRecent: document.getElementById("showRecent"),
+            openPages: document.getElementById("openPages"),
+            projectsContainer: document.getElementById("projectsContainer"),
+            resultSummary: document.getElementById("resultSummary"),
+            statTools: document.getElementById("statTools"),
+            statOffline: document.getElementById("statOffline"),
+            statCategories: document.getElementById("statCategories"),
+            allPagesModal: document.getElementById("allPagesModal"),
+            closePagesModal: document.getElementById("closePagesModal"),
+            pagesSearchBox: document.getElementById("pagesSearchBox"),
+            pagesContainer: document.getElementById("pagesContainer"),
+            pagesSourceLabel: document.getElementById("pagesSourceLabel")
+        };
+
+        function readList(key) {
+            try {
+                const value = JSON.parse(localStorage.getItem(key) || "[]");
+                return Array.isArray(value) ? value : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function writeList(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value.slice(0, 24)));
+            } catch {
+            }
+        }
 
         function escapeHtml(value) {
-            return String(value)
+            return String(value ?? "")
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")
                 .replaceAll(">", "&gt;")
@@ -348,149 +264,143 @@
                 .replaceAll("'", "&#39;");
         }
 
-        function renderStatusBadge(status) {
-            const normalized = String(status || "").trim().toLowerCase();
-            const badges = {
-                alpha: {
-                    symbol: "&alpha;",
-                    label: "Alpha",
-                    classes: "border-amber-300 bg-amber-50/85 text-amber-700 shadow-[0_10px_24px_rgba(255,184,109,0.22)]"
-                },
-                beta: {
-                    symbol: "&beta;",
-                    label: "Beta",
-                    classes: "border-sky-200 bg-sky-50/85 text-sky-700 shadow-[0_10px_24px_rgba(110,211,255,0.2)]"
-                }
+        function normalizeProject(project) {
+            return {
+                ...project,
+                description: project.description || project.desc || "",
+                tags: Array.isArray(project.tags) ? project.tags : [],
+                status: project.status || "stable",
+                offlineSupport: project.offlineSupport || (project.external ? "online-required" : "shell-cache")
             };
-            const badge = badges[normalized];
-
-            if (!badge) {
-                return "";
-            }
-
-            return `
-                <span
-                    class="glass-pill absolute right-4 top-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm font-bold ${badge.classes}"
-                    title="${badge.label}"
-                    aria-label="${badge.label}"
-                >
-                    ${badge.symbol}
-                </span>
-            `;
         }
 
-        function renderOverview() {
-            heroProjectCount.textContent = state.projects.length;
-            heroAlphaCount.textContent = state.projects.filter((project) => String(project.status).toLowerCase() === "alpha").length;
-            heroBetaCount.textContent = state.projects.filter((project) => String(project.status).toLowerCase() === "beta").length;
+        function button(label, value, active, group) {
+            return `<button class="filter-button rounded-lg px-3 py-2 text-xs font-semibold" data-group="${group}" data-value="${escapeHtml(value)}" type="button" aria-pressed="${String(active)}">${escapeHtml(label)}</button>`;
         }
 
-        function renderExternalProjects() {
-            if (!state.externalProjects.length) {
-                externalProjectsSection.classList.add("hidden");
-                externalProjectsContainer.innerHTML = "";
-                return;
-            }
+        function renderFilters() {
+            const categories = ["all", ...new Set(state.projects.map((project) => project.category).filter(Boolean).sort())];
+            const statuses = ["all", "stable", "beta", "alpha"];
+            const offline = ["all", "full", "shell-cache", "online-required"];
 
-            externalProjectsSection.classList.remove("hidden");
-            externalProjectsContainer.innerHTML = state.externalProjects.map((project) => `
-                <article class="glass-card rounded-[1.7rem]">
-                    <a href="${escapeHtml(project.link)}" target="_blank" rel="noreferrer" class="block h-full">
-                        <div class="card-media rounded-t-[1.7rem]">
-                            <div class="media-icon-wrap">
-                                <img
-                                    class="media-icon"
-                                    src="${escapeHtml(project.img)}"
-                                    alt="${escapeHtml(project.title)}"
-                                    loading="lazy"
-                                    decoding="async"
-                                />
-                            </div>
-                        </div>
-                        <div class="relative z-10 p-5">
-                            <div class="mb-3 flex items-center justify-between gap-3">
-                                <span class="glass-pill rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">External</span>
-                                <span class="text-sm text-[var(--ink-2)]">Opens new tab</span>
-                            </div>
-                            <h3 class="display-face text-xl font-bold text-[var(--ink-1)]">${escapeHtml(project.title)}</h3>
-                            <p class="mt-3 text-sm leading-6 text-[var(--ink-2)]">${escapeHtml(project.desc)}</p>
-                        </div>
-                    </a>
-                </article>
-            `).join("");
+            el.categoryFilters.innerHTML = categories.map((item) => button(item === "all" ? "All" : item, item, state.category === item, "category")).join("");
+            el.statusFilters.innerHTML = statuses.map((item) => button(item === "all" ? "All" : labels[item], item, state.status === item, "status")).join("");
+            el.offlineFilters.innerHTML = offline.map((item) => button(item === "all" ? "All" : labels[item], item, state.offline === item, "offline")).join("");
+        }
+
+        function filteredProjects() {
+            const query = state.query.trim().toLowerCase();
+            return state.projects.filter((project) => {
+                const haystack = [
+                    project.title,
+                    project.description,
+                    project.category,
+                    project.status,
+                    project.offlineSupport,
+                    project.link,
+                    project.tags.join(" ")
+                ].join(" ").toLowerCase();
+
+                if (query && !haystack.includes(query)) return false;
+                if (state.category !== "all" && project.category !== state.category) return false;
+                if (state.status !== "all" && project.status !== state.status) return false;
+                if (state.offline !== "all" && project.offlineSupport !== state.offline) return false;
+                if (state.favoritesOnly && !state.favorites.includes(project.slug)) return false;
+                if (state.recentOnly && !state.recent.includes(project.slug)) return false;
+                return true;
+            });
+        }
+
+        function markRecent(slug) {
+            state.recent = [slug, ...state.recent.filter((item) => item !== slug)];
+            writeList("tools:recent", state.recent);
+        }
+
+        function toggleFavorite(slug) {
+            state.favorites = state.favorites.includes(slug)
+                ? state.favorites.filter((item) => item !== slug)
+                : [slug, ...state.favorites];
+            writeList("tools:favorites", state.favorites);
+            renderProjects();
         }
 
         function renderProjects() {
-            const query = state.projectQuery.trim().toLowerCase();
-            const filtered = state.projects.filter((project) => {
-                const haystack = [project.id, project.title, project.desc, project.link, project.status].join(" ").toLowerCase();
-                return haystack.includes(query);
-            });
+            const projects = filteredProjects();
+            el.showFavorites.setAttribute("aria-pressed", String(state.favoritesOnly));
+            el.showRecent.setAttribute("aria-pressed", String(state.recentOnly));
+            el.resultSummary.textContent = `${projects.length} of ${state.projects.length} tools shown`;
 
-            if (filtered.length === 0) {
-                projectsContainer.innerHTML = `
-                    <div class="glass-panel col-span-full rounded-[1.8rem] px-6 py-8 text-center text-[var(--ink-2)]">
-                        No tools found for "<strong class="text-[var(--ink-1)]">${escapeHtml(state.projectQuery)}</strong>".
-                    </div>
-                `;
+            if (!projects.length) {
+                el.projectsContainer.innerHTML = '<div class="panel rounded-xl p-6 text-sm text-[var(--muted)] md:col-span-2 xl:col-span-3">No tools match the current filters.</div>';
                 return;
             }
 
-            projectsContainer.innerHTML = filtered.map((project) => `
-                <article class="glass-card rounded-[1.8rem]">
-                    <div class="relative h-full">
-                        ${renderStatusBadge(project.status)}
-                        <div class="card-media rounded-t-[1.8rem]">
-                            <div class="media-icon-wrap">
-                                <img
-                                    class="media-icon"
-                                    src="${escapeHtml(project.img)}"
-                                    alt="${escapeHtml(project.title)}"
-                                    loading="lazy"
-                                    decoding="async"
-                                />
+            el.projectsContainer.innerHTML = projects.map((project) => {
+                const isFavorite = state.favorites.includes(project.slug);
+                const target = project.external ? ' target="_blank" rel="noreferrer"' : "";
+                return `
+                    <article class="tool-card rounded-xl p-4">
+                        <div class="flex gap-4">
+                            <img class="h-14 w-14 shrink-0 rounded-lg border border-[var(--line)] object-cover" src="${escapeHtml(project.img)}" alt="" loading="lazy" decoding="async">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <h2 class="truncate text-lg font-bold">${escapeHtml(project.title)}</h2>
+                                        <p class="mt-1 text-xs text-[var(--muted)]">${escapeHtml(project.category)} · ${escapeHtml(project.link)}</p>
+                                    </div>
+                                    <button class="icon-button favorite-button" type="button" data-slug="${escapeHtml(project.slug)}" aria-label="Toggle favorite for ${escapeHtml(project.title)}" aria-pressed="${String(isFavorite)}">★</button>
+                                </div>
+                                <p class="mt-3 line-clamp-3 text-sm leading-6 text-[var(--muted)]">${escapeHtml(project.description)}</p>
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <span class="chip status-${escapeHtml(project.status)} rounded-full px-2.5 py-1 text-xs font-semibold">${escapeHtml(labels[project.status] || project.status)}</span>
+                                    <span class="chip offline-${escapeHtml(project.offlineSupport)} rounded-full px-2.5 py-1 text-xs font-semibold">${escapeHtml(labels[project.offlineSupport] || project.offlineSupport)}</span>
+                                    ${project.external ? '<span class="chip rounded-full px-2.5 py-1 text-xs font-semibold">External</span>' : ""}
+                                    ${project.tags.slice(0, 3).map((tag) => `<span class="chip rounded-full px-2.5 py-1 text-xs font-semibold">${escapeHtml(tag)}</span>`).join("")}
+                                </div>
+                                <a class="mt-4 inline-flex rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white" href="${escapeHtml(project.link)}" data-open-slug="${escapeHtml(project.slug)}"${target}>Open tool</a>
                             </div>
                         </div>
-                        <div class="relative z-10 flex h-[calc(100%-168px)] flex-col p-5">
-                            <div class="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">
-                                <span class="glass-pill rounded-full px-3 py-1">#${escapeHtml(project.id)}</span>
-                                ${project.status ? `<span class="glass-pill rounded-full px-3 py-1">${escapeHtml(project.status)}</span>` : ""}
-                            </div>
-                            <h3 class="display-face text-xl font-bold leading-tight text-[var(--ink-1)]">${escapeHtml(project.title)}</h3>
-                            <p class="mt-3 flex-grow text-sm leading-6 text-[var(--ink-2)]">${escapeHtml(project.desc)}</p>
-                            <a href="${escapeHtml(project.link)}" class="glass-pill mt-5 inline-flex items-center justify-center rounded-full bg-white/58 px-4 py-3 text-sm font-semibold text-[var(--ink-1)] transition hover:bg-white/82">
-                                Open Tool
-                            </a>
-                        </div>
-                    </div>
-                </article>
-            `).join("");
+                    </article>
+                `;
+            }).join("");
+        }
+
+        function renderStats() {
+            const localProjects = state.projects.filter((project) => !project.external);
+            el.statTools.textContent = localProjects.length;
+            el.statOffline.textContent = localProjects.filter((project) => project.offlineSupport === "full").length;
+            el.statCategories.textContent = new Set(state.projects.map((project) => project.category)).size;
+        }
+
+        function renderSchema() {
+            const schema = {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "tools.shakeeb.in",
+                url: "https://tools.shakeeb.in/",
+                hasPart: state.projects.slice(0, 40).map((project) => ({
+                    "@type": "WebApplication",
+                    name: project.title,
+                    applicationCategory: project.category,
+                    url: project.external ? project.link : `https://tools.shakeeb.in/${project.link}`
+                }))
+            };
+            document.getElementById("siteSchema").textContent = JSON.stringify(schema);
         }
 
         async function loadProjects() {
             try {
-                statusMessage.textContent = "Loading project registry...";
-                const res = await fetch("projects.json", { cache: "no-store" });
-                if (!res.ok) {
-                    throw new Error(`projects.json request failed with ${res.status}`);
-                }
-
-                const allProjects = await res.json();
-                const items = Array.isArray(allProjects) ? allProjects : [];
-                state.projects = items.filter((item) => !item.external);
-                state.externalProjects = items.filter((item) => item.external);
-                searchBox.placeholder = `Search across ${state.projects.length} hosted tools...`;
-                renderOverview();
-                renderExternalProjects();
+                const response = await fetch("projects.json", { cache: "no-store" });
+                if (!response.ok) throw new Error(`projects.json failed with ${response.status}`);
+                state.projects = (await response.json()).map(normalizeProject);
+                renderStats();
+                renderFilters();
                 renderProjects();
-                statusMessage.textContent = "";
+                renderSchema();
             } catch (error) {
-                statusMessage.textContent = "Could not load showcase projects right now.";
-                projectsContainer.innerHTML = `
-                    <div class="glass-panel col-span-full rounded-[1.8rem] border border-red-200 bg-red-50/75 px-6 py-8 text-red-700">
-                        Failed to load projects. Please refresh and try again.
-                    </div>
-                `;
+                el.resultSummary.textContent = navigator.onLine
+                    ? "The tool registry could not be loaded."
+                    : "The tool registry is not cached yet. Reconnect once to install it.";
                 console.error(error);
             }
         }
@@ -499,221 +409,97 @@
             const groups = {};
             entries.forEach((entry) => {
                 const folder = entry.folder || "(root)";
-                if (!groups[folder]) {
-                    groups[folder] = [];
-                }
+                groups[folder] ||= [];
                 groups[folder].push(entry);
             });
-
-            Object.keys(groups).forEach((folder) => {
-                groups[folder].sort((a, b) => a.path.localeCompare(b.path));
-            });
-
-            return Object.keys(groups).sort().map((folder) => ({
-                folder,
-                entries: groups[folder]
-            }));
+            return Object.keys(groups).sort().map((folder) => ({ folder, entries: groups[folder].sort((a, b) => a.path.localeCompare(b.path)) }));
         }
 
-        function renderPagesList() {
-            const query = pagesSearchBox.value.trim().toLowerCase();
-            const filtered = state.pages.filter((item) => {
-                return [item.path, item.folder, item.title].join(" ").toLowerCase().includes(query);
-            });
+        function renderPages() {
+            const query = el.pagesSearchBox.value.trim().toLowerCase();
+            const pages = state.pages.filter((page) => [page.path, page.title, page.folder].join(" ").toLowerCase().includes(query));
+            el.pagesContainer.innerHTML = groupByFolder(pages).map((group) => `
+                <section class="mb-4 rounded-lg border border-[var(--line)] bg-white p-4">
+                    <h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">${escapeHtml(group.folder)} (${group.entries.length})</h3>
+                    <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                        ${group.entries.map((entry) => `<a class="break-all text-sm text-[var(--accent)] hover:underline" href="${escapeHtml(entry.path)}">${escapeHtml(entry.path)}</a>`).join("")}
+                    </div>
+                </section>
+            `).join("") || '<p class="text-sm text-[var(--muted)]">No pages match.</p>';
+        }
 
-            if (filtered.length === 0) {
-                pagesContainer.innerHTML = '<p class="text-sm text-[var(--ink-2)]">No pages match your filter.</p>';
+        async function openPagesModal() {
+            el.allPagesModal.classList.remove("hidden");
+            el.allPagesModal.classList.add("flex");
+            if (!state.pagesLoaded) {
+                el.pagesContainer.innerHTML = '<p class="text-sm text-[var(--muted)]">Loading pages...</p>';
+                try {
+                    const response = await fetch("assets/data/tools-manifest.json", { cache: "no-store" });
+                    if (!response.ok) throw new Error(`tools-manifest failed with ${response.status}`);
+                    const data = await response.json();
+                    state.pages = Array.isArray(data.entries) ? data.entries : [];
+                    state.pagesLoaded = true;
+                    el.pagesSourceLabel.textContent = `${state.pages.length} cached page entries`;
+                    renderPages();
+                } catch (error) {
+                    el.pagesContainer.innerHTML = '<p class="text-sm text-[var(--danger)]">Could not load the page inventory.</p>';
+                    console.error(error);
+                }
+            }
+            el.pagesSearchBox.focus();
+        }
+
+        document.addEventListener("click", (event) => {
+            const filter = event.target.closest("[data-group]");
+            if (filter) {
+                state[filter.dataset.group] = filter.dataset.value;
+                renderFilters();
+                renderProjects();
                 return;
             }
 
-            const groups = groupByFolder(filtered);
-            pagesContainer.innerHTML = groups.map((group) => `
-                <section class="glass-pill rounded-[1.35rem] p-4">
-                    <h3 class="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-2)]">
-                        ${escapeHtml(group.folder)} <span class="normal-case text-[var(--ink-1)]">(${group.entries.length})</span>
-                    </h3>
-                    <ul class="mt-3 space-y-2">
-                        ${group.entries.map((entry) => `
-                            <li>
-                                <a href="${escapeHtml(entry.path)}" class="text-sm text-[var(--ink-1)] transition hover:text-sky-700 hover:underline break-all">
-                                    ${escapeHtml(entry.path)}
-                                </a>
-                            </li>
-                        `).join("")}
-                    </ul>
-                </section>
-            `).join("");
-        }
-
-        function readCachedPages() {
-            try {
-                const raw = localStorage.getItem(GITHUB_CONFIG.cacheKey);
-                if (!raw) return null;
-                const parsed = JSON.parse(raw);
-                if (!parsed?.timestamp || !Array.isArray(parsed?.entries)) return null;
-                if (Date.now() - parsed.timestamp > GITHUB_CONFIG.cacheExpiryMs) return null;
-                return parsed.entries;
-            } catch {
-                return null;
-            }
-        }
-
-        function writeCachedPages(entries) {
-            try {
-                const payload = JSON.stringify({
-                    timestamp: Date.now(),
-                    entries
-                });
-                localStorage.setItem(GITHUB_CONFIG.cacheKey, payload);
-            } catch {
-            }
-        }
-
-        function normalizeManifestEntries(data) {
-            const entries = Array.isArray(data) ? data : data?.entries;
-            if (!Array.isArray(entries)) return [];
-
-            return entries
-                .filter((entry) => typeof entry.path === "string" && entry.path.endsWith(".html"))
-                .map((entry) => {
-                    const pathValue = entry.path;
-                    const parts = pathValue.split("/");
-                    return {
-                        path: pathValue,
-                        folder: entry.folder || (parts.length > 1 ? parts[0] : "(root)"),
-                        title: entry.title || pathValue
-                    };
-                });
-        }
-
-        async function fetchManifestEntries() {
-            const response = await fetch("assets/data/tools-manifest.json", { cache: "no-store" });
-            if (!response.ok) {
-                throw new Error(`manifest failed with ${response.status}`);
-            }
-            const json = await response.json();
-            const entries = normalizeManifestEntries(json);
-            if (!entries.length) {
-                throw new Error("manifest returned no entries");
-            }
-            return entries;
-        }
-
-        async function fetchGitHubEntries() {
-            const endpoint = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/git/trees/${GITHUB_CONFIG.branch}?recursive=1`;
-            const response = await fetch(endpoint, { cache: "no-store" });
-            if (!response.ok) {
-                throw new Error(`github tree failed with ${response.status}`);
-            }
-            const json = await response.json();
-            const tree = Array.isArray(json?.tree) ? json.tree : [];
-            const entries = tree
-                .filter((item) => item.type === "blob" && item.path.endsWith(".html"))
-                .map((item) => {
-                    const parts = item.path.split("/");
-                    const filename = parts[parts.length - 1];
-                    return {
-                        path: item.path,
-                        folder: parts.length > 1 ? parts[0] : "(root)",
-                        title: filename
-                    };
-                });
-
-            if (!entries.length) {
-                throw new Error("github returned no html files");
+            const favorite = event.target.closest(".favorite-button");
+            if (favorite) {
+                toggleFavorite(favorite.dataset.slug);
+                return;
             }
 
-            entries.sort((a, b) => a.path.localeCompare(b.path));
-            return entries;
-        }
-
-        async function resolveAllPages() {
-            try {
-                const manifestEntries = await fetchManifestEntries();
-                writeCachedPages(manifestEntries);
-                return { entries: manifestEntries, source: "Loaded from local manifest" };
-            } catch (manifestError) {
-                console.warn("Manifest load failed:", manifestError);
+            const opener = event.target.closest("[data-open-slug]");
+            if (opener) {
+                markRecent(opener.dataset.openSlug);
             }
+        });
 
-            try {
-                const githubEntries = await fetchGitHubEntries();
-                writeCachedPages(githubEntries);
-                return { entries: githubEntries, source: "Loaded from GitHub API" };
-            } catch (githubError) {
-                console.warn("GitHub fallback failed:", githubError);
-            }
-
-            const cachedEntries = readCachedPages();
-            if (cachedEntries && cachedEntries.length) {
-                return { entries: cachedEntries, source: "Loaded from local cache (stale fallback)" };
-            }
-
-            throw new Error("No page list source is available.");
-        }
-
-        async function openAllPagesModal() {
-            allPagesModal.classList.remove("hidden");
-            allPagesModal.classList.add("flex");
-
-            if (!state.pagesLoaded) {
-                pagesContainer.innerHTML = '<p class="text-sm text-[var(--ink-2)]">Loading pages...</p>';
-                pagesSourceLabel.textContent = "";
-
-                try {
-                    const resolved = await resolveAllPages();
-                    state.pages = resolved.entries;
-                    state.pagesLoaded = true;
-                    pagesSourceLabel.textContent = `${resolved.source} - ${state.pages.length} pages`;
-                    renderPagesList();
-                } catch (error) {
-                    pagesContainer.innerHTML = `
-                        <p class="text-sm text-red-600">Could not load page list right now.</p>
-                    `;
-                    pagesSourceLabel.textContent = "Manifest and GitHub fallback both failed.";
-                    console.error(error);
-                }
-            } else {
-                renderPagesList();
-            }
-
-            pagesSearchBox.focus();
-        }
-
-        function closeAllPagesModal() {
-            allPagesModal.classList.add("hidden");
-            allPagesModal.classList.remove("flex");
-        }
-
-        searchBox.addEventListener("input", () => {
-            state.projectQuery = searchBox.value;
-
-            if (state.projectQuery.trim().toLowerCase() === ":pages") {
-                searchBox.value = "";
-                state.projectQuery = "";
-                openAllPagesModal();
-            }
-
+        el.searchBox.addEventListener("input", () => {
+            state.query = el.searchBox.value;
             renderProjects();
         });
-
-        closePagesModal.addEventListener("click", closeAllPagesModal);
-        pagesSearchBox.addEventListener("input", renderPagesList);
-
-        allPagesModal.addEventListener("click", (event) => {
-            if (event.target === allPagesModal) {
-                closeAllPagesModal();
+        el.showFavorites.addEventListener("click", () => {
+            state.favoritesOnly = !state.favoritesOnly;
+            renderProjects();
+        });
+        el.showRecent.addEventListener("click", () => {
+            state.recentOnly = !state.recentOnly;
+            renderProjects();
+        });
+        el.openPages.addEventListener("click", openPagesModal);
+        el.closePagesModal.addEventListener("click", () => {
+            el.allPagesModal.classList.add("hidden");
+            el.allPagesModal.classList.remove("flex");
+        });
+        el.pagesSearchBox.addEventListener("input", renderPages);
+        el.allPagesModal.addEventListener("click", (event) => {
+            if (event.target === el.allPagesModal) {
+                el.closePagesModal.click();
             }
         });
-
         document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape" && !allPagesModal.classList.contains("hidden")) {
-                closeAllPagesModal();
+            if (event.key === "Escape" && !el.allPagesModal.classList.contains("hidden")) {
+                el.closePagesModal.click();
             }
-
             if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "p") {
                 event.preventDefault();
-                openAllPagesModal();
+                openPagesModal();
             }
         });
 

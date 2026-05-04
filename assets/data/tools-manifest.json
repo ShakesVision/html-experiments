@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-05-02T14:48:52.351Z",
-  "count": 51,
+  "generatedAt": "deterministic",
+  "count": 52,
   "entries": [
     {
       "path": "alphabet/index.html",
@@ -69,7 +69,7 @@
       "path": "editor/poetry.html",
       "folder": "editor",
       "isIndex": false,
-      "title": "",
+      "title": "editor/poetry",
       "isRoot": false
     },
     {
@@ -203,6 +203,13 @@
       "folder": "ocr",
       "isIndex": true,
       "title": "OCR",
+      "isRoot": false
+    },
+    {
+      "path": "offline.html",
+      "folder": ".",
+      "isIndex": false,
+      "title": "Offline - tools.shakeeb.in",
       "isRoot": false
     },
     {

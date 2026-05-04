@@ -1,23 +1,18 @@
 const fs = require("fs");
 const path = require("path");
-const { scanProjectFiles } = require("./scripts/lib/project-scan");
+const { readProjects } = require("./scripts/lib/registry");
 
 const BASE_URL = process.env.BASE_URL || "https://tools.shakeeb.in/";
 const OUTPUT_MARKDOWN = path.join(__dirname, "README.md");
 const PROJECTS_HEADING = "### Projects";
 
 function generateProjectLinks() {
-  const entries = scanProjectFiles({ root: __dirname });
-  const toolEntries = entries.filter(
-    (item) =>
-      item.isIndex &&
-      !item.isRoot &&
-      item.path.split("/").length === 2,
-  );
+  const projects = readProjects();
 
-  return toolEntries.map((item) => {
-    const folder = item.folder;
-    return `- [${folder}](${BASE_URL}${folder}/index.html)`;
+  return projects.map((item) => {
+    const label = item.external ? `${item.title} (external)` : item.title;
+    const url = item.external ? item.link : `${BASE_URL}${item.link}`;
+    return `- [${label}](${url})`;
   });
 }
 

@@ -1,211 +1,701 @@
 [
   {
     "id": 1,
+    "slug": "ocr",
     "title": "OCR",
+    "description": "OCR try using Tesseract.js.",
     "desc": "OCR try using Tesseract.js.",
+    "category": "Readers & data",
+    "status": "alpha",
+    "tags": [
+      "data"
+    ],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "ocr/ocr.png",
-    "link": "ocr/index.html",
-    "status": "alpha"
+    "link": "ocr/index.html"
   },
   {
     "id": 2,
+    "slug": "textRead",
     "title": "Enhanced Folder Reader",
+    "description": "Asks you to select a folder and then lists its file for reading as HTML or plain text.",
     "desc": "Asks you to select a folder and then lists its file for reading as HTML or plain text.",
+    "category": "Readers & data",
+    "status": "stable",
+    "tags": [
+      "reader"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "textRead/folder-text-reader.png",
     "link": "textRead/index.html"
   },
   {
     "id": 3,
+    "slug": "pdf-creator",
     "title": "Image to PDF",
+    "description": "Select images and convert them to PDF, offline.",
     "desc": "Select images and convert them to PDF, offline.",
+    "category": "Media & design",
+    "status": "alpha",
+    "tags": [
+      "image",
+      "offline",
+      "pdf"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "pdf-creator/img-pdf.png",
-    "link": "pdf-creator/index.html",
-    "status": "alpha"
+    "link": "pdf-creator/index.html"
   },
   {
     "id": 4,
+    "slug": "image-resizer",
     "title": "Image Resizer",
+    "description": "Resize images to multiple sizes.",
     "desc": "Resize images to multiple sizes.",
+    "category": "Media & design",
+    "status": "stable",
+    "tags": [
+      "image"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "image-resizer/image-resizer.png",
     "link": "image-resizer/index.html"
   },
   {
     "id": 5,
+    "slug": "logo-creator",
     "title": "Logo Creator",
+    "description": "Create logos using simple intuitive interface.",
     "desc": "Create logos using simple intuitive interface.",
+    "category": "Media & design",
+    "status": "beta",
+    "tags": [
+      "image"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "logo-creator/icon.png",
-    "link": "logo-creator/index.html",
-    "status": "beta"
+    "link": "logo-creator/index.html"
   },
   {
     "id": 6,
+    "slug": "editor",
     "title": "Urdu Editor",
+    "description": "Write Urdu / English with your default keyboard.",
     "desc": "Write Urdu / English with your default keyboard.",
+    "category": "Urdu & language",
+    "status": "beta",
+    "tags": [
+      "urdu"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "editor/urdu-editor.png",
-    "link": "editor/index.html",
-    "status": "beta"
+    "link": "editor/index.html"
   },
   {
     "id": 7,
+    "slug": "pdf-image",
     "title": "PDF to Image Converter",
+    "description": "Convert PDF to images with selected pages and resize options.",
     "desc": "Convert PDF to images with selected pages and resize options.",
+    "category": "Media & design",
+    "status": "stable",
+    "tags": [
+      "image",
+      "pdf"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "pdf-image/pdf-image.png",
     "link": "pdf-image/index.html"
   },
   {
     "id": 8,
+    "slug": "graphic-designer",
     "title": "Graphic Designer",
+    "description": "A simple graphic designer which allows you to add image, text, pencil brush, colors, custom canvas size and png/svg exports in any size.",
     "desc": "A simple graphic designer which allows you to add image, text, pencil brush, colors, custom canvas size and png/svg exports in any size.",
+    "category": "Media & design",
+    "status": "alpha",
+    "tags": [
+      "image"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "graphic-designer/graphic-designer.png",
-    "link": "graphic-designer/index.html",
-    "status": "alpha"
+    "link": "graphic-designer/index.html"
   },
   {
     "id": 9,
+    "slug": "number-mnemonics",
     "title": "Mnemonic Mapper",
+    "description": "A Major System converter that helps you easily translate numbers into phonetic letter combinations and vice versa. 🚀",
     "desc": "A Major System converter that helps you easily translate numbers into phonetic letter combinations and vice versa. 🚀",
+    "category": "Productivity",
+    "status": "stable",
+    "tags": [],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "number-mnemonics/icon.png",
     "link": "number-mnemonics/index.html"
   },
   {
     "id": 10,
+    "slug": "post-maker",
     "title": "Arabic/Urdu Post Maker",
+    "description": "Create beautiful social media images with Quranic Ayahs and translations in Arabic, English, and Urdu.",
     "desc": "Create beautiful social media images with Quranic Ayahs and translations in Arabic, English, and Urdu.",
+    "category": "Urdu & language",
+    "status": "stable",
+    "tags": [
+      "image",
+      "quran",
+      "urdu"
+    ],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "post-maker/post-maker-quran.png",
     "link": "post-maker/index.html"
   },
   {
     "id": 11,
+    "slug": "scraper",
     "title": "Web Scraper & Data Extractor",
+    "description": "Extract text or HTML from web pages using custom selectors with GAS proxy.",
     "desc": "Extract text or HTML from web pages using custom selectors with GAS proxy.",
+    "category": "Readers & data",
+    "status": "stable",
+    "tags": [
+      "data"
+    ],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "scraper/icon.webp",
     "link": "scraper/index.html"
   },
   {
     "id": 12,
+    "slug": "stock-profit-tracker",
     "title": "Stock Profit Tracker",
+    "description": "Tracks your stock profit and loss, with % profit targets.",
     "desc": "Tracks your stock profit and loss, with % profit targets.",
+    "category": "Productivity",
+    "status": "beta",
+    "tags": [
+      "finance"
+    ],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "stock-profit-tracker/icon.png",
-    "link": "stock-profit-tracker/index.html",
-    "status": "beta"
+    "link": "stock-profit-tracker/index.html"
   },
   {
     "id": 13,
+    "slug": "shopping-list",
     "title": "Grocery List Generator (In-Progress)",
+    "description": "Easily generate a shopping list from your voice.",
     "desc": "Easily generate a shopping list from your voice.",
+    "category": "Productivity",
+    "status": "stable",
+    "tags": [],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "shopping-list/shopping-list-icon.jpg",
     "link": "shopping-list/index.html"
   },
   {
     "id": 14,
+    "slug": "rss-reader",
     "title": "Material RSS Reader",
+    "description": "Minimal Material-style feed reader with Blogger JSONP support, pagination, reader settings, and immersive reading mode.",
     "desc": "Minimal Material-style feed reader with Blogger JSONP support, pagination, reader settings, and immersive reading mode.",
+    "category": "Readers & data",
+    "status": "beta",
+    "tags": [
+      "data",
+      "reader"
+    ],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "rss-reader/icon.png",
-    "link": "rss-reader/index.html",
-    "status": "beta"
+    "link": "rss-reader/index.html"
   },
   {
     "id": 15,
+    "slug": "alphabet",
     "title": "Alphabet Adventure",
+    "description": "A playful kids letter game for learning alphabet sounds and recognition.",
     "desc": "A playful kids letter game for learning alphabet sounds and recognition.",
+    "category": "Productivity",
+    "status": "beta",
+    "tags": [],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
-    "link": "alphabet/index.html",
-    "status": "beta"
+    "link": "alphabet/index.html"
   },
   {
     "id": 16,
+    "slug": "bloggerflux",
     "title": "BlogFlux",
+    "description": "Extract and browse Blogger archive data from a blog feed.",
     "desc": "Extract and browse Blogger archive data from a blog feed.",
+    "category": "Readers & data",
+    "status": "beta",
+    "tags": [
+      "data"
+    ],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
-    "link": "bloggerflux/index.html",
-    "status": "beta"
+    "link": "bloggerflux/index.html"
   },
   {
     "id": 17,
+    "slug": "editor-poetry2",
     "title": "Poetry Formatter",
+    "description": "Format Urdu poetry text into cleaner, presentation-ready layouts.",
     "desc": "Format Urdu poetry text into cleaner, presentation-ready layouts.",
+    "category": "Urdu & language",
+    "status": "alpha",
+    "tags": [
+      "urdu"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "editor/urdu-editor.png",
-    "link": "editor/poetry2.html",
-    "status": "alpha"
+    "link": "editor/poetry2.html"
   },
   {
     "id": 18,
+    "slug": "inpage",
     "title": "Naseem PDF Texter",
+    "description": "A web tool for preparing and placing Naseem-style text over PDF pages.",
     "desc": "A web tool for preparing and placing Naseem-style text over PDF pages.",
+    "category": "Urdu & language",
+    "status": "alpha",
+    "tags": [
+      "pdf",
+      "urdu"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
-    "link": "inpage/pdf-texter/index.html",
-    "status": "alpha"
+    "link": "inpage/pdf-texter/index.html"
   },
   {
     "id": 19,
+    "slug": "inpage-reader",
     "title": "InPage INP Reader",
+    "description": "Read and inspect InPage INP content directly in the browser.",
     "desc": "Read and inspect InPage INP content directly in the browser.",
+    "category": "Urdu & language",
+    "status": "alpha",
+    "tags": [
+      "reader",
+      "urdu"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
-    "link": "inpage/reader.html",
-    "status": "alpha"
+    "link": "inpage/reader.html"
   },
   {
     "id": 20,
+    "slug": "mockup",
     "title": "Offline Mock Generator",
+    "description": "Create quick offline mockups and export clean presentation images.",
     "desc": "Create quick offline mockups and export clean presentation images.",
+    "category": "Media & design",
+    "status": "beta",
+    "tags": [
+      "image",
+      "offline"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
-    "link": "mockup/index.html",
-    "status": "beta"
+    "link": "mockup/index.html"
   },
   {
     "id": 21,
+    "slug": "mockup-skew",
     "title": "3D Tilt Studio",
+    "description": "Skew, tilt, and export interface mockups with a 3D presentation effect.",
     "desc": "Skew, tilt, and export interface mockups with a 3D presentation effect.",
+    "category": "Media & design",
+    "status": "alpha",
+    "tags": [
+      "image"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
-    "link": "mockup/skew.html",
-    "status": "alpha"
+    "link": "mockup/skew.html"
   },
   {
     "id": 22,
+    "slug": "quoter",
     "title": "Quoter",
+    "description": "Create clean quote graphics from short text snippets.",
     "desc": "Create clean quote graphics from short text snippets.",
+    "category": "Media & design",
+    "status": "beta",
+    "tags": [
+      "image"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
-    "link": "quoter/index.html",
-    "status": "beta"
+    "link": "quoter/index.html"
   },
   {
     "id": 23,
+    "slug": "wp-dp-dw",
     "title": "WhatsApp DP Viewer",
+    "description": "Preview and download WhatsApp display pictures from a simple browser tool.",
     "desc": "Preview and download WhatsApp display pictures from a simple browser tool.",
+    "category": "Utilities",
+    "status": "alpha",
+    "tags": [],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
-    "link": "wp-dp-dw/index.html",
-    "status": "alpha"
+    "link": "wp-dp-dw/index.html"
   },
   {
     "id": 24,
+    "slug": "rekhta-reader",
     "title": "Rekhta Reader",
+    "description": "Load Rekhta book pages through a proxy, preview them lazily, and export a PDF when needed.",
     "desc": "Load Rekhta book pages through a proxy, preview them lazily, and export a PDF when needed.",
+    "category": "Urdu & language",
+    "status": "alpha",
+    "tags": [
+      "pdf",
+      "reader",
+      "urdu"
+    ],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
-    "link": "rekhta-reader/index.html",
-    "status": "alpha"
+    "link": "rekhta-reader/index.html"
   },
   {
     "id": 25,
+    "slug": "utools",
     "title": "Utools",
+    "description": "A dedicated toolbox of Urdu-focused utilities hosted as its own full app.",
     "desc": "A dedicated toolbox of Urdu-focused utilities hosted as its own full app.",
+    "category": "Urdu & language",
+    "status": "stable",
+    "tags": [
+      "urdu"
+    ],
+    "offlineSupport": "online-required",
+    "external": true,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "https://play-lh.googleusercontent.com/Dsjxk8LMkDOvIpjK-RYYaWm64P9zdBxLqbkMeA6ODnvqTo_RptHryPG9wzh_UB1B8A=w480-h960-rw",
-    "link": "https://utools.shakeeb.in",
-    "external": true
+    "link": "https://utools.shakeeb.in"
   },
   {
     "id": 26,
+    "slug": "qaafiyah",
     "title": "Qaafiyah Expert",
+    "description": "A focused tool for qaafiyah work, meter-adjacent analysis, and poetic assistance.",
     "desc": "A focused tool for qaafiyah work, meter-adjacent analysis, and poetic assistance.",
+    "category": "Urdu & language",
+    "status": "stable",
+    "tags": [
+      "urdu"
+    ],
+    "offlineSupport": "online-required",
+    "external": true,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "https://lh3.googleusercontent.com/Zl1iGtSkUpSlTbRh3g8ps5KcYPqoTkVNGsvlbDVxwj3RoUN5z823HRz3dAPrSa0JjoHT=s180-rw",
-    "link": "https://qaafiyah.sarbakaf.com",
-    "external": true
+    "link": "https://qaafiyah.sarbakaf.com"
   },
   {
     "id": 27,
+    "slug": "quran",
     "title": "Hifz Helper",
+    "description": "A Quran memorization helper built as a standalone experience outside this tools host.",
     "desc": "A Quran memorization helper built as a standalone experience outside this tools host.",
+    "category": "Urdu & language",
+    "status": "stable",
+    "tags": [
+      "quran"
+    ],
+    "offlineSupport": "online-required",
+    "external": true,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
     "img": "https://play-lh.googleusercontent.com/TldXGOQXc8jfNNyFNWprbdMHg9ZhuIlmQD9idRPsEz3hY7uDcTXgVDIDu1ueN3vtAeYdAp7W9jsvZINz7fCNKw=s96-rw",
-    "link": "https://quran.shakeeb.in",
-    "external": true
+    "link": "https://quran.shakeeb.in"
+  },
+  {
+    "id": 28,
+    "slug": "bayaz-proto",
+    "title": "Bayaaz - Notion Style Editor",
+    "description": "Standalone browser tool hosted at bayaz-proto/index.html.",
+    "desc": "Standalone browser tool hosted at bayaz-proto/index.html.",
+    "category": "Urdu & language",
+    "status": "alpha",
+    "tags": [
+      "urdu"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "bayaz-proto/index.html"
+  },
+  {
+    "id": 29,
+    "slug": "epub-to-html",
+    "title": "EPUB to One-Page HTML Converter",
+    "description": "Standalone browser tool hosted at epub-to-html/index.html.",
+    "desc": "Standalone browser tool hosted at epub-to-html/index.html.",
+    "category": "Readers & data",
+    "status": "alpha",
+    "tags": [
+      "reader"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "epub-to-html/index.html"
+  },
+  {
+    "id": 30,
+    "slug": "hin-en",
+    "title": "Devanagari Transliteration",
+    "description": "Standalone browser tool hosted at hin-en/index.html.",
+    "desc": "Standalone browser tool hosted at hin-en/index.html.",
+    "category": "Utilities",
+    "status": "alpha",
+    "tags": [],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "hin-en/index.html"
+  },
+  {
+    "id": 31,
+    "slug": "hindi-scansion",
+    "title": "Devanagari Taqti — Scansion & Metre Detection",
+    "description": "Standalone browser tool hosted at hindi-scansion/index.html.",
+    "desc": "Standalone browser tool hosted at hindi-scansion/index.html.",
+    "category": "Utilities",
+    "status": "alpha",
+    "tags": [],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "hindi-scansion/index.html"
+  },
+  {
+    "id": 32,
+    "slug": "jibreel",
+    "title": "MJBX Converter + Reader",
+    "description": "Standalone browser tool hosted at jibreel/index.html.",
+    "desc": "Standalone browser tool hosted at jibreel/index.html.",
+    "category": "Readers & data",
+    "status": "alpha",
+    "tags": [
+      "reader"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "jibreel/index.html"
+  },
+  {
+    "id": 33,
+    "slug": "json-ui",
+    "title": "json-ui",
+    "description": "Standalone browser tool hosted at json-ui/index.html.",
+    "desc": "Standalone browser tool hosted at json-ui/index.html.",
+    "category": "Readers & data",
+    "status": "alpha",
+    "tags": [
+      "data"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "json-ui/index.html"
+  },
+  {
+    "id": 34,
+    "slug": "mushaf",
+    "title": "Mushaf Page",
+    "description": "Standalone browser tool hosted at mushaf/index.html.",
+    "desc": "Standalone browser tool hosted at mushaf/index.html.",
+    "category": "Urdu & language",
+    "status": "alpha",
+    "tags": [
+      "quran"
+    ],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "mushaf/index.html"
+  },
+  {
+    "id": 35,
+    "slug": "super-scrape",
+    "title": "Advanced Scraper WebApp",
+    "description": "Standalone browser tool hosted at super-scrape/index.html.",
+    "desc": "Standalone browser tool hosted at super-scrape/index.html.",
+    "category": "Readers & data",
+    "status": "alpha",
+    "tags": [
+      "data"
+    ],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "super-scrape/index.html"
+  },
+  {
+    "id": 36,
+    "slug": "svg-theme",
+    "title": "SVG Theme Studio | Pitch Deck",
+    "description": "Standalone browser tool hosted at svg-theme/index.html.",
+    "desc": "Standalone browser tool hosted at svg-theme/index.html.",
+    "category": "Media & design",
+    "status": "alpha",
+    "tags": [
+      "image"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "svg-theme/index.html"
+  },
+  {
+    "id": 37,
+    "slug": "text-aggregator",
+    "title": "Story Collection",
+    "description": "Standalone browser tool hosted at text-aggregator/index.html.",
+    "desc": "Standalone browser tool hosted at text-aggregator/index.html.",
+    "category": "Utilities",
+    "status": "alpha",
+    "tags": [],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "text-aggregator/index.html"
+  },
+  {
+    "id": 38,
+    "slug": "urdu-dashboard",
+    "title": "اردو ڈیش بورڈ",
+    "description": "Standalone browser tool hosted at urdu-dashboard/index.html.",
+    "desc": "Standalone browser tool hosted at urdu-dashboard/index.html.",
+    "category": "Urdu & language",
+    "status": "alpha",
+    "tags": [
+      "urdu"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "urdu-dashboard/index.html"
+  },
+  {
+    "id": 39,
+    "slug": "zip-editor",
+    "title": "ZIP File Viewer & Editor",
+    "description": "Standalone browser tool hosted at zip-editor/index.html.",
+    "desc": "Standalone browser tool hosted at zip-editor/index.html.",
+    "category": "Readers & data",
+    "status": "alpha",
+    "tags": [
+      "data"
+    ],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-05-04",
+    "img": "assets/images/project.png",
+    "link": "zip-editor/index.html"
   }
 ]

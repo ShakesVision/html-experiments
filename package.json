@@ -4,14 +4,17 @@
   "version": "1.0.0",
   "description": "Static HTML experiments tooling scripts",
   "scripts": {
+    "build": "npm run sync:all",
     "build:tailwind": "tailwindcss -c tailwind.config.js -i ./assets/css/tailwind-input.css -o ./assets/css/tailwind.css --minify",
     "watch:tailwind": "tailwindcss -c tailwind.config.js -i ./assets/css/tailwind-input.css -o ./assets/css/tailwind.css --watch",
     "migrate:tailwind-local": "node scripts/migrate-tailwind-local.js",
-    "check:tailwind-cdn": "rg -n \"cdn\\.tailwindcss\\.com|tailwindcss@2|tailwind\\.min\\.css\" -S . --glob \"!node_modules/**\" --glob \"!rekhta-upstream-temp/**\" --glob \"!%TEMP%/**\"",
+    "check:tailwind-cdn": "node scripts/check-tailwind-cdn.js",
+    "check": "npm run check:tailwind-cdn && node scripts/validate-site.js && node scripts/audit-third-party.js && node scripts/check-generated.js",
     "build:manifest": "node scripts/generate-tools-manifest.js",
+    "build:site-assets": "node scripts/generate-site-assets.js",
     "sync:html-head": "node scripts/ensure-shared-head.js",
     "sync:readme": "node update_readme.js",
-    "sync:all": "npm run sync:html-head && npm run build:tailwind && npm run build:manifest && npm run sync:readme"
+    "sync:all": "npm run sync:html-head && npm run build:tailwind && npm run build:manifest && npm run build:site-assets && npm run sync:readme"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.19"

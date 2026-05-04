@@ -1,0 +1,91 @@
+{
+  "name": "tools.shakeeb.in",
+  "short_name": "Shakeeb Tools",
+  "description": "A static, installable hub of browser tools for reading, editing, conversion, Urdu workflows, and small utilities.",
+  "id": "/",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "browser"
+  ],
+  "background_color": "#f8fbff",
+  "theme_color": "#1b4965",
+  "categories": [
+    "productivity",
+    "utilities",
+    "education"
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/assets/images/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/images/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "OCR",
+      "short_name": "OCR",
+      "description": "OCR try using Tesseract.js.",
+      "url": "/ocr/index.html",
+      "icons": [
+        {
+          "src": "/assets/images/icon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Enhanced Folder Reader",
+      "short_name": "Enhanced Folder Reader",
+      "description": "Asks you to select a folder and then lists its file for reading as HTML or plain text.",
+      "url": "/textRead/index.html",
+      "icons": [
+        {
+          "src": "/assets/images/icon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Image to PDF",
+      "short_name": "Image to PDF",
+      "description": "Select images and convert them to PDF, offline.",
+      "url": "/pdf-creator/index.html",
+      "icons": [
+        {
+          "src": "/assets/images/icon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Image Resizer",
+      "short_name": "Image Resizer",
+      "description": "Resize images to multiple sizes.",
+      "url": "/image-resizer/index.html",
+      "icons": [
+        {
+          "src": "/assets/images/icon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

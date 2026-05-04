@@ -11,7 +11,7 @@ function ensureDirFor(filePath) {
 function buildManifest() {
   const entries = scanProjectFiles();
   return {
-    generatedAt: new Date().toISOString(),
+    generatedAt: process.env.BUILD_TIMESTAMP || "deterministic",
     count: entries.length,
     entries,
   };
