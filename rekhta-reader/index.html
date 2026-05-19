@@ -7,12 +7,7 @@
     <link rel="stylesheet" href="./styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
     <script src="./index.js" type="module"></script>
-    <script defer src="../assets/js/shared-init.js"></script>
-      <link rel="canonical" href="https://tools.shakeeb.in/rekhta-reader/index.html">
-    <link rel="manifest" href="../manifest.webmanifest">
-    <meta name="theme-color" content="#1b4965">
-    <link rel="stylesheet" href="../assets/css/tailwind.css" />
-</head>
+  </head>
   <body>
     <main class="app-shell">
       <section class="hero hero--compact">
@@ -52,6 +47,9 @@
             class="hero-button hero-button--accent"
           >
             Go
+          </button>
+          <button id="search-button" type="button" class="hero-button">
+            Search
           </button>
           <button
             id="download-button"
@@ -100,10 +98,90 @@
       </section>
     </main>
 
+    <div
+      id="search-modal"
+      class="search-modal search-modal--hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Book search"
+    >
+      <div class="search-shell">
+        <header class="search-header">
+          <div class="search-toprow">
+            <h2 class="search-title">Find a book</h2>
+            <button
+              id="search-close"
+              type="button"
+              class="search-close"
+              aria-label="Close search"
+            >
+              &times;
+            </button>
+          </div>
+
+          <div class="search-controls">
+            <label class="search-field">
+              <span>Keyword</span>
+              <input
+                id="search-keyword"
+                type="search"
+                placeholder="Type author or title..."
+                autocomplete="off"
+              />
+            </label>
+            <label class="search-field">
+              <span>Lang</span>
+              <select id="search-lang">
+                <option value="3" selected>Urdu (3)</option>
+                <option value="2">Hindi (2)</option>
+                <option value="1">English (1)</option>
+              </select>
+            </label>
+            <button
+              id="search-submit"
+              type="button"
+              class="hero-button hero-button--accent"
+            >
+              Search
+            </button>
+          </div>
+
+          <div class="search-meta">
+            <p id="search-status" class="search-status" data-tone="muted"></p>
+            <div class="search-pagination">
+              <button
+                id="search-prev"
+                type="button"
+                class="hero-button"
+                disabled
+              >
+                Prev
+              </button>
+              <span id="search-page" class="search-page">Page 1</span>
+              <button
+                id="search-next"
+                type="button"
+                class="hero-button"
+                disabled
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div
+          id="search-results"
+          class="search-results"
+          aria-live="polite"
+        ></div>
+      </div>
+    </div>
+
     <div id="reader-modal" class="reader-modal reader-modal--hidden">
       <div class="reader-shell">
         <div class="reader-stage">
-          <img id="reader-image" class="reader-image" alt="" />
+          <div id="reader-pages-container" class="reader-pages-container"></div>
         </div>
         <div class="reader-toolbar">
           <button

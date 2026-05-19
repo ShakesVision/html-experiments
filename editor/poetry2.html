@@ -2,21 +2,21 @@
 <html lang="ur" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>فارمیٹرِ شاعری</title>
     <link rel="stylesheet" href="../assets/css/tailwind.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
       rel="stylesheet"
     />
-    <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@1.0.9/dist/shakeeb-justify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@latest/dist/shakeeb-justify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script defer src="../assets/js/shared-init.js"></script>
-      <link rel="canonical" href="https://tools.shakeeb.in/editor/poetry2.html">
-    <link rel="manifest" href="../manifest.webmanifest">
-    <meta name="theme-color" content="#1b4965">
-</head>
+    <link rel="canonical" href="https://tools.shakeeb.in/editor/poetry2.html" />
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <meta name="theme-color" content="#1b4965" />
+  </head>
 
   <body
     class="bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 min-h-screen"
@@ -731,7 +731,9 @@
         }
 
         function buildPoetryHtml(lines, patternName, customPattern) {
-          const classAttr = patternName ? ' class="' + patternName + '"' : "";
+          const classAttr = patternName
+            ? ' class="sj ' + patternName + '"'
+            : "";
           const patternAttr =
             !patternName && customPattern
               ? ' data-pattern="' + customPattern.replace(/"/g, "&quot;") + '"'
@@ -847,6 +849,7 @@
             );
           }
 
+          console.log("Preprocessed chunks:", chunks);
           return chunks.join("\n");
         }
 
