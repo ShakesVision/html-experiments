@@ -40,12 +40,18 @@ const elements = {
   searchStatus: document.getElementById("search-status"),
   searchSubmit: document.getElementById("search-submit"),
   readerClose: document.getElementById("reader-close"),
+  readerImage1: document.getElementById("reader-image-1"),
+  readerImage2: document.getElementById("reader-image-2"),
+  readerStage: document.querySelector(".reader-stage"),
   readerPagesContainer: document.getElementById("reader-pages-container"),
   readerModal: document.getElementById("reader-modal"),
   readerNext: document.getElementById("reader-next"),
   readerPageInput: document.getElementById("reader-page-input"),
   readerPageTotal: document.getElementById("reader-page-total"),
   readerPrev: document.getElementById("reader-prev"),
+  onePageViewButton: document.getElementById("one-page-view"),
+  twoPageViewButton: document.getElementById("two-page-view"),
+  readerLangIndicator: document.getElementById("reader-lang-indicator"),
   statusText: document.getElementById("status-text"),
   proxyInput: document.getElementById("proxy-prefix"),
   urlInput: document.getElementById("book-url"),
@@ -83,7 +89,10 @@ elements.bookForm.addEventListener("submit", onLoadBook);
 elements.downloadButton.addEventListener("click", onDownloadPdf);
 elements.cancelButton.addEventListener("click", onCancelWork);
 elements.searchButton.addEventListener("click", openSearch);
-elements.searchClose.addEventListener("click", closeSearch);
+elements.searchClose.addEventListener("click", (event) => {
+  event.stopPropagation();
+  closeSearch();
+});
 elements.searchModal.addEventListener("click", onSearchBackdropClick);
 elements.searchSubmit.addEventListener("click", () =>
   runSearch({ force: true }),
@@ -94,16 +103,25 @@ elements.searchLang.addEventListener("change", onSearchLangChange);
 elements.searchPrev.addEventListener("click", () => changeSearchPage(-1));
 elements.searchNext.addEventListener("click", () => changeSearchPage(1));
 elements.readerClose.addEventListener("click", closeReader);
-elements.readerPrev.addEventListener("click", () => stepReader("prev"));
-elements.readerNext.addEventListener("click", () => stepReader("next"));
+// Wire navigation buttons to visual-direction helpers so RTL/LTR behave the same visually
+elements.readerPrev.addEventListener("click", () => stepVisualLeft());
+elements.readerNext.addEventListener("click", () => stepVisualRight());
 elements.readerPageInput.addEventListener("change", onReaderPageInput);
 elements.readerModal.addEventListener("click", onReaderBackdropClick);
 document.addEventListener("keydown", onDocumentKeydown);
+
+elements.onePageViewButton.addEventListener("click", () =>
+  setTwoPageMode(false),
+);
+elements.twoPageViewButton.addEventListener("click", () =>
+  setTwoPageMode(true),
+);
 
 setStatus("Paste a Rekhta URL or use the sample book to load the manifest.");
 setProgress(0, "Idle");
 renderDeviceHint();
 renderSearchState();
+renderReaderViewMode();
 
 async function onLoadBook(event) {
   event.preventDefault();
@@ -136,6 +154,7 @@ async function onLoadBook(event) {
 
     state.manifest = manifest;
     state.isUrduBook = /\?lang=ur\b/i.test(bookUrl);
+    console.log("Book URL:", bookUrl, "| isUrduBook:", state.isUrduBook);
     renderManifest(manifest);
     setBusy(false);
     setProgress(100, "Manifest cached");
@@ -234,9 +253,18 @@ function renderManifest(manifest) {
   elements.metaTitle.textContent = manifest.bookName;
   elements.metaAuthor.textContent = manifest.author;
   elements.metaPages.textContent = `${manifest.pageCount} pages`;
-  elements.cacheBadge.textContent = state.isUrduBook
-    ? "Manifest cached - Urdu navigation enabled"
-    : "Manifest cached";
+
+  if (state.isUrduBook) {
+    elements.cacheBadge.textContent =
+      "✓ Urdu (RTL) - Right-to-left navigation enabled";
+    elements.cacheBadge.style.backgroundColor = "rgba(45, 106, 79, 0.15)";
+    elements.cacheBadge.style.color = "var(--success)";
+  } else {
+    elements.cacheBadge.textContent = "Manifest cached";
+    elements.cacheBadge.style.backgroundColor = "";
+    elements.cacheBadge.style.color = "";
+  }
+
   elements.downloadButton.disabled = false;
   elements.readerPageTotal.textContent = `/ ${manifest.pageCount}`;
   elements.readerPageInput.max = `${manifest.pageCount}`;
@@ -371,9 +399,11 @@ function resetPreviewState() {
   elements.readerPageTotal.textContent = "/ 0";
 
   window.removeEventListener("resize", onWindowResize);
-  elements.readerPagesContainer.removeEventListener("touchstart", onTouchStart);
-  elements.readerPagesContainer.removeEventListener("touchmove", onTouchMove);
-  elements.readerPagesContainer.removeEventListener("touchend", onTouchEnd);
+  if (elements.readerStage) {
+    elements.readerStage.removeEventListener("touchstart", onTouchStart);
+    elements.readerStage.removeEventListener("touchmove", onTouchMove);
+    elements.readerStage.removeEventListener("touchend", onTouchEnd);
+  }
 }
 
 function cancelActiveWork() {
@@ -416,46 +446,129 @@ function handleError(error, fallbackMessage) {
   setProgress(0, "Stopped");
 }
 
+function setTwoPageMode(enable) {
+  state.isTwoPageMode = enable;
+  renderReaderViewMode();
+  renderReaderPages(state.modalPageIndex);
+}
+
+function renderReaderViewMode() {
+  if (state.isTwoPageMode) {
+    elements.onePageViewButton.classList.remove("active");
+    elements.twoPageViewButton.classList.add("active");
+  } else {
+    elements.onePageViewButton.classList.add("active");
+    elements.twoPageViewButton.classList.remove("active");
+  }
+}
+
+function getDirectionalDelta(direction) {
+  let delta = 0;
+  if (state.isTwoPageMode) {
+    delta = 2; // Two pages at a time
+  } else {
+    delta = 1; // One page at a time
+  }
+
+  if (state.isUrduBook) {
+    return direction === "prev" ? delta : -delta;
+  }
+
+  return direction === "prev" ? -delta : delta;
+}
+
+function onDocumentKeydown(event) {
+  if (!isSearchClosed()) {
+    if (event.key === "Escape") {
+      closeSearch();
+    }
+
+    return;
+  }
+
+  if (isReaderClosed()) {
+    return;
+  }
+
+  if (event.key === "Escape") {
+    closeReader();
+    return;
+  }
+
+  if (event.key === "ArrowLeft") {
+    // ArrowLeft should move the visual viewport to the left
+    stepVisualLeft();
+  }
+
+  if (event.key === "ArrowRight") {
+    // ArrowRight should move the visual viewport to the right
+    stepVisualRight();
+  }
+}
+
+function isReaderClosed() {
+  return elements.readerModal.classList.contains("hidden");
+}
+
+function isSearchClosed() {
+  return elements.searchModal.classList.contains("hidden");
+}
+
 function openReader(pageIndex) {
   if (!state.manifest) {
     return;
   }
 
   state.modalPageIndex = pageIndex;
-  elements.readerModal.classList.remove("reader-modal--hidden");
+  elements.readerModal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
+
+  // Show RTL indicator if Urdu book
+  if (state.isUrduBook) {
+    elements.readerLangIndicator.classList.remove("hidden");
+  } else {
+    elements.readerLangIndicator.classList.add("hidden");
+  }
 
   onWindowResize(); /* Call on resize to set two-page mode initially */
   window.addEventListener("resize", onWindowResize);
 
-  elements.readerPagesContainer.addEventListener("touchstart", onTouchStart);
-  elements.readerPagesContainer.addEventListener("touchmove", onTouchMove);
-  elements.readerPagesContainer.addEventListener("touchend", onTouchEnd);
+  if (elements.readerStage) {
+    elements.readerStage.addEventListener("touchstart", onTouchStart);
+    elements.readerStage.addEventListener("touchmove", onTouchMove);
+    elements.readerStage.addEventListener("touchend", onTouchEnd);
+  }
 
   renderReaderPages(pageIndex);
 }
 
 function closeReader() {
-  elements.readerModal.classList.add("reader-modal--hidden");
-  elements.readerPagesContainer.innerHTML = "";
+  elements.readerModal.classList.add("hidden");
+  elements.readerImage1.src = "";
+  elements.readerImage2.src = "";
+  elements.readerImage1.classList.add("hidden");
+  elements.readerImage2.classList.add("hidden");
   document.body.style.overflow = "";
   state.currentPages = [];
-  state.isTwoPageMode = false;
+  // state.isTwoPageMode = false; // Keep the last set mode
   window.removeEventListener("resize", onWindowResize);
-  elements.readerPagesContainer.removeEventListener("touchstart", onTouchStart);
-  elements.readerPagesContainer.removeEventListener("touchmove", onTouchMove);
-  elements.readerPagesContainer.removeEventListener("touchend", onTouchEnd);
+  if (elements.readerStage) {
+    elements.readerStage.removeEventListener("touchstart", onTouchStart);
+    elements.readerStage.removeEventListener("touchmove", onTouchMove);
+    elements.readerStage.removeEventListener("touchend", onTouchEnd);
+  }
+  renderReaderViewMode();
 }
 
 function openSearch() {
-  elements.searchModal.classList.remove("search-modal--hidden");
+  elements.searchModal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
   elements.searchKeyword.focus();
   renderSearchState();
 }
 
 function closeSearch() {
-  elements.searchModal.classList.add("search-modal--hidden");
+  elements.searchModal.classList.add("hidden");
   clearTimeout(state.search.debounceTimer);
   state.search.debounceTimer = null;
   cancelSearch();
@@ -878,6 +991,84 @@ function stepReader(direction) {
   renderReaderPages(nextIndex);
 }
 
+// Visual navigation: move viewport left or right regardless of logical RTL/LTR
+// These apply the correct delta directly, accounting for RTL/LTR and one/two-page mode
+function stepVisualLeft() {
+  if (!state.manifest) {
+    return;
+  }
+
+  let delta = 0;
+  if (state.isTwoPageMode) {
+    delta = 2; // Two pages at a time
+  } else {
+    delta = 1; // One page at a time
+  }
+
+  // For visual left: in RTL we go forward, in LTR we go backward
+  if (state.isUrduBook) {
+    delta = delta; // Move forward (positive delta)
+  } else {
+    delta = -delta; // Move backward (negative delta)
+  }
+
+  const nextIndex = state.modalPageIndex + delta;
+  console.log(
+    "stepVisualLeft: isUrdu=",
+    state.isUrduBook,
+    "delta=",
+    delta,
+    "currentIndex=",
+    state.modalPageIndex,
+    "nextIndex=",
+    nextIndex,
+  );
+  if (nextIndex < 0 || nextIndex >= state.manifest.pageCount) {
+    return;
+  }
+
+  state.modalPageIndex = nextIndex;
+  renderReaderPages(nextIndex);
+}
+
+function stepVisualRight() {
+  if (!state.manifest) {
+    return;
+  }
+
+  let delta = 0;
+  if (state.isTwoPageMode) {
+    delta = 2; // Two pages at a time
+  } else {
+    delta = 1; // One page at a time
+  }
+
+  // For visual right: in RTL we go backward, in LTR we go forward
+  if (state.isUrduBook) {
+    delta = -delta; // Move backward (negative delta)
+  } else {
+    delta = delta; // Move forward (positive delta)
+  }
+
+  const nextIndex = state.modalPageIndex + delta;
+  console.log(
+    "stepVisualRight: isUrdu=",
+    state.isUrduBook,
+    "delta=",
+    delta,
+    "currentIndex=",
+    state.modalPageIndex,
+    "nextIndex=",
+    nextIndex,
+  );
+  if (nextIndex < 0 || nextIndex >= state.manifest.pageCount) {
+    return;
+  }
+
+  state.modalPageIndex = nextIndex;
+  renderReaderPages(nextIndex);
+}
+
 const MIN_TWO_PAGE_WIDTH = 1024; // Minimum width for two-page display
 
 function onWindowResize() {
@@ -910,11 +1101,11 @@ function onTouchEnd() {
   const deltaX = touchEndX - touchStartX;
 
   if (deltaX > swipeThreshold) {
-    // Swiped right (previous page)
-    stepReader("prev");
+    // Swiped right (previous page) -> move viewport visually left
+    stepVisualLeft();
   } else if (deltaX < -swipeThreshold) {
-    // Swiped left (next page)
-    stepReader("next");
+    // Swiped left (next page) -> move viewport visually right
+    stepVisualRight();
   }
 
   // Reset touch positions
@@ -949,53 +1140,117 @@ async function renderReaderPages(pageIndex) {
     }
 
     // Ensure page indices are within bounds
-    if (page1Index >= 0 && page1Index < state.manifest.pageCount) {
-      pagesToRender.push(page1Index);
-    }
-    if (
-      page2Index >= 0 &&
-      page2Index < state.manifest.pageCount &&
-      page1Index !== page2Index
-    ) {
-      pagesToRender.push(page2Index);
+    // Push pages in visual order: for LTR -> left then right; for RTL -> right then left
+    const isRtl = state.isUrduBook;
+    const leftIndex = page1Index;
+    const rightIndex = page2Index;
+
+    if (!isRtl) {
+      if (leftIndex >= 0 && leftIndex < state.manifest.pageCount) {
+        pagesToRender.push(leftIndex);
+      }
+      if (
+        rightIndex >= 0 &&
+        rightIndex < state.manifest.pageCount &&
+        rightIndex !== leftIndex
+      ) {
+        pagesToRender.push(rightIndex);
+      }
+    } else {
+      // RTL: visual first should be right, then left
+      if (rightIndex >= 0 && rightIndex < state.manifest.pageCount) {
+        pagesToRender.push(rightIndex);
+      }
+      if (
+        leftIndex >= 0 &&
+        leftIndex < state.manifest.pageCount &&
+        leftIndex !== rightIndex
+      ) {
+        pagesToRender.push(leftIndex);
+      }
     }
   } else {
     pagesToRender.push(pageIndex);
   }
 
-  state.currentPages = pagesToRender.sort((a, b) => a - b);
+  // Sort pages for predictable preloading/storage, but visual order will depend on direction
+  state.currentPages = pagesToRender.slice().sort((a, b) => a - b);
 
   elements.readerPageInput.value = `${pageInputDisplayIndex}`;
   elements.readerPageTotal.textContent = `/ ${state.manifest.pageCount}`;
-  elements.readerPrev.disabled =
-    pageIndex + getDirectionalDelta("prev") < 0 ||
-    pageIndex + getDirectionalDelta("prev") >= state.manifest.pageCount;
-  elements.readerNext.disabled =
-    pageIndex + getDirectionalDelta("next") < 0 ||
-    pageIndex + getDirectionalDelta("next") >= state.manifest.pageCount;
 
-  elements.readerPagesContainer.innerHTML = "";
-  for (const pIndex of pagesToRender) {
+  // Calculate visual deltas for button disabled states (not logical deltas from getDirectionalDelta)
+  let visualLeftDelta = 0;
+  let visualRightDelta = 0;
+  if (state.isTwoPageMode) {
+    visualLeftDelta = state.isUrduBook ? 2 : -2;
+    visualRightDelta = state.isUrduBook ? -2 : 2;
+  } else {
+    visualLeftDelta = state.isUrduBook ? 1 : -1;
+    visualRightDelta = state.isUrduBook ? -1 : 1;
+  }
+
+  elements.readerPrev.disabled =
+    pageIndex + visualLeftDelta < 0 ||
+    pageIndex + visualLeftDelta >= state.manifest.pageCount;
+  elements.readerNext.disabled =
+    pageIndex + visualRightDelta < 0 ||
+    pageIndex + visualRightDelta >= state.manifest.pageCount;
+
+  // Reset image elements
+  elements.readerImage1.src = "";
+  elements.readerImage2.src = "";
+  elements.readerImage1.classList.add("hidden");
+  elements.readerImage2.classList.add("hidden");
+
+  // Ensure reader pages container exists and set its direction for CSS ordering
+  const pagesContainer =
+    elements.readerPagesContainer ||
+    document.getElementById("reader-pages-container");
+  if (pagesContainer) {
+    if (state.isUrduBook) {
+      pagesContainer.setAttribute("dir", "rtl");
+    } else {
+      pagesContainer.setAttribute("dir", "ltr");
+    }
+  }
+
+  for (let i = 0; i < pagesToRender.length; i++) {
+    const pIndex = pagesToRender[i];
+    // Determine visual slot for this page index in two-page or one-page mode
+    let imageElement = elements.readerImage1;
+
+    if (state.isTwoPageMode) {
+      // For two-page mode decide which element maps to left/right visually.
+      // When Urdu (RTL): first visual (left) should be the second in pagesToRender, so we map accordingly using pagesContainer dir.
+      const isRtl = state.isUrduBook;
+      if (isRtl) {
+        // Visual order: right, left. We place the higher-order visual (right) into readerImage1 when pagesToRender was built with page1/page2 mapping.
+        imageElement = i === 0 ? elements.readerImage1 : elements.readerImage2;
+      } else {
+        // LTR: readerImage1 is left, readerImage2 is right
+        imageElement = i === 0 ? elements.readerImage1 : elements.readerImage2;
+      }
+    } else {
+      imageElement = elements.readerImage1;
+    }
+
     try {
       const objectUrl = await ensurePagePreview(pIndex);
       if (requestToken !== state.readerRequestToken || isReaderClosed()) {
         return;
       }
 
-      const img = document.createElement("img");
-      img.className = `reader-image ${pagesToRender.length > 1 ? "" : "single-page"}`;
-      img.alt = `${state.manifest.bookName} page ${pIndex + 1}`;
-      img.src = objectUrl;
-      elements.readerPagesContainer.appendChild(img);
+      imageElement.alt = `${state.manifest.bookName} page ${pIndex + 1}`;
+      imageElement.src = objectUrl;
+      imageElement.classList.remove("hidden");
     } catch (error) {
       if (error.name === "AbortError") {
         return;
       }
       console.error(`Failed to load page ${pIndex + 1}:`, error);
-      const errorDiv = document.createElement("div");
-      errorDiv.textContent = `Error loading page ${pIndex + 1}.`;
-      errorDiv.className = "reader-image-error"; // Add a class for styling
-      elements.readerPagesContainer.appendChild(errorDiv);
+      imageElement.classList.remove("hidden");
+      imageElement.alt = `Error loading page ${pIndex + 1}`;
     }
   }
 }
@@ -1019,54 +1274,4 @@ async function ensurePagePreview(pageIndex) {
   }
 
   return objectUrl;
-}
-
-function getDirectionalDelta(direction) {
-  let delta = 0;
-  if (state.isTwoPageMode) {
-    delta = 2; // Two pages at a time
-  } else {
-    delta = 1; // One page at a time
-  }
-
-  if (state.isUrduBook) {
-    return direction === "prev" ? delta : -delta;
-  }
-
-  return direction === "prev" ? -delta : delta;
-}
-
-function onDocumentKeydown(event) {
-  if (!isSearchClosed()) {
-    if (event.key === "Escape") {
-      closeSearch();
-    }
-
-    return;
-  }
-
-  if (isReaderClosed()) {
-    return;
-  }
-
-  if (event.key === "Escape") {
-    closeReader();
-    return;
-  }
-
-  if (event.key === "ArrowLeft") {
-    stepReader("prev");
-  }
-
-  if (event.key === "ArrowRight") {
-    stepReader("next");
-  }
-}
-
-function isReaderClosed() {
-  return elements.readerModal.classList.contains("reader-modal--hidden");
-}
-
-function isSearchClosed() {
-  return elements.searchModal.classList.contains("search-modal--hidden");
 }

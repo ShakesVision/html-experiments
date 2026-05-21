@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rekhta Book Downloader</title>
     <link rel="stylesheet" href="./styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
     <script src="./index.js" type="module"></script>
   </head>
@@ -100,7 +107,7 @@
 
     <div
       id="search-modal"
-      class="search-modal search-modal--hidden"
+      class="search-modal hidden"
       role="dialog"
       aria-modal="true"
       aria-label="Book search"
@@ -178,10 +185,13 @@
       </div>
     </div>
 
-    <div id="reader-modal" class="reader-modal reader-modal--hidden">
+    <div id="reader-modal" class="reader-modal hidden">
       <div class="reader-shell">
         <div class="reader-stage">
-          <div id="reader-pages-container" class="reader-pages-container"></div>
+          <div id="reader-pages-container" class="reader-pages-container">
+            <img id="reader-image-1" class="reader-image reader-page hidden" />
+            <img id="reader-image-2" class="reader-image reader-page hidden" />
+          </div>
         </div>
         <div class="reader-toolbar">
           <button
@@ -190,8 +200,31 @@
             class="reader-action"
             aria-label="Close reader"
           >
-            ×
+            <i class="fas fa-close"></i>
           </button>
+          <div class="reader-view-modes">
+            <button
+              id="one-page-view"
+              type="button"
+              class="reader-action reader-view-mode active"
+              aria-label="One page view"
+              title="One page view"
+            >
+              <i class="fa-solid fa-file"></i>
+            </button>
+            <button
+              id="two-page-view"
+              type="button"
+              class="reader-action reader-view-mode"
+              aria-label="Two page view"
+              title="Two page view"
+            >
+              <i class="fa-solid fa-book-open"></i>
+            </button>
+          </div>
+          <div id="reader-lang-indicator" class="reader-lang-indicator hidden">
+            RTL
+          </div>
           <div class="reader-nav">
             <button
               id="reader-prev"
@@ -199,7 +232,7 @@
               class="reader-action"
               aria-label="Previous page"
             >
-              ‹
+              <i class="fas fa-chevron-left"></i>
             </button>
             <label class="reader-pagebox" for="reader-page-input">
               <input
@@ -216,7 +249,7 @@
               class="reader-action"
               aria-label="Next page"
             >
-              ›
+              <i class="fas fa-chevron-right"></i>
             </button>
           </div>
         </div>

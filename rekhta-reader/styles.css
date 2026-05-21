@@ -70,7 +70,7 @@ input {
 
 .hero-toolbar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: 1fr 1fr repeat(4, minmax(80px, 1fr));
   gap: 8px;
   margin: 14px 0 0;
 }
@@ -255,6 +255,10 @@ input {
   display: none;
 }
 
+.hidden {
+  display: none !important;
+}
+
 .reader-shell {
   width: 100%;
   height: 100%;
@@ -263,14 +267,19 @@ input {
 }
 
 .reader-toolbar {
-  height: 52px; /* Fixed height for the toolbar */
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
-  padding: 0 16px; /* Add some horizontal padding */
+  padding: 0 16px;
   background: rgba(24, 15, 8, 0.9);
+  min-height: 52px;
+  width: 100%;
+}
+
+.reader-toolbar .reader-nav {
+  margin-left: auto;
 }
 
 .reader-stage {
@@ -284,15 +293,21 @@ input {
 
 .reader-pages-container {
   display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
-  gap: 20px; /* Space between two pages */
+  gap: 0px; /* Space between two pages. But why, joint looks better. */
   padding: 20px; /* Padding around the pages */
 }
 
+/* Why reverse when already rtl is selected.   */
+/* .reader-pages-container[dir="rtl"] {
+  flex-direction: row-reverse; 
+} */
+
 .reader-image {
   max-width: 100%;
-  max-height: calc(100vh - 52px - 40px); /* Full viewport height - toolbar height - container padding */
+  max-height: calc(100vh - 52px - 10px); /* Full viewport height - toolbar height - container padding */
   width: auto;
   height: auto;
   object-fit: contain;
@@ -300,35 +315,25 @@ input {
   border-radius: 20px;
 }
 
-.reader-image.single-page {
-  /* Already has border-radius, no need to re-apply */
-}
-
-.reader-pages-container[dir="rtl"] .reader-image:first-child {
-  order: 2; /* First page (odd) on the right */
-}
-
-.reader-pages-container[dir="rtl"] .reader-image:last-child {
-  order: 1; /* Second page (even) on the left */
-}
-
 .reader-image-error {
   color: var(--error);
   font-size: 1.2rem;
   text-align: center;
 }
-
+/* Stack pages vertically on smaller screens */
+/* 
 @media (max-width: 1023px) {
   .reader-pages-container {
-    flex-direction: column; /* Stack pages vertically on smaller screens */
+    flex-direction: column;
     gap: 10px;
     padding: 10px;
   }
 
   .reader-image {
-    max-height: calc(50vh - 52px - 15px); /* Half viewport height for stacked pages */
+    max-height: calc(50vh - 52px - 15px);
   }
 }
+*/
 
 .reader-nav {
   display: flex;
@@ -350,6 +355,73 @@ input {
 
 .reader-action:hover {
   transform: translateY(-1px);
+}
+
+.reader-view-modes {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.reader-lang-indicator {
+  padding: 4px 8px;
+  margin-left: 8px;
+  border-radius: 6px;
+  background: rgba(45, 106, 79, 0.2);
+  color: var(--success);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reader-lang-indicator.hidden {
+  display: none;
+}
+
+.reader-view-mode {
+  min-width: 44px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fffaf5;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.reader-view-mode:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.reader-view-mode.active {
+  border-color: rgba(160, 63, 36, 0.6);
+  background: rgba(160, 63, 36, 0.3);
+}
+
+.reader-view-mode i,
+.reader-action i {
+  display: inline-block;
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+.reader-page {
+  max-width: 100%;
+  max-height: calc(100vh - 52px - 40px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  border-radius: 20px;
+}
+
+.reader-page.hidden {
+  display: none;
 }
 
 .reader-pagebox {
@@ -378,6 +450,7 @@ input {
 }
 
 .reader-pagebox input[type="number"] {
+  appearance: textfield;
   -moz-appearance: textfield;
 }
 

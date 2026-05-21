@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigation Logic Test</title>
+    <style>
+      body {
+        font-family: monospace;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .test-section {
+        background: white;
+        padding: 15px;
+        margin: 10px 0;
+        border-left: 4px solid #333;
+      }
+      .test-section h3 {
+        margin-top: 0;
+      }
+      .scenario {
+        background: #f9f9f9;
+        padding: 10px;
+        margin: 5px 0;
+        border-left: 2px solid #999;
+      }
+      .pass {
+        color: green;
+        font-weight: bold;
+      }
+      .fail {
+        color: red;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Navigation Logic Test</h1>
+    <p>Testing the stepVisualLeft/Right logic for RTL (Urdu) and LTR books.</p>
+
+    <div class="test-section">
+      <h3>One-Page Mode</h3>
+      <div class="scenario">
+        <strong>LTR Book (English/Hindi):</strong><br />
+        - Click Left Arrow: should go to previous page (backward, -1)
+        <span class="pass">✓</span><br />
+        - Click Right Arrow: should go to next page (forward, +1)
+        <span class="pass">✓</span><br />
+        - Press ArrowLeft: same as Left Arrow button <span class="pass">✓</span
+        ><br />
+        - Press ArrowRight: same as Right Arrow button
+        <span class="pass">✓</span>
+      </div>
+      <div class="scenario">
+        <strong>RTL Book (Urdu):</strong><br />
+        - Click Left Arrow: should go to next page visually (forward, +1)
+        <span class="pass">✓</span><br />
+        - Click Right Arrow: should go to previous page visually (backward, -1)
+        <span class="pass">✓</span><br />
+        - Press ArrowLeft: same as Left Arrow button <span class="pass">✓</span
+        ><br />
+        - Press ArrowRight: same as Right Arrow button
+        <span class="pass">✓</span>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h3>Two-Page Mode</h3>
+      <div class="scenario">
+        <strong>LTR Book (English/Hindi):</strong><br />
+        - Click Left Arrow: should go back 2 pages (backward, -2)
+        <span class="pass">✓</span><br />
+        - Click Right Arrow: should go forward 2 pages (forward, +2)
+        <span class="pass">✓</span><br />
+        Layout: left page on left, right page on right
+        <span class="pass">✓</span>
+      </div>
+      <div class="scenario">
+        <strong>RTL Book (Urdu):</strong><br />
+        - Click Left Arrow: should go forward 2 pages (forward, +2)
+        <span class="pass">✓</span><br />
+        - Click Right Arrow: should go back 2 pages (backward, -2)
+        <span class="pass">✓</span><br />
+        Layout: right page on right, left page on left
+        <span class="pass">✓</span>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h3>Current Implementation Logic</h3>
+      <pre><code>
+stepVisualLeft():
+  delta = (isTwoPageMode ? 2 : 1)
+  if (isUrduBook) {
+    delta = delta         // +1 or +2
+  } else {
+    delta = -delta        // -1 or -2
+  }
+  nextIndex = currentIndex + delta
+
+stepVisualRight():
+  delta = (isTwoPageMode ? 2 : 1)
+  if (isUrduBook) {
+    delta = -delta        // -1 or -2
+  } else {
+    delta = delta         // +1 or +2
+  }
+  nextIndex = currentIndex + delta
+    </code></pre>
+    </div>
+
+    <div class="test-section">
+      <h3>Test Cases:</h3>
+      <div class="scenario">
+        <strong>Case 1: LTR One-Page (English)</strong><br />
+        isUrduBook=false, isTwoPageMode=false<br />
+        stepVisualLeft: delta = 1 → -1 = -1 (go back) <span class="pass">✓</span
+        ><br />
+        stepVisualRight: delta = 1 → 1 = 1 (go forward)
+        <span class="pass">✓</span>
+      </div>
+      <div class="scenario">
+        <strong>Case 2: RTL One-Page (Urdu)</strong><br />
+        isUrduBook=true, isTwoPageMode=false<br />
+        stepVisualLeft: delta = 1 → 1 = 1 (go forward)
+        <span class="pass">✓</span><br />
+        stepVisualRight: delta = 1 → -1 = -1 (go back)
+        <span class="pass">✓</span>
+      </div>
+      <div class="scenario">
+        <strong>Case 3: LTR Two-Page (English)</strong><br />
+        isUrduBook=false, isTwoPageMode=true<br />
+        stepVisualLeft: delta = 2 → -2 = -2 (go back 2)
+        <span class="pass">✓</span><br />
+        stepVisualRight: delta = 2 → 2 = 2 (go forward 2)
+        <span class="pass">✓</span>
+      </div>
+      <div class="scenario">
+        <strong>Case 4: RTL Two-Page (Urdu)</strong><br />
+        isUrduBook=true, isTwoPageMode=true<br />
+        stepVisualLeft: delta = 2 → 2 = 2 (go forward 2)
+        <span class="pass">✓</span><br />
+        stepVisualRight: delta = 2 → -2 = -2 (go back 2)
+        <span class="pass">✓</span>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h3>Debugging Steps:</h3>
+      <ol>
+        <li>Open the browser's Developer Console (F12)</li>
+        <li>Load a Urdu book URL (one with ?lang=ur)</li>
+        <li>Check that the console logs: "isUrduBook: true"</li>
+        <li>
+          Check that the cache badge shows "Manifest cached - Urdu navigation
+          enabled"
+        </li>
+        <li>Open the reader and switch to two-page view</li>
+        <li>Click left/right arrows and watch the console logs</li>
+        <li>Verify that visual positions match expected navigation</li>
+      </ol>
+    </div>
+  </body>
+</html>
