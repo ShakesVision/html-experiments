@@ -55,20 +55,20 @@ input {
     margin: 8px auto 80px;
     padding: 0 6px;
   }
-  
+
   .hero {
     padding: 16px;
     border-radius: 20px;
   }
-  
+
   .hero--compact {
     padding: 12px 14px;
   }
-  
+
   .hero h1 {
     font-size: clamp(1.2rem, 5vw, 1.8rem);
   }
-  
+
   .hero p {
     font-size: 0.88rem;
   }
@@ -80,13 +80,13 @@ input {
     margin: 4px auto 70px;
     padding: 0 4px;
   }
-  
+
   .hero {
     padding: 12px;
     border-radius: 16px;
     background: linear-gradient(135deg, rgba(160, 63, 36, 0.08), rgba(255, 252, 246, 0.8)), var(--card);
   }
-  
+
   .hero--compact {
     padding: 10px 12px;
   }
@@ -138,12 +138,12 @@ input {
     grid-template-columns: 1fr 1fr;
     gap: 6px;
   }
-  
+
   .hero-toolbar input {
     padding: 10px 8px;
     font-size: 16px;
   }
-  
+
   .hero-button {
     padding: 8px 10px;
     font-size: 0.9rem;
@@ -155,7 +155,7 @@ input {
     grid-template-columns: 1fr;
     gap: 8px;
   }
-  
+
   .hero-toolbar input,
   .hero-button {
     width: 100%;
@@ -221,21 +221,21 @@ input {
     gap: 8px;
     margin-top: 12px;
   }
-  
+
   .badge {
     font-size: 0.7rem;
     padding: 4px 8px;
   }
-  
+
   .status-copy {
     min-width: 160px;
     flex: 0 1 auto;
   }
-  
+
   .status-copy strong {
     font-size: 0.9rem;
   }
-  
+
   #status-text {
     font-size: 0.85rem;
   }
@@ -247,12 +247,12 @@ input {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .badge {
     font-size: 0.65rem;
     max-width: 90vw;
   }
-  
+
   .status-copy {
     min-width: auto;
     width: 100%;
@@ -310,7 +310,7 @@ input {
     padding: 12px;
     border-radius: 18px;
   }
-  
+
   .panel h2 {
     font-size: 0.95rem;
     margin-bottom: 10px;
@@ -322,7 +322,7 @@ input {
     padding: 10px;
     border-radius: 14px;
   }
-  
+
   .panel h2 {
     font-size: 0.9rem;
   }
@@ -385,7 +385,7 @@ input {
   .preview-panel {
     min-height: 40vh;
   }
-  
+
   .preview-grid {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 8px;
@@ -398,7 +398,9 @@ input {
   border: 1px solid var(--card-border);
   background: rgba(255, 255, 255, 0.72);
   cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .page-card:active {
@@ -424,11 +426,11 @@ input {
   .page-card {
     border-radius: 14px;
   }
-  
+
   .page-body {
     min-height: 140px;
   }
-  
+
   .page-number {
     padding: 6px 8px;
     font-size: 0.75rem;
@@ -439,12 +441,12 @@ input {
   .page-card {
     border-radius: 10px;
   }
-  
+
   .page-body {
     min-height: 110px;
     padding: 8px;
   }
-  
+
   .page-number {
     padding: 4px 6px;
     font-size: 0.7rem;
@@ -537,7 +539,7 @@ input {
     min-height: 44px;
     max-height: 88px;
   }
-  
+
   .reader-toolbar .reader-nav {
     order: -1;
   }
@@ -754,25 +756,25 @@ input {
   .reader-view-modes {
     gap: 6px;
   }
-  
+
   .reader-lang-indicator {
     padding: 3px 6px;
     margin-left: 6px;
     font-size: 0.65rem;
   }
-  
+
   .reader-view-mode {
     min-width: 38px;
     min-height: 38px;
     padding: 4px 8px;
     border-radius: 10px;
   }
-  
+
   .reader-view-mode i,
   .reader-action i {
     font-size: 0.95rem;
   }
-  
+
   .reader-page {
     max-height: calc(100vh - 48px - 40px);
     border-radius: 12px;
@@ -783,25 +785,25 @@ input {
   .reader-view-modes {
     gap: 4px;
   }
-  
+
   .reader-lang-indicator {
     padding: 2px 4px;
     margin-left: 4px;
     font-size: 0.6rem;
   }
-  
+
   .reader-view-mode {
     min-width: 34px;
     min-height: 34px;
     padding: 2px 6px;
     border-radius: 6px;
   }
-  
+
   .reader-view-mode i,
   .reader-action i {
     font-size: 0.8rem;
   }
-  
+
   .reader-page {
     max-height: calc(100vh - 44px - 40px);
     border-radius: 8px;
@@ -847,7 +849,7 @@ input {
     min-height: 40px;
     font-size: 0.9rem;
   }
-  
+
   .reader-pagebox input {
     width: 50px;
     font-size: 13px;
@@ -861,7 +863,7 @@ input {
     gap: 4px;
     font-size: 0.8rem;
   }
-  
+
   .reader-pagebox input {
     width: 40px;
     font-size: 12px;
@@ -899,7 +901,7 @@ input {
   .search-modal {
     padding: 12px;
   }
-  
+
   .search-shell {
     height: min(100%, 90vh);
     border-radius: 20px;
@@ -910,7 +912,7 @@ input {
   .search-modal {
     padding: 8px;
   }
-  
+
   .search-shell {
     width: calc(100vw - 16px);
     height: 95vh;
@@ -943,7 +945,7 @@ input {
   .search-header {
     padding: 12px 14px 10px;
   }
-  
+
   .search-title {
     font-size: 0.95rem;
   }
@@ -953,7 +955,7 @@ input {
   .search-header {
     padding: 10px 12px 8px;
   }
-  
+
   .search-title {
     font-size: 0.9rem;
   }
@@ -1020,12 +1022,12 @@ input {
     gap: 8px;
     margin-top: 10px;
   }
-  
+
   .search-field span {
     font-size: 0.75rem;
     margin-bottom: 4px;
   }
-  
+
   .search-field input,
   .search-field select {
     padding: 8px 8px;
@@ -1039,7 +1041,7 @@ input {
     grid-template-columns: 1fr;
     gap: 6px;
   }
-  
+
   .search-field input,
   .search-field select {
     min-height: 40px;
@@ -1121,7 +1123,7 @@ input {
     gap: 10px;
     padding: 12px 12px 14px;
   }
-  
+
   .search-result {
     padding: 10px;
     gap: 8px;
@@ -1135,7 +1137,7 @@ input {
     gap: 8px;
     padding: 10px 10px 12px;
   }
-  
+
   .search-result {
     grid-template-columns: 56px 1fr;
     padding: 10px;
@@ -1193,17 +1195,17 @@ input {
     height: 74px;
     border-radius: 10px;
   }
-  
+
   .search-tagline {
     font-size: 0.95rem;
     line-height: 1.15;
   }
-  
+
   .search-author {
     font-size: 0.85rem;
     margin-top: 4px;
   }
-  
+
   .search-href {
     font-size: 0.7rem;
     margin-top: 4px;
@@ -1216,15 +1218,15 @@ input {
     height: 64px;
     border-radius: 8px;
   }
-  
+
   .search-tagline {
     font-size: 0.9rem;
   }
-  
+
   .search-author {
     font-size: 0.8rem;
   }
-  
+
   .search-href {
     font-size: 0.65rem;
   }

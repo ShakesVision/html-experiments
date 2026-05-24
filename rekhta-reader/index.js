@@ -170,6 +170,32 @@ async function onLoadBook(event) {
   }
 }
 
+function generatePdfFilename() {
+  const title = elements.metaTitle.textContent || "book";
+  const author = elements.metaAuthor.textContent || "unknown";
+  const pagesText = elements.metaPages.textContent || "0 pages";
+  const pageCount = pagesText.split(" ")[0]; // Extract just the number
+
+  // Clean up strings: remove special characters, convert to filename-safe format
+  const cleanTitle = title
+    .trim()
+    .replace(/[^\w\s-]/g, "") // Remove special chars
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .toLowerCase()
+    .slice(0, 50); // Limit to 50 chars
+
+  const cleanAuthor = author
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .toLowerCase()
+    .slice(0, 30); // Limit to 30 chars
+
+  // Format: title-author-pagecount
+  const filename = `${cleanTitle}_${cleanAuthor}_${pageCount}p.pdf`;
+  return filename;
+}
+
 async function onDownloadPdf() {
   if (!state.manifest) {
     setStatus("Load a book first, then download the PDF.", "error");
@@ -230,7 +256,8 @@ async function onDownloadPdf() {
       setProgress(completion, `Building PDF ${index + 1}/${renderJobs.length}`);
     }
 
-    pdfDocument.save(`${state.manifest.fileName}.pdf`);
+    const filename = generatePdfFilename();
+    pdfDocument.save(filename);
     setBusy(false);
     setStatus("PDF export finished.", "success");
   } catch (error) {
