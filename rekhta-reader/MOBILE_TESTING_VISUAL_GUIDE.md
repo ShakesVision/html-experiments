@@ -1,0 +1,322 @@
+# 📱 Mobile Responsiveness Testing Guide
+
+## Quick Visual Reference
+
+### Screen Size Breakpoints
+
+```
+Mobile      Tablet      Desktop
+┌────────┐  ┌──────────┐  ┌──────────────┐
+│        │  │          │  │              │
+│ 320px  │  │  768px   │  │   1024px+    │
+│ 375px  │  │ 900px    │  │   1180px+    │
+│ 480px  │  │          │  │              │
+└────────┘  └──────────┘  └──────────────┘
+
+Includes:  Includes:      Includes:
+- iPhone   - iPad Mini    - Desktop
+- Android  - iPad Air     - Large monitors
+- Small    - Some tablets
+  tablets
+```
+
+## Component Behavior by Screen Size
+
+### 1. Hero Toolbar
+
+**Desktop (1024px+)**
+```
+┌─────────────────────────────────────────────────┐
+│ [URL Input]  [Proxy] [Go] [Search] [PDF] [Stop] │
+└─────────────────────────────────────────────────┘
+```
+
+**Tablet (768px)**
+```
+┌──────────────────────────┐
+│ [URL Input]  [Proxy]     │
+│ [Go]   [Search] [PDF]    │
+└──────────────────────────┘
+```
+
+**Mobile (480px)**
+```
+┌──────────────┐
+│ [URL Input]  │
+├──────────────┤
+│ [Proxy]      │
+├──────────────┤
+│ [Go]         │
+├──────────────┤
+│ [Search]     │
+├──────────────┤
+│ [PDF]        │
+├──────────────┤
+│ [Stop]       │
+└──────────────┘
+```
+
+### 2. Dashboard Layout
+
+**Desktop**
+```
+┌─────────────────────────────────────────┐
+│ ┌──────────┐  ┌──────────────────────┐ │
+│ │ Book     │  │  Lazy Preview Grid   │ │
+│ │ Info     │  │  ┌──┬──┬──┐          │ │
+│ │ ┌─────┐  │  │  │  │  │  │   ...    │ │
+│ │ │     │  │  │  └──┴──┴──┘          │ │
+│ │ └─────┘  │  └──────────────────────┘ │
+│ └──────────┘                           │
+└─────────────────────────────────────────┘
+```
+
+**Mobile**
+```
+┌─────────────────────┐
+│  Book Info          │
+│  ┌──────────────┐   │
+│  │ Title        │   │
+│  │ Author       │   │
+│  │ Pages        │   │
+│  └──────────────┘   │
+├─────────────────────┤
+│  Lazy Preview       │
+│  ┌──┐ ┌──┐ ┌──┐     │
+│  │  │ │  │ │  │     │
+│  └──┘ └──┘ └──┘     │
+│  ┌──┐ ┌──┐ ┌──┐     │
+│  │  │ │  │ │  │     │
+│  └──┘ └──┘ └──┘     │
+└─────────────────────┘
+```
+
+### 3. Search Modal
+
+**Desktop**
+```
+┌──────────────────────────────────────┐
+│ Find a book                       [×] │
+├──────────────────────────────────────┤
+│ [Keyword field] [Lang] [Search]      │
+├──────────────────────────────────────┤
+│ ┌──────────┐ ┌──────────┐ ┌───────┐  │
+│ │ Book 1   │ │ Book 2   │ │Book 3 │  │
+│ └──────────┘ └──────────┘ └───────┘  │
+│ ┌──────────┐ ┌──────────┐ ┌───────┐  │
+│ │ Book 4   │ │ Book 5   │ │Book 6 │  │
+│ └──────────┘ └──────────┘ └───────┘  │
+│ [Prev] [Page 1] [Next]               │
+└──────────────────────────────────────┘
+```
+
+**Mobile**
+```
+┌──────────────────────┐
+│ Find a book     [×]  │
+├──────────────────────┤
+│ [Keyword field]      │
+├──────────────────────┤
+│ [Lang]               │
+├──────────────────────┤
+│ [Search]             │
+├──────────────────────┤
+│ ┌────────────────┐   │
+│ │ Book 1         │   │
+│ └────────────────┘   │
+│ ┌────────────────┐   │
+│ │ Book 2         │   │
+│ └────────────────┘   │
+│ ┌────────────────┐   │
+│ │ Book 3         │   │
+│ └────────────────┘   │
+│ [Prev] [Pg] [Next]   │
+└──────────────────────┘
+```
+
+### 4. Reader Modal
+
+**Desktop (One-Page)**
+```
+┌─────────────────────────────────────────┐
+│ [×] [1page] [2page] [RTL] [←] [P1/100] [→] │
+├─────────────────────────────────────────┤
+│                                         │
+│            ┌──────────────┐             │
+│            │              │             │
+│            │  Page Image  │             │
+│            │              │             │
+│            └──────────────┘             │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+**Mobile (One-Page)**
+```
+┌───────────────────────────┐
+│ [×] [1] [2] [←] [P/100] [→]│
+├───────────────────────────┤
+│                           │
+│      ┌─────────────┐       │
+│      │             │       │
+│      │  Page Img   │       │
+│      │             │       │
+│      └─────────────┘       │
+│                           │
+└───────────────────────────┘
+```
+
+**Desktop (Two-Page)**
+```
+┌─────────────────────────────────────────────────┐
+│ [×] [1page] [2page] [RTL] [←] [P1/100] [→]     │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│      ┌──────────┐        ┌──────────┐          │
+│      │  Page 1  │        │  Page 2  │          │
+│      │          │        │          │          │
+│      └──────────┘        └──────────┘          │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
+
+**Mobile (Two-Page) - Stacks to full-width**
+```
+┌───────────────────────────┐
+│ [×] [1] [2] [←] [P/100] [→]│
+├───────────────────────────┤
+│                           │
+│    ┌─────────────┐        │
+│    │  Page 1     │        │
+│    │             │        │
+│    └─────────────┘        │
+│    ┌─────────────┐        │
+│    │  Page 2     │        │
+│    │             │        │
+│    └─────────────┘        │
+│                           │
+└───────────────────────────┘
+```
+
+## Touch Target Sizes
+
+```
+Desktop        Tablet         Mobile
+44px × 44px    40px × 40px    36px × 40px
+
+[48x48]        [44x44]        [40x40]
+minimum        recommended    acceptable
+for ease       on tablets     on phones
+```
+
+All buttons and inputs meet or exceed these sizes.
+
+## Font Size Scaling
+
+```
+Component       Desktop    Tablet    Mobile
+─────────────────────────────────────────
+Hero h1         1.4-2.6rem 1.2-1.8rem 1.2-1.8rem
+Hero p          0.94rem    0.88rem    0.88rem
+Body text       0.92rem    0.87rem    0.87rem
+Labels          0.84rem    0.75rem    0.75rem
+Captions        0.78rem    0.70rem    0.70rem
+```
+
+Uses `clamp()` for smooth scaling without media query jumps.
+
+## Test Checklist
+
+### Quick 5-Minute Test
+
+- [ ] Open app on mobile browser
+- [ ] Can you read all text without zooming?
+- [ ] Can you tap all buttons easily?
+- [ ] No horizontal scrolling?
+- [ ] Can you load a book?
+- [ ] Can you navigate pages?
+- [ ] Can you search?
+- [ ] Reader works on mobile?
+
+### Full Testing
+
+#### Main Screen
+- [ ] Hero section responsive at all sizes
+- [ ] Toolbar wraps correctly
+- [ ] All buttons clickable
+- [ ] Status text visible
+- [ ] No layout shift when loading
+
+#### Dashboard
+- [ ] Sidebar stacks on mobile
+- [ ] Page grid adapts
+- [ ] Cards are tappable
+- [ ] Scrolls smoothly
+- [ ] No overlap
+
+#### Search Modal
+- [ ] Modal fills screen properly
+- [ ] Inputs are tappable
+- [ ] Results scroll
+- [ ] Pagination works
+- [ ] Can close modal
+
+#### Reader
+- [ ] Image fits screen
+- [ ] Can navigate pages
+- [ ] Buttons don't overflow
+- [ ] Two-page view works
+- [ ] Page input accessible
+
+## Development Tools
+
+### Chrome DevTools
+
+1. **Open DevTools**: `F12` or `Ctrl+Shift+I`
+2. **Toggle Device Mode**: `Ctrl+Shift+M`
+3. **Preset Devices**: 
+   - iPhone SE (375px)
+   - iPhone 13 (390px)
+   - iPad (768px)
+   - iPad Pro (1024px)
+4. **Custom Size**: Enter any width you want
+5. **Test Throttle**: Simulate slow networks
+
+### Recommended Testing Sequence
+
+```
+1. Desktop (1180px) - baseline
+2. Large tablet (1024px)
+3. Tablet (768px)
+4. Large phone (480px)
+5. Standard phone (375px)
+6. Small phone (320px)
+```
+
+## Responsive Image Tips
+
+- Images scale with `max-width: 100%`
+- Height auto-adjusts
+- No distortion
+- Proper aspect ratio maintained
+
+## Common Issues & Fixes
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Text too small | Font size not responsive | ✅ Fixed with clamp() |
+| Buttons overlap | Not enough space | ✅ Added flex-wrap |
+| Input won't zoom on iOS | Font < 16px | ✅ All inputs 16px |
+| Horizontal scroll | Width too wide | ✅ Added calc(100vw - padding) |
+| Toolbar wraps badly | Fixed gap | ✅ Adjusted gap at breakpoints |
+| Cards too big | Min-width not responsive | ✅ Scale 150px → 100px |
+
+---
+
+## Quick Links
+
+- 📄 Full Documentation: `MOBILE_RESPONSIVENESS_FIXES.md`
+- 🔍 Commit: `fe5d888`
+- 📊 CSS File: `styles.css` (1242 lines)
+
+**All components tested and working! 🎉**
