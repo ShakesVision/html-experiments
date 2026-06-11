@@ -252,7 +252,7 @@
     "external": false,
     "featured": false,
     "lastReviewed": "2026-05-04",
-    "img": "assets/images/project.png",
+    "img": "bloggerflux/blogger.png",
     "link": "bloggerflux/index.html"
   },
   {
@@ -268,7 +268,7 @@
     "external": false,
     "featured": true,
     "lastReviewed": "2026-05-04",
-    "img": "editor/urdu-editor.png",
+    "img": "editor/poetry2.png",
     "link": "editor/poetry2.html"
   },
   {
@@ -284,7 +284,7 @@
     "external": false,
     "featured": false,
     "lastReviewed": "2026-05-04",
-    "img": "assets/images/project.png",
+    "img": "inpage/pdf-texter/NaseemUrdu.png",
     "link": "inpage/pdf-texter/index.html"
   },
   {
@@ -300,7 +300,7 @@
     "external": false,
     "featured": false,
     "lastReviewed": "2026-05-04",
-    "img": "assets/images/project.png",
+    "img": "inpage/inpage.png",
     "link": "inpage/reader.html"
   },
   {
@@ -348,7 +348,7 @@
     "external": false,
     "featured": true,
     "lastReviewed": "2026-05-04",
-    "img": "assets/images/project.png",
+    "img": "quoter/icon.png",
     "link": "quoter/index.html"
   },
   {
@@ -380,7 +380,7 @@
     "external": false,
     "featured": true,
     "lastReviewed": "2026-05-04",
-    "img": "assets/images/project.png",
+    "img": "rekhta-reader/icon.png",
     "link": "rekhta-reader/index.html"
   },
   {
@@ -434,7 +434,7 @@
   {
     "id": 28,
     "slug": "bayaz-proto",
-    "title": "Bayaaz - Notion Style Editor",
+    "title": "Bayaaz",
     "description": "Standalone browser tool hosted at bayaz-proto/index.html.",
     "desc": "Standalone browser tool hosted at bayaz-proto/index.html.",
     "category": "Urdu & language",
