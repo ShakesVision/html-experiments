@@ -66,17 +66,17 @@
       "isRoot": false
     },
     {
-      "path": "editor/poetry.html",
+      "path": "editor/poetry-classic.html",
       "folder": "editor",
       "isIndex": false,
-      "title": "editor/poetry",
+      "title": "Poetry (classic)",
       "isRoot": false
     },
     {
-      "path": "editor/poetry2.html",
+      "path": "editor/poetry-studio.html",
       "folder": "editor",
       "isIndex": false,
-      "title": "فارمیٹرِ شاعری",
+      "title": "شاعری اسٹوڈیو — Poetry Studio",
       "isRoot": false
     },
     {

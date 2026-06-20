@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var bgColorPicker = document.getElementById("bgColorPicker");
   var textColorPicker = document.getElementById("textColorPicker");
   var fontUrlEl = document.getElementById("fontUrlInput");
+  var fontNameEl = document.getElementById("fontNameInput");
   var savedListEl = document.getElementById("savedPoetryList");
   var importFileInput = document.getElementById("importFileInput");
   var customCssInput = document.getElementById("customCssInput");
@@ -249,24 +250,55 @@ document.addEventListener("DOMContentLoaded", function () {
     fontSelector.appendChild(opt);
   }
 
-  function registerCustomFont(name, url, label) {
+  function registerCustomFont(name, url) {
     if (!name || !url) return;
-    if (!document.getElementById("font-" + name)) {
+    var id = "font-" + name.replace(/[^a-z0-9_-]/gi, "_");
+    if (!document.getElementById(id)) {
       var style = document.createElement("style");
-      style.id = "font-" + name;
+      style.id = id;
+      // local() first → use an installed copy with no network; url() otherwise
+      // (browser-cached, and SW-cached for whitelisted CDN hosts).
       style.textContent = "@font-face{font-family:'" + name + "';src:local('" + name + "'),url('" + url + "');font-display:swap;}";
       document.head.appendChild(style);
     }
-    ensureFontOption(name, label);
+    ensureFontOption(name, name); // dropdown shows the real name, not "custom"
+  }
+
+  // Persistent registry of named custom fonts so they survive reloads, stay in
+  // the font dropdown, and re-register (re-cache) automatically each session.
+  var CUSTOM_FONTS_KEY = "poetryCustomFontsV1";
+  function getCustomFonts() {
+    try {
+      var a = JSON.parse(localStorage.getItem(CUSTOM_FONTS_KEY) || "[]");
+      return Array.isArray(a) ? a : [];
+    } catch (e) { return []; }
+  }
+  function rememberCustomFont(name, url) {
+    var list = getCustomFonts().filter(function (f) { return f.name !== name; });
+    list.push({ name: name, url: url });
+    localStorage.setItem(CUSTOM_FONTS_KEY, JSON.stringify(list));
+  }
+  function registerSavedCustomFonts() {
+    getCustomFonts().forEach(function (f) { registerCustomFont(f.name, f.url); });
+  }
+  function deriveFontName(url) {
+    try {
+      var file = decodeURIComponent(url.split("/").pop().split("?")[0]);
+      return file.replace(/\.(woff2?|ttf|otf|eot)$/i, "").replace(/[-_%]+/g, " ").trim() || "Custom Font";
+    } catch (e) { return "Custom Font"; }
   }
 
   window.loadCustomFont = function () {
     var url = fontUrlEl ? fontUrlEl.value.trim() : "";
-    if (!url) return alert("Font URL درج کریں");
-    var name = "CustomFont_" + Date.now();
-    registerCustomFont(name, url, "کسٹم فونٹ");
+    if (!url) return alert("فونٹ کا لنک درج کریں — enter a font URL");
+    var name = fontNameEl ? fontNameEl.value.trim() : "";
+    if (!name) name = (window.prompt("اس فونٹ کا نام؟ — Name this font:", deriveFontName(url)) || "").trim();
+    if (!name) return;
+    registerCustomFont(name, url);
+    rememberCustomFont(name, url);
     if (fontSelector) fontSelector.value = name;
     currentFont = name;
+    if (fontNameEl) fontNameEl.value = "";
     applyFont();
     autoSave();
   };
@@ -480,8 +512,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (colorEl) colorEl.value = item.color || "";
     if (fontUrlEl) fontUrlEl.value = item.fontUrl || "";
     if (customCssInput) customCssInput.value = item.customCss || "";
-    if (item.fontUrl && item.fontName) registerCustomFont(item.fontName, item.fontUrl, "کسٹم فونٹ");
-    if (fontSelector) { ensureFontOption(currentFont, "کسٹم فونٹ"); fontSelector.value = currentFont; }
+    if (item.fontUrl && item.fontName) { registerCustomFont(item.fontName, item.fontUrl); rememberCustomFont(item.fontName, item.fontUrl); }
+    if (fontSelector) { ensureFontOption(currentFont, currentFont); fontSelector.value = currentFont; }
     if (pageSizeSelect) pageSizeSelect.value = ["auto", "custom"].indexOf(currentPageSize) >= 0 || /^\d+x\d+$/.test(currentPageSize) ? currentPageSize : "auto";
     syncColorPickers();
     applyFont();
@@ -818,6 +850,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function initFromStorage() {
     savedItems = storageItems();
+    registerSavedCustomFonts(); // re-add named custom fonts to head + dropdown
     renderGradStops();
     if (!savedItems.length) { initEditor(""); window.createNewPoetryItem(); return; }
     var storedId = localStorage.getItem(ACTIVE_ITEM_KEY);
