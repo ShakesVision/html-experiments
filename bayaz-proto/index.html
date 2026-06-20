@@ -36,9 +36,19 @@
       .book-pad-narrow { padding: 38px; }
       .book-pad-normal { padding: 64px; }
       .book-pad-wide   { padding: 96px; }
-      .book-head, .book-foot { flex: 0 0 auto; color: #8a8275; font-size: 13px; }
-      .book-head { border-bottom: 1px solid #efe9dd; padding-bottom: 8px; margin-bottom: 14px; display: flex; justify-content: space-between; }
-      .book-foot { border-top: 1px solid #efe9dd; padding-top: 8px; margin-top: 14px; text-align: center; }
+      .book-head, .book-foot { flex: 0 0 auto; color: #8a8275; font-size: 13px; display: flex; justify-content: space-between; gap: 1em; }
+      .book-head { border-bottom: 1px solid #efe9dd; padding-bottom: 8px; margin-bottom: 14px; }
+      .book-foot { border-top: 1px solid #efe9dd; padding-top: 8px; margin-top: 14px; }
+
+      /* Table of contents page */
+      .toc-title { text-align: center; font-weight: 700; font-size: 1.6rem; margin-bottom: 1em; }
+      .toc-row { display: flex; align-items: baseline; gap: .5em; margin: .35em 0; font-size: 1.1rem; }
+      .toc-row.lvl2 { padding-inline-start: 1.5em; font-size: 1rem; color: #4b4438; }
+      .toc-row .toc-dots { flex: 1 1 auto; border-bottom: 2px dotted #c8bfa9; transform: translateY(-.3em); }
+
+      /* Editor formatting toolbar */
+      .ed-btn { display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border-radius: 8px; color: #44403c; background: #f5f5f4; border: 0; cursor: pointer; font-size: 14px; }
+      .ed-btn:hover { background: #e7e5e4; }
       .book-body { flex: 1 1 auto; text-align: justify; line-height: 2.05; font-size: 1.25rem; color: #15110c; }
       .book-body :first-child { margin-top: 0; }
       .book-body h1, .book-body h2, .book-body h3 { font-weight: 700; margin: .6em 0 .35em; text-align: center; }
@@ -102,25 +112,54 @@
     <main class="max-w-7xl mx-auto p-3 grid gap-4 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
       <!-- Editor -->
       <section :class="{ 'hidden lg:block': view!=='edit' }" class="no-print">
-        <div class="bg-white rounded-xl shadow p-3 sticky top-16">
-          <p class="text-xs text-stone-500 mb-2">
-            <code>---</code> ایک لائن میں = نیا صفحہ۔ شاعری کے لیے <code>[sj]</code>…<code>[/sj]</code> (یا <code>[sj format="mukhammas"]</code>)۔ مارک ڈاؤن سپورٹڈ۔
-          </p>
+        <div class="bg-white rounded-xl shadow p-3 sticky top-16 space-y-2">
+          <!-- formatting toolbar -->
+          <div class="flex flex-wrap items-center gap-1">
+            <button class="ed-btn font-bold" title="موٹا — Bold" @click="wrapMd('**','**')">B</button>
+            <button class="ed-btn italic" title="ترچھا — Italic" @click="wrapMd('*','*')">I</button>
+            <button class="ed-btn" title="سرخی — Heading" @click="linePrefix('# ')"><span class="material-symbols-outlined">title</span></button>
+            <button class="ed-btn" title="اقتباس — Quote" @click="linePrefix('> ')"><span class="material-symbols-outlined">format_quote</span></button>
+            <button class="ed-btn" title="فہرست — List" @click="linePrefix('- ')"><span class="material-symbols-outlined">format_list_bulleted</span></button>
+            <span class="w-px h-5 bg-stone-200 mx-1"></span>
+            <button class="ed-btn text-pink-700" title="شعر داخل کریں — Insert poetry" @click="openSj()"><span class="material-symbols-outlined">splitscreen</span> شعر</button>
+            <button class="ed-btn" title="نیا صفحہ — Page break" @click="insertText('\n\n---\n\n')"><span class="material-symbols-outlined">insert_page_break</span></button>
+            <span class="ml-auto text-xs text-stone-400" x-text="wordCount + ' لفظ · ' + pages.length + ' ص'"></span>
+          </div>
           <textarea id="bookSource" x-model="source" @input="onInput()" dir="rtl"
-            class="w-full h-[70vh] border border-stone-200 rounded-lg p-3 text-lg leading-loose outline-none focus:ring-2 focus:ring-stone-300"
+            class="w-full h-[58vh] border border-stone-200 rounded-lg p-3 text-lg leading-loose outline-none focus:ring-2 focus:ring-stone-300"
             style="font-family: var(--book-font, 'Payami'), 'Mehr', serif;"
             placeholder="یہاں اپنی کتاب لکھیں…"></textarea>
+          <p class="text-[11px] text-stone-400">
+            <code>---</code> = نیا صفحہ · <code>#</code> = باب (chapter) · <code>[sj]…[/sj]</code> = شعر · Markdown سپورٹڈ
+          </p>
+
+          <!-- Running header / footer templates -->
+          <details class="rounded-lg border border-stone-200 p-2">
+            <summary class="cursor-pointer text-sm text-stone-600">ہیڈر / فٹر اور فہرست — Header / footer & TOC</summary>
+            <div class="mt-2 space-y-2 text-sm">
+              <label class="block">
+                <span class="text-xs text-stone-500">Header template</span>
+                <input x-model="headerTpl" @input="save()" dir="auto" class="w-full border border-stone-200 rounded-lg p-1.5" placeholder="{title} | {chapter}" />
+              </label>
+              <label class="block">
+                <span class="text-xs text-stone-500">Footer template</span>
+                <input x-model="footerTpl" @input="save()" dir="auto" class="w-full border border-stone-200 rounded-lg p-1.5" placeholder="{page}" />
+              </label>
+              <p class="text-[11px] text-stone-400">ٹوکنز: <code>{title}</code> <code>{author}</code> <code>{chapter}</code> <code>{page}</code> <code>{total}</code> · کالم کے لیے <code>|</code> استعمال کریں۔</p>
+              <label class="flex items-center gap-2"><input type="checkbox" x-model="toc" @change="save();justify()" /> <span class="text-stone-600">فہرست کا صفحہ شامل کریں — Table of contents</span></label>
+            </div>
+          </details>
         </div>
       </section>
 
       <!-- Book preview -->
       <section :class="{ 'hidden lg:block': view!=='preview' }" id="bookScroll" class="overflow-auto">
-        <div id="book" :style="`zoom:${zoom}`">
-          <template x-for="(chunk, i) in pages" :key="i">
+        <div id="book" :style="`zoom:${zoom}`" x-effect="renderedPages.length; justify()">
+          <template x-for="(pg, i) in renderedPages" :key="i">
             <div class="book-page" :class="'book-pad-'+margin" :style="`--book-font:'${fontName}'`">
-              <div class="book-head" x-show="header"><span x-text="title"></span><span x-text="author"></span></div>
-              <div class="book-body" x-html="render(chunk)"></div>
-              <div class="book-foot" x-show="footer" x-text="i+1"></div>
+              <div class="book-head" x-show="header" x-html="pg.headerHtml"></div>
+              <div class="book-body" x-html="pg.bodyHtml"></div>
+              <div class="book-foot" x-show="footer" x-html="pg.footerHtml"></div>
             </div>
           </template>
         </div>
@@ -142,6 +181,38 @@
       </div>
     </div>
 
+    <!-- Shairi block selector -->
+    <div x-show="sjOpen" x-cloak @click.self="sjOpen=false" class="no-print fixed inset-0 bg-stone-900/50 flex items-center justify-center p-4 z-50">
+      <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-stone-800">شعر بلاک — Poetry block</h2>
+          <button @click="sjOpen=false" class="text-stone-500"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <label class="block text-sm">
+          <span class="text-stone-500">فارمیٹ — Format</span>
+          <select x-model="sjFormat" class="w-full border border-stone-200 rounded-xl p-2.5 mt-1">
+            <option value="sher">شعر</option>
+            <option value="sher2">دو کالم شعر</option>
+            <option value="mukhammas">مخمس</option>
+            <option value="mukhammas-3-2">۳+۲</option>
+            <option value="mukhammas-mixed">۴+۱</option>
+            <option value="musaddas">مسدس</option>
+            <option value="musaddas-6">۶ مصرعے</option>
+            <option value="musaddas-mixed">۴+۲</option>
+          </select>
+        </label>
+        <p class="text-xs text-stone-400">منتخب متن لپیٹ دیا جائے گا، ورنہ نمونہ مصرعے داخل ہوں گے۔</p>
+        <div class="flex justify-end gap-2">
+          <button @click="sjOpen=false" class="px-4 py-2 rounded-xl bg-stone-100 text-stone-700">Close</button>
+          <button @click="insertSj()" class="px-4 py-2 rounded-xl bg-pink-600 text-white">Insert</button>
+        </div>
+        <p class="text-[11px] text-center text-stone-400 border-t border-stone-100 pt-2">
+          Justification powered by
+          <a href="https://www.npmjs.com/package/shakeeb-justify" target="_blank" rel="noopener" class="text-pink-600 font-semibold underline">✨ shakeeb-justify</a>
+        </p>
+      </div>
+    </div>
+
     <footer class="no-print text-center text-xs text-stone-400 py-4">
       Powered by
       <a href="https://www.npmjs.com/package/shakeeb-justify" target="_blank" rel="noopener" class="text-pink-600 font-semibold underline">✨ shakeeb-justify</a>
@@ -159,6 +230,7 @@
         Story:  { w: 1080, h: 1920, css: "1080px 1920px" },
       };
       const STORE = "bookMakerV1";
+      const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       const SAMPLE = "# پہلا باب\n\nیہ بیاض ایک سادہ کتاب ساز ہے۔ ہر صفحہ الگ دکھتا ہے اور پرنٹ/PDF میں الگ صفحے پر آتا ہے۔\n\n[sj]\nدل ہی تو ہے نہ سنگ و خشت درد سے بھر نہ آئے کیوں\nروئیں گے ہم ہزار بار کوئی ہمیں ستائے کیوں\n[/sj]\n\n---\n\n## دوسرا صفحہ\n\nنئے صفحے پر متن یہاں سے شروع ہوتا ہے۔";
 
       function book() {
@@ -167,6 +239,8 @@
           title: "", author: "", source: SAMPLE,
           pageSize: "A4", fontName: "Payami", margin: "normal",
           header: true, footer: true, zoom: 0.6, view: "preview", about: false,
+          headerTpl: "{title} | {chapter}", footerTpl: "{page}", toc: false,
+          sjOpen: false, sjFormat: "sher",
           fonts: ["Payami", "Mehr", "Emaad"],
           _t: null,
 
@@ -179,6 +253,102 @@
 
           get pages() {
             return this.source.split(/\r?\n-{3,}\r?\n/).map((s) => s.trim());
+          },
+
+          get wordCount() {
+            return (this.source.replace(/[#>*_\-\[\]`]/g, " ").match(/\S+/g) || []).length;
+          },
+
+          // Header/footer template: substitute tokens, split into columns on `|`.
+          hf(tpl, ctx) {
+            if (!tpl) return "";
+            var sub = String(tpl)
+              .replace(/\{title\}/g, esc(this.title))
+              .replace(/\{author\}/g, esc(this.author))
+              .replace(/\{chapter\}/g, esc(ctx.chapter || ""))
+              .replace(/\{page\}/g, ctx.page)
+              .replace(/\{total\}/g, ctx.total);
+            var cols = sub.split("|");
+            if (cols.length === 1) return '<span style="margin-inline:auto">' + cols[0] + "</span>";
+            return cols.map(function (c) { return "<span>" + c + "</span>"; }).join("");
+          },
+
+          // Build the rendered page list: optional TOC page (from # / ## headings
+          // with their page numbers) + content pages with a running chapter.
+          get renderedPages() {
+            var content = this.pages;
+            var tocOffset = this.toc ? 1 : 0;
+            var total = content.length + tocOffset;
+            var headings = [];
+            content.forEach(function (chunk, ci) {
+              var pageNum = ci + 1 + tocOffset;
+              chunk.split("\n").forEach(function (line) {
+                var m = line.match(/^(#{1,3})\s+(.+?)\s*#*\s*$/);
+                if (m) headings.push({ level: m[1].length, text: m[2].trim(), page: pageNum });
+              });
+            });
+            var self = this, out = [];
+            if (this.toc) {
+              var rows = headings.map(function (h) {
+                return '<div class="toc-row' + (h.level > 1 ? " lvl2" : "") + '"><span>' +
+                  esc(h.text) + '</span><span class="toc-dots"></span><span>' + h.page + "</span></div>";
+              }).join("");
+              var tctx = { chapter: "فہرست", page: 1, total: total };
+              out.push({
+                headerHtml: this.hf(this.headerTpl, tctx),
+                bodyHtml: '<div class="toc-title">فہرست</div>' +
+                  (rows || '<p style="text-align:center;color:#999">سرخی کے لیے # لگائیں</p>'),
+                footerHtml: this.hf(this.footerTpl, tctx),
+              });
+            }
+            content.forEach(function (chunk, ci) {
+              var num = ci + 1 + tocOffset, ch = null;
+              for (var k = headings.length - 1; k >= 0; k--) {
+                if (headings[k].level === 1 && headings[k].page <= num) { ch = headings[k].text; break; }
+              }
+              var ctx = { chapter: ch || self.title || "", page: num, total: total };
+              out.push({
+                headerHtml: self.hf(self.headerTpl, ctx),
+                bodyHtml: self.render(chunk),
+                footerHtml: self.hf(self.footerTpl, ctx),
+              });
+            });
+            return out;
+          },
+
+          /* --- Editor toolbar. setRangeText is reliable AND native-undoable;
+                 the dispatched input event keeps Alpine's x-model in sync. --- */
+          ta() { var t = document.getElementById("bookSource"); if (t) t.focus(); return t; },
+          fire(t) { t.dispatchEvent(new Event("input", { bubbles: true })); },
+          insertText(str) {
+            var t = this.ta(); if (!t) return;
+            var s = t.selectionStart, e = t.selectionEnd;
+            t.setRangeText(str, s, e, "end");
+            this.fire(t);
+          },
+          wrapMd(before, after) {
+            var t = this.ta(); if (!t) return;
+            var s = t.selectionStart, e = t.selectionEnd, sel = t.value.slice(s, e) || "متن";
+            t.setRangeText(before + sel + after, s, e, "end");
+            t.setSelectionRange(s + before.length, s + before.length + sel.length);
+            this.fire(t);
+          },
+          linePrefix(prefix) {
+            var t = this.ta(); if (!t) return;
+            var s = t.selectionStart, ls = t.value.lastIndexOf("\n", s - 1) + 1;
+            t.setRangeText(prefix, ls, ls, "end");
+            t.setSelectionRange(s + prefix.length, s + prefix.length);
+            this.fire(t);
+          },
+          openSj() { this.sjOpen = true; },
+          insertSj() {
+            var t = this.ta();
+            var s = t ? t.selectionStart : 0, e = t ? t.selectionEnd : 0;
+            var sel = t ? t.value.slice(s, e).trim() : "";
+            var body = sel || "پہلا مصرع\nدوسرا مصرع";
+            var snippet = "\n[sj format=\"" + this.sjFormat + "\"]\n" + body + "\n[/sj]\n";
+            this.sjOpen = false;
+            if (t) { t.setRangeText(snippet, s, e, "end"); this.fire(t); }
           },
 
           render(chunk) {
@@ -243,6 +413,7 @@
               title: this.title, author: this.author, source: this.source,
               pageSize: this.pageSize, fontName: this.fontName, margin: this.margin,
               header: this.header, footer: this.footer,
+              headerTpl: this.headerTpl, footerTpl: this.footerTpl, toc: this.toc,
             }));
           },
           load() {
