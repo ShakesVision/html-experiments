@@ -9,6 +9,11 @@
     <!-- Toast UI Editor (Markdown ⇄ WYSIWYG). Cached offline by the service worker after first load. -->
     <link rel="stylesheet" href="https://uicdn.toast.com/editor/3.2.2/toastui-editor.min.css" />
     <script src="https://uicdn.toast.com/editor/3.2.2/toastui-editor-all.min.js"></script>
+    <!-- Color-syntax plugin: colors the current selection (per word/letter). -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.css" />
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.css" />
+    <script src="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.js"></script>
+    <script src="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@latest/dist/shakeeb-justify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -61,11 +66,13 @@
         border-color: #ec4899; box-shadow: 0 8px 24px rgba(236, 72, 153, 0.12);
       }
 
-      /* Toast UI in an RTL Urdu context */
+      /* Toast UI in an RTL Urdu context. v3 uses ProseMirror for both modes;
+         the selected font is applied to these editables from JS too. */
       .toastui-editor-defaultUI { border-radius: 14px; }
       .toastui-editor-contents,
-      .toastui-editor-md-container .toastui-editor .CodeMirror,
-      .toastui-editor-ww-container .toastui-editor-contents {
+      .toastui-editor .ProseMirror,
+      .toastui-editor-md-container .ProseMirror,
+      .toastui-editor-ww-container .ProseMirror {
         direction: rtl; text-align: right;
         font-family: "Payami", "Mehr", serif; font-size: 1.15rem; line-height: 2.1;
       }
@@ -73,6 +80,20 @@
       .toastui-editor-md-preview { display: none; }
       .toastui-editor-md-splitter { display: none; }
       .toastui-editor-md-container .toastui-editor { width: 100% !important; }
+
+      /* Compact format bar (alignment + direction) */
+      .fmt-btn { display:inline-flex; align-items:center; justify-content:center; padding:6px; border-radius:9px; color:#9d174d; background:#fdf2f8; border:0; cursor:pointer; transition:.15s; }
+      .fmt-btn:hover { background:#fbcfe8; }
+
+      /* #print-area square-corner option for clean image export */
+      #print-area.square-corners { border-radius: 0 !important; }
+
+      /* Mobile preview FAB + full-screen overlay */
+      #previewFab { position: fixed; left: 1rem; bottom: 1rem; z-index: 40; box-shadow: 0 10px 24px rgba(219,39,119,.35); }
+      @media (min-width: 1024px) { #previewFab { display: none; } }
+      #previewOverlay { position: fixed; inset: 0; z-index: 50; background: rgba(15,23,42,.55); display: none; padding: 1rem; overflow: auto; }
+      #previewOverlay.open { display: block; }
+      #previewOverlayBody { background: transparent; min-height: 100%; display: flex; align-items: flex-start; justify-content: center; }
 
       #print-area {
         font-family: "Payami", "Mehr", serif;
@@ -127,6 +148,16 @@
               </button>
               <span class="text-xs text-gray-500">Markdown ⇄ WYSIWYG سوئچ نیچے ہے</span>
             </div>
+            <!-- Alignment + direction (applied to the current selection) -->
+            <div class="flex flex-wrap items-center gap-1 border-t border-pink-100 pt-2">
+              <button class="fmt-btn" title="دائیں — Align right" onclick="applyAlignment('right')"><span class="material-symbols-outlined">format_align_right</span></button>
+              <button class="fmt-btn" title="درمیان — Align center" onclick="applyAlignment('center')"><span class="material-symbols-outlined">format_align_center</span></button>
+              <button class="fmt-btn" title="بائیں — Align left" onclick="applyAlignment('left')"><span class="material-symbols-outlined">format_align_left</span></button>
+              <button class="fmt-btn" title="جسٹیفائی — Justify" onclick="applyAlignment('justify')"><span class="material-symbols-outlined">format_align_justify</span></button>
+              <span class="w-px h-5 bg-pink-200 mx-1"></span>
+              <button class="fmt-btn" title="RTL (دائیں سے بائیں)" onclick="applyDirection('rtl')"><span class="material-symbols-outlined">format_textdirection_r_to_l</span></button>
+              <button class="fmt-btn" title="LTR (بائیں سے دائیں)" onclick="applyDirection('ltr')"><span class="material-symbols-outlined">format_textdirection_l_to_r</span></button>
+            </div>
             <div id="editor"></div>
           </div>
 
@@ -142,15 +173,26 @@
               <input type="color" id="textColorPicker" title="متن رنگ" />
             </div>
 
-            <!-- Gradient builder -->
-            <div class="flex gap-2 items-center flex-wrap">
-              <span class="text-xs text-gray-500">گریڈینٹ:</span>
-              <input type="color" id="grad1" value="#fde2e4" />
-              <input type="color" id="grad2" value="#e2ecf9" />
-              <input type="number" id="gradAngle" value="135" class="w-16 border border-gray-200 p-1.5 rounded-lg text-center text-sm" title="زاویہ" />
-              <button onclick="applyGradient()" class="icon-btn bg-indigo-500" title="گریڈینٹ لگائیں">
-                <span class="material-symbols-outlined">gradient</span>
-              </button>
+            <!-- Gradient builder: multiple color stops + type + direction -->
+            <div class="space-y-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs text-gray-500">گریڈینٹ:</span>
+                <select id="gradType" class="border border-gray-200 p-1.5 rounded-lg text-sm">
+                  <option value="linear">Linear</option>
+                  <option value="radial">Radial</option>
+                </select>
+                <select id="gradDir" class="border border-gray-200 p-1.5 rounded-lg text-sm">
+                  <option value="135">↘ Diagonal</option>
+                  <option value="45">↗ Diagonal</option>
+                  <option value="90">→ Right</option>
+                  <option value="270">← Left</option>
+                  <option value="180">↓ Down</option>
+                  <option value="0">↑ Up</option>
+                </select>
+                <button onclick="addGradStop()" class="fmt-btn" title="رنگ شامل کریں — add color"><span class="material-symbols-outlined">add</span></button>
+                <button onclick="applyGradient()" class="icon-btn bg-indigo-500" title="گریڈینٹ لگائیں — apply"><span class="material-symbols-outlined">gradient</span></button>
+              </div>
+              <div id="gradStops" class="flex items-center gap-2 flex-wrap"></div>
             </div>
 
             <!-- Image background -->
@@ -167,9 +209,11 @@
                 <span class="material-symbols-outlined">backspace</span>
               </button>
             </div>
-            <div>
-              <div class="text-xs text-gray-500 mb-1">Unsplash پس منظر</div>
-              <div id="unsplashGallery" class="grid grid-cols-6 gap-2"></div>
+            <div class="flex items-center gap-2">
+              <button onclick="openUnsplash()" class="inline-flex items-center gap-2 rounded-lg bg-stone-800 text-white px-3 py-2 text-sm hover:opacity-90">
+                <span class="material-symbols-outlined">wallpaper</span> Unsplash پس منظر
+              </button>
+              <span class="text-xs text-gray-400">تلاش کریں اور منتخب کریں</span>
             </div>
           </div>
 
@@ -218,12 +262,16 @@
 
         <!-- ============== PREVIEW COLUMN ============== -->
         <div class="flex flex-col items-stretch gap-4">
-          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 flex justify-center gap-3">
+          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 flex items-center justify-center gap-3 flex-wrap">
             <button onclick="downloadImage()" class="icon-btn bg-green-500" title="تصویر ڈاؤن لوڈ"><span class="material-symbols-outlined">download</span></button>
             <button onclick="window.print()" class="icon-btn bg-gray-700" title="پرنٹ"><span class="material-symbols-outlined">print</span></button>
+            <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-600 select-none">
+              <input type="checkbox" id="roundedToggle" class="w-4 h-4 text-pink-600 rounded border-gray-300" />
+              گول کونے — Rounded corners
+            </label>
           </div>
-          <div class="overflow-auto rounded-3xl">
-            <div id="print-area" class="bg-white/80 backdrop-blur rounded-3xl shadow-xl px-10 py-12 text-center text-xl leading-loose min-h-[300px] transition-all"></div>
+          <div id="previewHost" class="overflow-auto rounded-3xl">
+            <div id="print-area" class="bg-white/80 backdrop-blur rounded-3xl square-corners shadow-xl px-10 py-12 text-center text-xl leading-loose min-h-[300px] transition-all"></div>
           </div>
         </div>
       </div>
@@ -275,6 +323,43 @@
           <button type="button" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700" onclick="toggleSjModal(false)">Close</button>
           <button type="button" class="px-4 py-2 rounded-xl bg-pink-600 text-white" onclick="insertPoetryBlockFromModal()">Insert</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Unsplash search modal -->
+    <div id="unsplashModal" class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center p-4 z-50">
+      <div class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-5 space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold text-slate-800">Unsplash پس منظر</h2>
+          <button type="button" class="icon-btn bg-slate-700" onclick="closeUnsplash()"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="flex gap-2 items-center">
+          <input id="unsplashQuery" placeholder="تلاش… (mountain, paper, sky…)" class="flex-1 border border-slate-200 rounded-xl p-2.5 text-sm" />
+          <button onclick="searchUnsplash()" class="icon-btn bg-stone-800"><span class="material-symbols-outlined">search</span></button>
+          <a id="unsplashOpenLink" href="https://unsplash.com" target="_blank" rel="noopener" class="icon-btn bg-stone-500" title="Unsplash پر کھولیں"><span class="material-symbols-outlined">open_in_new</span></a>
+        </div>
+        <div id="unsplashKeyRow" class="hidden text-xs text-slate-500 bg-slate-50 rounded-xl p-2 space-y-1">
+          <p>براہِ راست تلاش کے لیے مفت Unsplash Access Key درکار ہے (ایک بار)۔ <a class="text-pink-600 underline" href="https://unsplash.com/developers" target="_blank" rel="noopener">یہاں سے حاصل کریں</a>۔</p>
+          <div class="flex gap-2">
+            <input id="unsplashKey" placeholder="Unsplash Access Key" class="flex-1 border border-slate-200 rounded-lg p-1.5" />
+            <button onclick="saveUnsplashKey()" class="px-3 rounded-lg bg-pink-600 text-white text-xs">Save</button>
+          </div>
+        </div>
+        <div id="unsplashResults" class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[50vh] overflow-auto"></div>
+        <p class="text-[11px] text-slate-400">تصاویر Unsplash سے۔ کلک کرنے پر پس منظر بن جائے گی۔</p>
+      </div>
+    </div>
+
+    <!-- Mobile preview FAB + full-screen overlay -->
+    <button id="previewFab" onclick="togglePreview(true)" class="icon-btn bg-pink-600" title="پیش منظر — Preview">
+      <span class="material-symbols-outlined">visibility</span>
+    </button>
+    <div id="previewOverlay">
+      <div class="max-w-3xl mx-auto">
+        <div class="flex justify-end mb-2">
+          <button onclick="togglePreview(false)" class="icon-btn bg-white text-pink-700"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="previewOverlayBody"></div>
       </div>
     </div>
 

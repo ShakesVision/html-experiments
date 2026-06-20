@@ -64,6 +64,11 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    var plugins = [];
+    if (toastui.Editor.plugin && toastui.Editor.plugin.colorSyntax) {
+      plugins.push(toastui.Editor.plugin.colorSyntax); // colors the selection
+    }
+
     editor = new toastui.Editor({
       el: host,
       height: "420px",
@@ -72,6 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
       usageStatistics: false,
       hideModeSwitch: false,
       initialValue: initialValue || "",
+      plugins: plugins,
       toolbarItems: [
         ["heading", "bold", "italic", "strike"],
         ["hr", "quote"],
@@ -226,9 +232,12 @@ document.addEventListener("DOMContentLoaded", function () {
   function applyFont() {
     var stack = fontStack(currentFont);
     if (previewEl) previewEl.style.fontFamily = stack;
-    document.querySelectorAll(".toastui-editor-contents, .toastui-editor .CodeMirror, #fallbackArea").forEach(function (el) {
-      el.style.fontFamily = stack;
-    });
+    // v3 Toast UI uses ProseMirror editables in both markdown & WYSIWYG modes.
+    document
+      .querySelectorAll(".toastui-editor-contents, .toastui-editor .ProseMirror, #fallbackArea")
+      .forEach(function (el) {
+        el.style.fontFamily = stack;
+      });
   }
 
   function ensureFontOption(name, label) {
@@ -281,11 +290,45 @@ document.addEventListener("DOMContentLoaded", function () {
     if (save !== false) autoSave();
   }
 
+  var gradStops = ["#fde2e4", "#e2ecf9"];
+  function renderGradStops() {
+    var wrap = document.getElementById("gradStops");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    gradStops.forEach(function (color, i) {
+      var box = document.createElement("span");
+      box.className = "inline-flex items-center";
+      var inp = document.createElement("input");
+      inp.type = "color";
+      inp.value = color;
+      inp.addEventListener("input", function () { gradStops[i] = this.value; window.applyGradient(); });
+      box.appendChild(inp);
+      if (gradStops.length > 2) {
+        var rm = document.createElement("button");
+        rm.className = "fmt-btn";
+        rm.title = "رنگ ہٹائیں — remove";
+        rm.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">close</span>';
+        rm.addEventListener("click", function () { gradStops.splice(i, 1); renderGradStops(); window.applyGradient(); });
+        box.appendChild(rm);
+      }
+      wrap.appendChild(box);
+    });
+  }
+
+  window.addGradStop = function () {
+    gradStops.push("#ffffff");
+    renderGradStops();
+    window.applyGradient();
+  };
+
   window.applyGradient = function () {
-    var a = document.getElementById("gradAngle").value || 135;
-    var c1 = document.getElementById("grad1").value;
-    var c2 = document.getElementById("grad2").value;
-    bgEl.value = "linear-gradient(" + a + "deg, " + c1 + ", " + c2 + ")";
+    var type = (document.getElementById("gradType") || {}).value || "linear";
+    var dir = (document.getElementById("gradDir") || {}).value || "135";
+    var stops = gradStops.join(", ");
+    bgEl.value =
+      type === "radial"
+        ? "radial-gradient(circle, " + stops + ")"
+        : "linear-gradient(" + dir + "deg, " + stops + ")";
     applyPreviewStyles();
   };
 
@@ -311,52 +354,31 @@ document.addEventListener("DOMContentLoaded", function () {
     reader.readAsDataURL(file);
   }
 
-  // Curated, key-free Unsplash backgrounds (stable photo IDs). Clicking sets bg.
-  var UNSPLASH = [
-    "photo-1506744038136-46273834b3fb",
-    "photo-1470071459604-3b5ec3a7fe05",
-    "photo-1500530855697-b586d89ba3ee",
-    "photo-1499346030926-9a72daac6c63",
-    "photo-1524995997946-a1c2e315a42f",
-    "photo-1513682121497-80211f36a7d3",
-  ];
-  function buildUnsplashGallery() {
-    var wrap = document.getElementById("unsplashGallery");
-    if (!wrap) return;
-    UNSPLASH.forEach(function (id) {
-      var img = document.createElement("img");
-      img.className = "unsplash-thumb";
-      img.loading = "lazy";
-      img.src = "https://images.unsplash.com/" + id + "?auto=format&fit=crop&w=120&q=60";
-      img.title = "اس تصویر کو پس منظر بنائیں";
-      img.addEventListener("click", function () {
-        var full = "https://images.unsplash.com/" + id + "?auto=format&fit=crop&w=1600&q=80";
-        bgEl.value = "url('" + full + "') center/cover no-repeat";
-        applyPreviewStyles();
-      });
-      wrap.appendChild(img);
-    });
-  }
-
   /* ---------------------------- Page size ---------------------------- */
 
   function applyPageSize(value, save) {
     currentPageSize = value || "auto";
     if (!previewEl) return;
-    if (currentPageSize === "auto" || currentPageSize === "custom" && false) {
+    if (currentPageSize === "auto") {
       previewEl.style.width = "100%";
       previewEl.style.minHeight = "300px";
-    } else if (currentPageSize === "custom") {
-      var w = Number(document.getElementById("pageW").value) || 0;
-      var h = Number(document.getElementById("pageH").value) || 0;
+      previewEl.style.maxWidth = "100%";
+    } else {
+      var w, h;
+      if (currentPageSize === "custom") {
+        w = Number(document.getElementById("pageW").value) || 0;
+        h = Number(document.getElementById("pageH").value) || 0;
+      } else {
+        var parts = currentPageSize.split("x");
+        w = Number(parts[0]);
+        h = Number(parts[1]);
+      }
       if (w) previewEl.style.width = w + "px";
       if (h) previewEl.style.minHeight = h + "px";
-    } else {
-      var parts = currentPageSize.split("x");
-      previewEl.style.width = parts[0] + "px";
-      previewEl.style.minHeight = parts[1] + "px";
+      // Render the true page width; the #previewHost wrapper scrolls if the
+      // column is narrower. (Capping at 100% was squashing A4/Letter width.)
+      previewEl.style.maxWidth = "none";
     }
-    previewEl.style.maxWidth = "100%";
     if (save !== false) autoSave();
   }
 
@@ -602,6 +624,124 @@ document.addEventListener("DOMContentLoaded", function () {
     renderPreview();
   };
 
+  /* --------------------- Alignment / direction --------------------- */
+
+  function wrapSelection(makeHtml) {
+    if (!editor) return;
+    var sel = (editor.getSelectedText && editor.getSelectedText()) || "";
+    var text = sel || "متن";
+    var html = makeHtml(text);
+    if (editor.replaceSelection) editor.replaceSelection(html);
+    else editor.insertText(html);
+    renderPreview();
+    autoSave();
+  }
+
+  window.applyAlignment = function (align) {
+    wrapSelection(function (t) {
+      return '<p style="text-align:' + align + '">' + t.replace(/\n/g, "<br>") + "</p>";
+    });
+  };
+
+  window.applyDirection = function (dir) {
+    wrapSelection(function (t) {
+      var ta = dir === "rtl" ? "right" : "left";
+      return '<div dir="' + dir + '" style="text-align:' + ta + '">' + t.replace(/\n/g, "<br>") + "</div>";
+    });
+  };
+
+  /* --------------------------- Preview overlay --------------------------- */
+
+  window.togglePreview = function (show) {
+    var overlay = document.getElementById("previewOverlay");
+    var body = document.getElementById("previewOverlayBody");
+    var host = document.getElementById("previewHost");
+    if (!overlay || !body || !host || !previewEl) return;
+    if (show) {
+      body.appendChild(previewEl); // re-parent the single live preview node
+      overlay.classList.add("open");
+    } else {
+      host.appendChild(previewEl);
+      overlay.classList.remove("open");
+    }
+  };
+
+  /* ----------------------------- Unsplash ----------------------------- */
+
+  var UNSPLASH_KEY_STORE = "poetryUnsplashKey";
+  var CURATED = [
+    "photo-1506744038136-46273834b3fb", "photo-1470071459604-3b5ec3a7fe05",
+    "photo-1500530855697-b586d89ba3ee", "photo-1499346030926-9a72daac6c63",
+    "photo-1524995997946-a1c2e315a42f", "photo-1513682121497-80211f36a7d3",
+  ];
+  function unsplashThumb(id) { return "https://images.unsplash.com/" + id + "?auto=format&fit=crop&w=200&q=60"; }
+  function unsplashFull(id) { return "https://images.unsplash.com/" + id + "?auto=format&fit=crop&w=1600&q=80"; }
+
+  function setUnsplashBg(fullUrl) {
+    bgEl.value = "url('" + fullUrl + "') center/cover no-repeat";
+    applyPreviewStyles();
+    window.closeUnsplash();
+  }
+  function renderUnsplashResults(items) {
+    var wrap = document.getElementById("unsplashResults");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    items.forEach(function (it) {
+      var img = document.createElement("img");
+      img.src = it.thumb;
+      img.loading = "lazy";
+      img.className = "unsplash-thumb";
+      img.style.height = "90px";
+      img.addEventListener("click", function () { setUnsplashBg(it.full); });
+      wrap.appendChild(img);
+    });
+  }
+  function renderCurated() {
+    renderUnsplashResults(CURATED.map(function (id) { return { thumb: unsplashThumb(id), full: unsplashFull(id) }; }));
+  }
+
+  window.openUnsplash = function () {
+    var m = document.getElementById("unsplashModal");
+    m.classList.remove("hidden");
+    m.classList.add("flex");
+    document.getElementById("unsplashKeyRow").classList.toggle("hidden", !!localStorage.getItem(UNSPLASH_KEY_STORE));
+    if (!document.getElementById("unsplashResults").children.length) renderCurated();
+  };
+  window.closeUnsplash = function () {
+    var m = document.getElementById("unsplashModal");
+    m.classList.add("hidden");
+    m.classList.remove("flex");
+  };
+  window.saveUnsplashKey = function () {
+    var k = document.getElementById("unsplashKey").value.trim();
+    if (k) {
+      localStorage.setItem(UNSPLASH_KEY_STORE, k);
+      document.getElementById("unsplashKeyRow").classList.add("hidden");
+    }
+  };
+  window.searchUnsplash = function () {
+    var q = document.getElementById("unsplashQuery").value.trim();
+    var link = document.getElementById("unsplashOpenLink");
+    if (q && link) link.href = "https://unsplash.com/s/photos/" + encodeURIComponent(q);
+    var key = localStorage.getItem(UNSPLASH_KEY_STORE);
+    if (!key) {
+      // No key → can't query Unsplash directly; offer key setup + curated picks
+      // and let the ↗ button open the live search on unsplash.com.
+      document.getElementById("unsplashKeyRow").classList.remove("hidden");
+      renderCurated();
+      return;
+    }
+    if (!q) { renderCurated(); return; }
+    fetch("https://api.unsplash.com/search/photos?per_page=18&query=" + encodeURIComponent(q) + "&client_id=" + encodeURIComponent(key))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var items = (d.results || []).map(function (p) { return { thumb: p.urls.small, full: p.urls.regular }; });
+        renderUnsplashResults(items.length ? items : []);
+        if (!items.length) renderCurated();
+      })
+      .catch(function () { renderCurated(); });
+  };
+
   /* --------------------------- Color sync --------------------------- */
 
   function isHex(v) { return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test((v || "").trim()); }
@@ -650,16 +790,40 @@ document.addEventListener("DOMContentLoaded", function () {
     modal.addEventListener("click", function (e) { if (e.target === modal) { modal.classList.add("hidden"); modal.classList.remove("flex"); } });
   });
 
+  // Gradient type/direction, rounded-corners, Unsplash + preview-overlay wiring
+  var gradType = document.getElementById("gradType");
+  var gradDir = document.getElementById("gradDir");
+  if (gradType) gradType.addEventListener("change", function () {
+    if (gradDir) gradDir.disabled = this.value === "radial";
+    window.applyGradient();
+  });
+  if (gradDir) gradDir.addEventListener("change", function () { window.applyGradient(); });
+
+  var roundedToggle = document.getElementById("roundedToggle");
+  if (roundedToggle) roundedToggle.addEventListener("change", function () {
+    if (previewEl) previewEl.classList.toggle("square-corners", !this.checked);
+  });
+
+  var unsplashQuery = document.getElementById("unsplashQuery");
+  if (unsplashQuery) unsplashQuery.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); window.searchUnsplash(); }
+  });
+  var unsplashModalEl = document.getElementById("unsplashModal");
+  if (unsplashModalEl) unsplashModalEl.addEventListener("click", function (e) { if (e.target === unsplashModalEl) window.closeUnsplash(); });
+
+  var previewOverlayEl = document.getElementById("previewOverlay");
+  if (previewOverlayEl) previewOverlayEl.addEventListener("click", function (e) { if (e.target === previewOverlayEl) window.togglePreview(false); });
+
   /* ------------------------------ Init ------------------------------ */
 
   function initFromStorage() {
     savedItems = storageItems();
-    if (!savedItems.length) { initEditor(""); window.createNewPoetryItem(); buildUnsplashGallery(); return; }
+    renderGradStops();
+    if (!savedItems.length) { initEditor(""); window.createNewPoetryItem(); return; }
     var storedId = localStorage.getItem(ACTIVE_ITEM_KEY);
     var item = savedItems.find(function (i) { return i.id === storedId; }) || savedItems[0];
     initEditor(item.markdown || item.inputText || "");
     applyItemState(item);
-    buildUnsplashGallery();
   }
 
   initFromStorage();
