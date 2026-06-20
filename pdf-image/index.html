@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF to Images Converter</title>
     <link rel="icon" href="icon.png" type="image/png" sizes="16x16">
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip-utils/dist/jszip-utils.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>    <link rel="stylesheet" href="../assets/css/tailwind.css" />
@@ -54,7 +54,10 @@
     </div>
 
     <script>
-        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        const pdfjsLib = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
+        // pdf.js needs its worker configured or getDocument() never resolves.
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
         document.getElementById('convertBtn').addEventListener('click', async () => {
             const pdfFile = document.getElementById('pdfFile').files[0];

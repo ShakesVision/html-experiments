@@ -134,8 +134,17 @@
         <!-- ============== AUTHORING COLUMN ============== -->
         <div class="space-y-5">
           <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3">
-            <div class="flex flex-wrap items-center gap-2">
+            <!-- Alignment + direction (applied to the current selection) -->
+            <div class="flex flex-wrap items-center gap-1 border-t border-pink-100 pt-2">
+              <button class="fmt-btn" title="دائیں — Align right" onclick="applyAlignment('right')"><span class="material-symbols-outlined">format_align_right</span></button>
+              <button class="fmt-btn" title="درمیان — Align center" onclick="applyAlignment('center')"><span class="material-symbols-outlined">format_align_center</span></button>
+              <button class="fmt-btn" title="بائیں — Align left" onclick="applyAlignment('left')"><span class="material-symbols-outlined">format_align_left</span></button>
+              <button class="fmt-btn" title="جسٹیفائی — Justify" onclick="applyAlignment('justify')"><span class="material-symbols-outlined">format_align_justify</span></button>
+              <span class="w-px h-5 bg-pink-200 mx-1"></span>
+              <button class="fmt-btn" title="RTL (دائیں سے بائیں)" onclick="applyDirection('rtl')"><span class="material-symbols-outlined">format_textdirection_r_to_l</span></button>
+              <button class="fmt-btn" title="LTR (بائیں سے دائیں)" onclick="applyDirection('ltr')"><span class="material-symbols-outlined">format_textdirection_l_to_r</span></button>
               <button onclick="insertPoetryBlock()" class="icon-btn bg-pink-500" title="شعر بلاک داخل کریں / Insert poetry block">
+                شاعری
                 <span class="material-symbols-outlined">splitscreen</span>
               </button>
               <select id="fontSelector" class="border border-gray-200 p-2 rounded-lg text-sm">
@@ -146,17 +155,6 @@
               <button onclick="toggleCssModal(true)" class="icon-btn bg-slate-600" title="Preview CSS">
                 <span class="material-symbols-outlined">css</span>
               </button>
-              <span class="text-xs text-gray-500">Markdown ⇄ WYSIWYG سوئچ نیچے ہے</span>
-            </div>
-            <!-- Alignment + direction (applied to the current selection) -->
-            <div class="flex flex-wrap items-center gap-1 border-t border-pink-100 pt-2">
-              <button class="fmt-btn" title="دائیں — Align right" onclick="applyAlignment('right')"><span class="material-symbols-outlined">format_align_right</span></button>
-              <button class="fmt-btn" title="درمیان — Align center" onclick="applyAlignment('center')"><span class="material-symbols-outlined">format_align_center</span></button>
-              <button class="fmt-btn" title="بائیں — Align left" onclick="applyAlignment('left')"><span class="material-symbols-outlined">format_align_left</span></button>
-              <button class="fmt-btn" title="جسٹیفائی — Justify" onclick="applyAlignment('justify')"><span class="material-symbols-outlined">format_align_justify</span></button>
-              <span class="w-px h-5 bg-pink-200 mx-1"></span>
-              <button class="fmt-btn" title="RTL (دائیں سے بائیں)" onclick="applyDirection('rtl')"><span class="material-symbols-outlined">format_textdirection_r_to_l</span></button>
-              <button class="fmt-btn" title="LTR (بائیں سے دائیں)" onclick="applyDirection('ltr')"><span class="material-symbols-outlined">format_textdirection_l_to_r</span></button>
             </div>
             <div id="editor"></div>
           </div>
