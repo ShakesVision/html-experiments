@@ -136,6 +136,9 @@
           <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3">
             <!-- Alignment + direction (applied to the current selection) -->
             <div class="flex flex-wrap items-center gap-1 border-pink-100 pt-2">
+              <button id="undoBtn" class="fmt-btn disabled:opacity-40" title="واپس — Undo (Ctrl+Z)" onclick="undoEdit()"><span class="material-symbols-outlined">undo</span></button>
+              <button id="redoBtn" class="fmt-btn disabled:opacity-40" title="دوبارہ — Redo" onclick="redoEdit()"><span class="material-symbols-outlined">redo</span></button>
+              <span class="w-px h-5 bg-pink-200 mx-1"></span>
               <button class="fmt-btn" title="دائیں — Align right" onclick="applyAlignment('right')"><span class="material-symbols-outlined">format_align_right</span></button>
               <button class="fmt-btn" title="درمیان — Align center" onclick="applyAlignment('center')"><span class="material-symbols-outlined">format_align_center</span></button>
               <button class="fmt-btn" title="بائیں — Align left" onclick="applyAlignment('left')"><span class="material-symbols-outlined">format_align_left</span></button>
@@ -154,6 +157,9 @@
               </select>
               <button onclick="toggleCssModal(true)" class="icon-btn bg-slate-600" title="Preview CSS">
                 <span class="material-symbols-outlined">css</span>
+              </button>
+              <button onclick="toggleAboutModal(true)" class="icon-btn bg-pink-600" title="About / Credits — shakeeb-justify">
+                <span class="material-symbols-outlined">auto_awesome</span>
               </button>
             </div>
             <div id="editor"></div>
@@ -322,6 +328,33 @@
           <button type="button" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700" onclick="toggleSjModal(false)">Close</button>
           <button type="button" class="px-4 py-2 rounded-xl bg-pink-600 text-white" onclick="insertPoetryBlockFromModal()">Insert</button>
         </div>
+        <p class="text-xs text-center text-slate-400 border-t border-slate-100 pt-3">
+          منتخب شعر خود بخود لپیٹ دیا جائے گا۔ · Justification powered by
+          <a href="https://www.npmjs.com/package/shakeeb-justify" target="_blank" rel="noopener" class="text-pink-600 font-semibold underline">✨ shakeeb-justify</a>
+          — an npm package by <a href="https://shakeeb.in" target="_blank" rel="noopener" class="text-pink-600 underline">Shakeeb</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- About / credits modal -->
+    <div id="aboutModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+      <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 space-y-4 text-center">
+        <div class="flex items-center justify-end">
+          <button type="button" class="icon-btn bg-slate-700" onclick="toggleAboutModal(false)"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="text-5xl">✨</div>
+        <h2 class="text-xl font-bold text-slate-800">Powered by shakeeb-justify</h2>
+        <p class="text-sm text-slate-600">
+          The beautiful Urdu poetry justification in this app is powered by
+          <strong>shakeeb-justify</strong> — an open-source npm package crafted by
+          <strong>Shakeeb</strong>. It's the engine behind the perfectly aligned
+          مصرعے you see here and in the Book Maker.
+        </p>
+        <div class="flex flex-col gap-2">
+          <a href="https://www.npmjs.com/package/shakeeb-justify" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#cb3837] text-white px-4 py-2 text-sm font-semibold">npm: shakeeb-justify</a>
+          <a href="https://shakeeb.in" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-xl bg-pink-600 text-white px-4 py-2 text-sm">shakeeb.in</a>
+        </div>
+        <p class="text-xs text-slate-400">اگر پسند آئے تو npm پر ⭐ ضرور دیں — شکریہ!</p>
       </div>
     </div>
 

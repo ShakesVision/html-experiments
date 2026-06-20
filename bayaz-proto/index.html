@@ -85,6 +85,9 @@
           <input type="range" min="0.3" max="1" step="0.05" x-model.number="zoom" />
         </span>
         <span class="ml-auto text-xs text-stone-500" x-text="pages.length + ' صفحے'"></span>
+        <button @click="undo()" title="واپس — Undo (Ctrl+Z)" class="inline-flex items-center rounded-lg border border-stone-300 bg-white px-2 py-1.5 hover:bg-stone-100"><span class="material-symbols-outlined">undo</span></button>
+        <button @click="redo()" title="دوبارہ — Redo" class="inline-flex items-center rounded-lg border border-stone-300 bg-white px-2 py-1.5 hover:bg-stone-100"><span class="material-symbols-outlined">redo</span></button>
+        <button @click="about=true" title="About — powered by shakeeb-justify" class="inline-flex items-center rounded-lg bg-pink-600 text-white px-2 py-1.5"><span class="material-symbols-outlined">auto_awesome</span></button>
         <button @click="window.print()" class="inline-flex items-center gap-1 rounded-lg bg-stone-800 text-white px-3 py-1.5 text-sm hover:opacity-90">
           <span class="material-symbols-outlined">picture_as_pdf</span> Print / PDF
         </button>
@@ -103,7 +106,7 @@
           <p class="text-xs text-stone-500 mb-2">
             <code>---</code> ایک لائن میں = نیا صفحہ۔ شاعری کے لیے <code>[sj]</code>…<code>[/sj]</code> (یا <code>[sj format="mukhammas"]</code>)۔ مارک ڈاؤن سپورٹڈ۔
           </p>
-          <textarea x-model="source" @input="onInput()" dir="rtl"
+          <textarea id="bookSource" x-model="source" @input="onInput()" dir="rtl"
             class="w-full h-[70vh] border border-stone-200 rounded-lg p-3 text-lg leading-loose outline-none focus:ring-2 focus:ring-stone-300"
             style="font-family: var(--book-font, 'Payami'), 'Mehr', serif;"
             placeholder="یہاں اپنی کتاب لکھیں…"></textarea>
@@ -124,6 +127,27 @@
       </section>
     </main>
 
+    <!-- About / credits -->
+    <div x-show="about" x-cloak @click.self="about=false" class="no-print fixed inset-0 bg-stone-900/50 flex items-center justify-center p-4 z-50">
+      <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 space-y-4 text-center">
+        <div class="flex justify-end"><button @click="about=false" class="text-stone-500"><span class="material-symbols-outlined">close</span></button></div>
+        <div class="text-5xl">✨</div>
+        <h2 class="text-xl font-bold text-stone-800">Powered by shakeeb-justify</h2>
+        <p class="text-sm text-stone-600">بیاض میں شاعری کی خوبصورت ترتیب <strong>shakeeb-justify</strong> سے ہے — <strong>Shakeeb</strong> کا بنایا ہوا اوپن سورس npm پیکج، اور اسی کی پروڈ تخلیق۔</p>
+        <div class="flex flex-col gap-2">
+          <a href="https://www.npmjs.com/package/shakeeb-justify" target="_blank" rel="noopener" class="rounded-xl bg-[#cb3837] text-white px-4 py-2 text-sm font-semibold">npm: shakeeb-justify</a>
+          <a href="https://shakeeb.in" target="_blank" rel="noopener" class="rounded-xl bg-pink-600 text-white px-4 py-2 text-sm">shakeeb.in</a>
+        </div>
+        <p class="text-xs text-stone-400">اگر پسند آئے تو npm پر ⭐ ضرور دیں — شکریہ!</p>
+      </div>
+    </div>
+
+    <footer class="no-print text-center text-xs text-stone-400 py-4">
+      Powered by
+      <a href="https://www.npmjs.com/package/shakeeb-justify" target="_blank" rel="noopener" class="text-pink-600 font-semibold underline">✨ shakeeb-justify</a>
+      — by <a href="https://shakeeb.in" target="_blank" rel="noopener" class="text-pink-600 underline">Shakeeb</a>
+    </footer>
+
     <script>
       const SIZES = {
         A4:     { w: 794,  h: 1123, css: "A4" },
@@ -142,7 +166,7 @@
           SIZES,
           title: "", author: "", source: SAMPLE,
           pageSize: "A4", fontName: "Payami", margin: "normal",
-          header: true, footer: true, zoom: 0.6, view: "preview",
+          header: true, footer: true, zoom: 0.6, view: "preview", about: false,
           fonts: ["Payami", "Mehr", "Emaad"],
           _t: null,
 
@@ -179,6 +203,10 @@
             clearTimeout(this._t);
             this._t = setTimeout(() => { this.save(); this.justify(); }, 300);
           },
+
+          // Undo/redo via the textarea's native history (covers all edits).
+          undo() { const t = document.getElementById("bookSource"); if (!t) return; t.focus(); document.execCommand("undo"); this.source = t.value; this.onInput(); },
+          redo() { const t = document.getElementById("bookSource"); if (!t) return; t.focus(); document.execCommand("redo"); this.source = t.value; this.onInput(); },
 
           justify() {
             this.$nextTick(() => { if (window.ShakeebJustify) { try { ShakeebJustify.apply(); } catch (e) {} } });

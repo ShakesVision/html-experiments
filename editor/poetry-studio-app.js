@@ -38,6 +38,69 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (window.marked) marked.setOptions({ breaks: true, gfm: true });
 
+  /* --------------------- Undo / redo (markdown history) ---------------------
+     App-level snapshots of the markdown so no action (formatter, alignment,
+     new note) can ever silently lose work. Coarse-grained: typing collapses
+     into ~0.5s steps; mutations snapshot synchronously. */
+  var histPast = [], histFuture = [], histPresent = "", histTimer = null, histRestoring = false;
+
+  function updateUndoButtons() {
+    var u = document.getElementById("undoBtn"), r = document.getElementById("redoBtn");
+    if (u) u.disabled = !histPast.length;
+    if (r) r.disabled = !histFuture.length;
+  }
+  function histInit() {
+    histPresent = getMarkdown();
+    histPast = []; histFuture = [];
+    updateUndoButtons();
+  }
+  function histCapture() {
+    if (histRestoring) return;
+    clearTimeout(histTimer);
+    histTimer = setTimeout(function () {
+      var md = getMarkdown();
+      if (md === histPresent) return;
+      histPast.push(histPresent);
+      if (histPast.length > 80) histPast.shift();
+      histPresent = md; histFuture = [];
+      updateUndoButtons();
+    }, 500);
+  }
+  function histRecord() {
+    // Commit any pending edit so the pre-mutation state is a clean undo point.
+    clearTimeout(histTimer);
+    if (histRestoring) return;
+    var md = getMarkdown();
+    if (md !== histPresent) {
+      histPast.push(histPresent);
+      if (histPast.length > 80) histPast.shift();
+      histPresent = md; histFuture = [];
+      updateUndoButtons();
+    }
+  }
+  function applyHist(md) {
+    histRestoring = true;
+    if (editor) editor.setMarkdown(md);
+    renderPreview();
+    histRestoring = false;
+    updateUndoButtons();
+  }
+  window.undoEdit = function () {
+    clearTimeout(histTimer);
+    var md = getMarkdown();
+    if (md !== histPresent) { histPast.push(histPresent); histPresent = md; histFuture = []; }
+    if (!histPast.length) return;
+    histFuture.push(histPresent);
+    histPresent = histPast.pop();
+    applyHist(histPresent);
+  };
+  window.redoEdit = function () {
+    if (!histFuture.length) return;
+    histPast.push(histPresent);
+    histPresent = histFuture.pop();
+    applyHist(histPresent);
+  };
+
   /* ----------------------------- Editor ----------------------------- */
 
   function initEditor(initialValue) {
@@ -91,6 +154,7 @@ document.addEventListener("DOMContentLoaded", function () {
     editor.on("change", function () {
       renderPreview();
       autoSave();
+      histCapture();
     });
 
     // Urdu phonetic keyboard. Using Toast's insertText API (not manual textarea
@@ -520,6 +584,7 @@ document.addEventListener("DOMContentLoaded", function () {
     applyPreviewStyles(false);
     applyPageSize(currentPageSize, false);
     renderPreview();
+    histInit();
     persist();
     renderSavedItems();
   }
@@ -544,6 +609,7 @@ document.addEventListener("DOMContentLoaded", function () {
     applyPreviewStyles(false);
     applyPageSize("auto", false);
     renderPreview();
+    histInit();
     upsertActive();
   };
 
@@ -634,13 +700,27 @@ document.addEventListener("DOMContentLoaded", function () {
   };
   window.saveCustomCssFromModal = function () { applyPreviewStyles(); toggleCssModal(false); };
 
+  window.toggleAboutModal = function (show) {
+    var m = document.getElementById("aboutModal");
+    if (!m) return;
+    m.classList.toggle("hidden", !show);
+    m.classList.toggle("flex", !!show);
+  };
+
   window.toggleSjModal = function (show) {
     if (!sjModalEl) return;
     if (show && sjFormatSelect) sjFormatSelect.value = currentPattern || "sher";
     sjModalEl.classList.toggle("hidden", !show);
     sjModalEl.classList.toggle("flex", !!show);
   };
-  window.insertPoetryBlock = function () { window.toggleSjModal(true); };
+  // Selection captured at the moment the modal opens — the editor keeps its
+  // internal selection even while focus is in the modal, but we snapshot the
+  // text so we can WRAP it (never replace/lose it).
+  var sjSelectedText = "";
+  window.insertPoetryBlock = function () {
+    sjSelectedText = (editor && editor.getSelectedText && editor.getSelectedText()) || "";
+    window.toggleSjModal(true);
+  };
 
   window.insertPoetryBlockFromModal = function () {
     var fmt = sjFormatSelect ? sjFormatSelect.value : "sher";
@@ -650,8 +730,14 @@ document.addEventListener("DOMContentLoaded", function () {
     if (fmt === "custom" && custom) attrs.push('custom="' + custom.replace(/"/g, "&quot;") + '"');
     var open = attrs.length ? "[sj " + attrs.join(" ") + "]" : "[sj]";
     if (fmt !== "custom") currentPattern = fmt;
-    var snippet = "\n" + open + "\nپہلا مصرع\nدوسرا مصرع\n[/sj]\n";
-    editor.insertText(snippet);
+    // Wrap the selected couplet; only fall back to placeholders if nothing
+    // was selected. Snapshot first so a single Undo restores the original.
+    histRecord();
+    var body = sjSelectedText.trim() ? sjSelectedText.replace(/\s+$/, "") : "پہلا مصرع\nدوسرا مصرع";
+    var snippet = "\n" + open + "\n" + body + "\n[/sj]\n";
+    if (editor.replaceSelection) editor.replaceSelection(snippet);
+    else editor.insertText(snippet);
+    sjSelectedText = "";
     window.toggleSjModal(false);
     renderPreview();
   };
@@ -660,6 +746,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function wrapSelection(makeHtml) {
     if (!editor) return;
+    histRecord();
     var sel = (editor.getSelectedText && editor.getSelectedText()) || "";
     var text = sel || "متن";
     var html = makeHtml(text);
@@ -817,7 +904,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (importFileInput) importFileInput.addEventListener("change", function (e) { importItems(e.target.files && e.target.files[0]); e.target.value = ""; });
 
-  [cssModalEl, sjModalEl].forEach(function (modal) {
+  [cssModalEl, sjModalEl, document.getElementById("aboutModal")].forEach(function (modal) {
     if (!modal) return;
     modal.addEventListener("click", function (e) { if (e.target === modal) { modal.classList.add("hidden"); modal.classList.remove("flex"); } });
   });
