@@ -346,13 +346,6 @@
       "isRoot": false
     },
     {
-      "path": "wp-dp-dw/index.html",
-      "folder": "wp-dp-dw",
-      "isIndex": true,
-      "title": "WhatsApp DP Viewer",
-      "isRoot": false
-    },
-    {
       "path": "zip-editor/index.html",
       "folder": "zip-editor",
       "isIndex": true,

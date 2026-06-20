@@ -36,6 +36,12 @@
         <input id="urlInput" type="text" placeholder="https://example.com" class="mt-1 p-2 border rounded w-full"
           required />
       </div>
+      <!-- Optional CORS proxy -->
+      <div>
+        <label for="proxyInput" class="block font-medium">CORS proxy <span class="text-gray-400 font-normal">(optional)</span>:</label>
+        <input id="proxyInput" type="text" placeholder="empty = direct fetch · or https://corsproxy.io/?url={url}" class="mt-1 p-2 border rounded w-full" />
+        <p class="text-xs text-gray-500 mt-1">Empty = fetch directly (use a CORS-bypass extension). Or paste a proxy — put <code>{url}</code> where the encoded URL goes; otherwise it's appended. Remembered for next time.</p>
+      </div>
       <!-- CSS Selector -->
       <div>
         <label for="selectorInput" class="block font-medium">CSS Selector:</label>
@@ -98,10 +104,41 @@
   </main>
 
   <script>
-    // const GAS_URL = `https://script.google.com/macros/s/AKfycbw3xJdb-tOYC5uq_SZvW2g_PBmymbLg5fXuwnE3L2k2-4WvNz74i2JRAUgSd5j45HpU/exec`;
-    // Update this variable with the URL of your deployed Google Apps Script id.
-    const deploymentId = "AKfycbw3xJdb-tOYC5uq_SZvW2g_PBmymbLg5fXuwnE3L2k2-4WvNz74i2JRAUgSd5j45HpU";
-    const GAS_URL = `https://script.google.com/macros/s/${deploymentId}/exec`;
+    // Optional CORS proxy. Empty → fetch the target directly (works with a
+    // CORS-bypass browser extension). The proxy value is remembered.
+    const PROXY_KEY = "scraperProxyUrl";
+    const proxyInput = document.getElementById("proxyInput");
+    if (proxyInput) {
+      proxyInput.value = localStorage.getItem(PROXY_KEY) || "";
+      proxyInput.addEventListener("change", () =>
+        localStorage.setItem(PROXY_KEY, proxyInput.value.trim()),
+      );
+    }
+
+    function buildFetchUrl(targetUrl) {
+      const proxy = (proxyInput && proxyInput.value.trim()) || "";
+      if (!proxy) return targetUrl;
+      if (proxy.includes("{url}")) return proxy.replace("{url}", encodeURIComponent(targetUrl));
+      return proxy + encodeURIComponent(targetUrl);
+    }
+
+    // Fetch a page's HTML through the proxy (or directly). Handles common proxy
+    // shapes: raw HTML, or JSON with a `res`/`contents` field.
+    async function fetchHtml(targetUrl) {
+      const res = await fetch(buildFetchUrl(targetUrl));
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const text = await res.text();
+      try {
+        const j = JSON.parse(text);
+        if (j && typeof j === "object") {
+          if (j.error) throw new Error(j.error);
+          return j.res || j.contents || text;
+        }
+      } catch (e) {
+        if (e.message && !e.message.startsWith("Unexpected")) throw e;
+      }
+      return text;
+    }
 
     // Form elements
     const form = document.getElementById("scraperForm");
@@ -290,15 +327,12 @@
       }
 
       try {
-        // Fetch using your GAS endpoint
-        const res = await fetch(GAS_URL + "?url=" + encodeURIComponent(url));
-        const data = await res.json();
-        if (data.error) {
-          resultArea.value = "Error: " + data.error;
+        // Fetch directly, or via the configured proxy.
+        const html = await fetchHtml(url);
+        if (!html) {
+          resultArea.value = "No HTML returned.";
           return;
         }
-        // data.res holds the HTML
-        const html = data.res;
         const extracted = extractContent(html, selector, mode, extractType, index, joiner || "\n");
         resultArea.value = extracted || "No content found with that selector.";
       } catch (error) {

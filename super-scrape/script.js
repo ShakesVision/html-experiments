@@ -2,7 +2,37 @@
 
 const form = document.getElementById('scrape-form');
 const urlInput = document.getElementById('url-input');
+const proxyInput = document.getElementById('proxy-input');
 const statusDiv = document.getElementById('status');
+
+// Optional CORS proxy. Empty → fetch directly (works with a CORS-bypass
+// extension). Remembered across sessions.
+const PROXY_KEY = 'superScrapeProxyUrl';
+if (proxyInput) {
+    proxyInput.value = localStorage.getItem(PROXY_KEY) || '';
+    proxyInput.addEventListener('change', () => localStorage.setItem(PROXY_KEY, proxyInput.value.trim()));
+}
+function buildFetchUrl(targetUrl) {
+    const proxy = (proxyInput && proxyInput.value.trim()) || '';
+    if (!proxy) return targetUrl;
+    if (proxy.includes('{url}')) return proxy.replace('{url}', encodeURIComponent(targetUrl));
+    return proxy + encodeURIComponent(targetUrl);
+}
+async function fetchHtml(targetUrl) {
+    const res = await fetch(buildFetchUrl(targetUrl));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    try {
+        const j = JSON.parse(text);
+        if (j && typeof j === 'object') {
+            if (j.error) throw new Error(j.error);
+            return j.res || j.contents || text;
+        }
+    } catch (e) {
+        if (e.message && !e.message.startsWith('Unexpected')) throw e;
+    }
+    return text;
+}
 const metaContainer = document.getElementById('meta-container');
 const htmlPreview = document.getElementById('html-preview');
 
@@ -25,10 +55,7 @@ form.addEventListener('submit', async (e) => {
     currentURL = url;
     statusDiv.textContent = 'Fetching...';
     try {
-        const encoded = encodeURIComponent(url);
-        const response = await fetch(`https://script.google.com/macros/s/AKfycbw3xJdb-tOYC5uq_SZvW2g_PBmymbLg5fXuwnE3L2k2-4WvNz74i2JRAUgSd5j45HpU/exec?url=${encoded}`);
-        const data = await response.json();
-        rawHTML = data.res;
+        rawHTML = await fetchHtml(url);
         renderHTML(rawHTML);
         extractMeta(rawHTML);
         logSession(currentURL, rawHTML);
