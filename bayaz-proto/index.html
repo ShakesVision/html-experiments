@@ -1,282 +1,230 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ur" dir="rtl">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bayaaz - Notion Style Editor</title>    <link rel="stylesheet" href="../assets/css/tailwind.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Noto+Nastaliq+Urdu&display=swap"
-        rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/shakeeb-justify@1.0.0/dist/shakeeb-justify.min.css" rel="stylesheet">
-    <style>
-        /* Define custom font classes */
-        .nastaleeq-font {
-            font-family: 'Noto Nastaliq Urdu', serif;
-        }
-
-        .amiri-font {
-            font-family: 'Amiri Quran', serif;
-        }
-
-        /* Custom styles for the editor and buttons */
-        #editor-container {
-            min-height: 80vh;
-            outline: none;
-        }
-
-        .block-options-toolbar {
-            /* Position the toolbar above the keyboard on mobile */
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 20;
-            background-color: white;
-            padding: 0.5rem;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Style for the plus button */
-        .add-block-btn {
-            position: absolute;
-            right: 100%;
-            top: 50%;
-            transform: translateY(-50%);
-            margin-right: 8px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease-in-out;
-        }
-
-        p:hover .add-block-btn,
-        h1:hover .add-block-btn,
-        h2:hover .add-block-btn {
-            opacity: 1;
-            pointer-events: auto;
-        }
-    </style>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>بیاض — Book Maker</title>
+    <link rel="stylesheet" href="../assets/css/tailwind.css" />
+    <link rel="stylesheet" href="../assets/css/nastaliq-fonts.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <!-- Alpine keeps the app logic tiny; ShakeebJustify + marked are shared with Poetry Studio. -->
+    <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@latest/dist/shakeeb-justify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
     <script defer src="../assets/js/shared-init.js"></script>
-    <link rel="canonical" href="https://tools.shakeeb.in/bayaz-proto/index.html">
-    <link rel="manifest" href="../manifest.webmanifest">
-    <meta name="theme-color" content="#1b4965">
-</head>
+    <link rel="canonical" href="https://tools.shakeeb.in/bayaz-proto/index.html" />
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <meta name="theme-color" content="#1b4965" />
 
-<body class="bg-gray-100 flex flex-col min-h-screen nastaleeq-font">
+    <style>
+      body { direction: rtl; }
+      .material-symbols-outlined { font-size: 20px; vertical-align: middle; }
+      [x-cloak] { display: none !important; }
 
-    <header class="bg-white p-4 shadow-md flex justify-between items-center z-10">
-        <h1 class="text-xl font-bold">بیاض</h1>
-        <button id="save-btn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all">محفوظ
-            کریں</button>
+      /* A single book page. Exact px dimensions (set per page-size via #pageStyle)
+         so on-screen preview matches the printed/PDF page. */
+      .book-page {
+        background: #fff;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+        border: 1px solid #e7e2d8;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        font-family: var(--book-font, "Payami"), "Mehr", serif;
+      }
+      .book-pad-narrow { padding: 38px; }
+      .book-pad-normal { padding: 64px; }
+      .book-pad-wide   { padding: 96px; }
+      .book-head, .book-foot { flex: 0 0 auto; color: #8a8275; font-size: 13px; }
+      .book-head { border-bottom: 1px solid #efe9dd; padding-bottom: 8px; margin-bottom: 14px; display: flex; justify-content: space-between; }
+      .book-foot { border-top: 1px solid #efe9dd; padding-top: 8px; margin-top: 14px; text-align: center; }
+      .book-body { flex: 1 1 auto; text-align: justify; line-height: 2.05; font-size: 1.25rem; color: #15110c; }
+      .book-body :first-child { margin-top: 0; }
+      .book-body h1, .book-body h2, .book-body h3 { font-weight: 700; margin: .6em 0 .35em; text-align: center; }
+      .book-body p { margin: 0 0 .7em; }
+      .book-body blockquote { border-right: 4px solid #d8cdb6; padding-right: 1em; color: #5b5346; }
+      .book-body .poetry-empty-line { height: 1.4em; }
+
+      #bookScroll { /* perf: skip painting offscreen pages on long books */ }
+      .book-page { content-visibility: auto; contain-intrinsic-size: auto 1123px; }
+
+      @media print {
+        body * { visibility: hidden; }
+        #book, #book * { visibility: visible; }
+        #book { position: absolute; inset: 0; zoom: 1 !important; }
+        .book-page { box-shadow: none; border: none; margin: 0; break-after: page; content-visibility: visible; }
+        .no-print { display: none !important; }
+        @page { margin: 0; }
+      }
+    </style>
+    <!-- page dimensions injected here by Alpine -->
+    <style id="pageStyle"></style>
+  </head>
+
+  <body class="bg-stone-200 min-h-screen" x-data="book()" x-init="init()" x-cloak>
+    <!-- Toolbar -->
+    <header class="no-print sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-stone-300 px-4 py-2">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center gap-2">
+        <h1 class="text-lg font-bold text-stone-800 ml-2">بیاض <span class="text-xs font-normal text-stone-400">Book Maker</span></h1>
+        <input x-model="title" @input="save()" placeholder="کتاب کا نام — title" class="border border-stone-300 rounded-lg p-1.5 text-sm w-36 text-right" />
+        <input x-model="author" @input="save()" placeholder="مصنف — author" class="border border-stone-300 rounded-lg p-1.5 text-sm w-28 text-right" />
+        <select x-model="pageSize" @change="apply()" class="border border-stone-300 rounded-lg p-1.5 text-sm">
+          <template x-for="k in Object.keys(SIZES)" :key="k"><option :value="k" x-text="k"></option></template>
+        </select>
+        <select x-model="fontName" @change="apply()" class="border border-stone-300 rounded-lg p-1.5 text-sm">
+          <template x-for="f in fonts" :key="f"><option :value="f" x-text="f"></option></template>
+        </select>
+        <select x-model="margin" @change="apply()" class="border border-stone-300 rounded-lg p-1.5 text-sm">
+          <option value="narrow">Narrow</option><option value="normal">Normal</option><option value="wide">Wide</option>
+        </select>
+        <label class="flex items-center gap-1 text-xs text-stone-600"><input type="checkbox" x-model="header" @change="save()" /> Header</label>
+        <label class="flex items-center gap-1 text-xs text-stone-600"><input type="checkbox" x-model="footer" @change="save()" /> Footer</label>
+        <span class="text-xs text-stone-500 flex items-center gap-1">
+          <span class="material-symbols-outlined">zoom_out</span>
+          <input type="range" min="0.3" max="1" step="0.05" x-model.number="zoom" />
+        </span>
+        <span class="ml-auto text-xs text-stone-500" x-text="pages.length + ' صفحے'"></span>
+        <button @click="window.print()" class="inline-flex items-center gap-1 rounded-lg bg-stone-800 text-white px-3 py-1.5 text-sm hover:opacity-90">
+          <span class="material-symbols-outlined">picture_as_pdf</span> Print / PDF
+        </button>
+        <!-- mobile view switch -->
+        <div class="flex lg:hidden rounded-lg bg-stone-100 p-0.5">
+          <button @click="view='edit'" :class="view==='edit'?'bg-white shadow':''" class="px-2 py-1 rounded text-xs">Edit</button>
+          <button @click="view='preview'" :class="view==='preview'?'bg-white shadow':''" class="px-2 py-1 rounded text-xs">Preview</button>
+        </div>
+      </div>
     </header>
 
-    <main class="flex-grow p-4 overflow-y-auto">
-        <div id="editor-container" contenteditable="true"
-            class="bg-white p-6 rounded-lg shadow-lg max-w-2xl mx-auto space-y-4 text-xl">
-            <p data-block-id="1" class="relative">یہاں کچھ لکھنا شروع کریں...</p>
+    <main class="max-w-7xl mx-auto p-3 grid gap-4 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
+      <!-- Editor -->
+      <section :class="{ 'hidden lg:block': view!=='edit' }" class="no-print">
+        <div class="bg-white rounded-xl shadow p-3 sticky top-16">
+          <p class="text-xs text-stone-500 mb-2">
+            <code>---</code> ایک لائن میں = نیا صفحہ۔ شاعری کے لیے <code>[sj]</code>…<code>[/sj]</code> (یا <code>[sj format="mukhammas"]</code>)۔ مارک ڈاؤن سپورٹڈ۔
+          </p>
+          <textarea x-model="source" @input="onInput()" dir="rtl"
+            class="w-full h-[70vh] border border-stone-200 rounded-lg p-3 text-lg leading-loose outline-none focus:ring-2 focus:ring-stone-300"
+            style="font-family: var(--book-font, 'Payami'), 'Mehr', serif;"
+            placeholder="یہاں اپنی کتاب لکھیں…"></textarea>
         </div>
+      </section>
+
+      <!-- Book preview -->
+      <section :class="{ 'hidden lg:block': view!=='preview' }" id="bookScroll" class="overflow-auto">
+        <div id="book" :style="`zoom:${zoom}`">
+          <template x-for="(chunk, i) in pages" :key="i">
+            <div class="book-page" :class="'book-pad-'+margin" :style="`--book-font:'${fontName}'`">
+              <div class="book-head" x-show="header"><span x-text="title"></span><span x-text="author"></span></div>
+              <div class="book-body" x-html="render(chunk)"></div>
+              <div class="book-foot" x-show="footer" x-text="i+1"></div>
+            </div>
+          </template>
+        </div>
+      </section>
     </main>
 
-    <div id="toolbar" class="block-options-toolbar hidden flex justify-between items-center">
-        <div class="flex items-center space-x-2">
-            <button id="font-btn" class="p-2 rounded-md hover:bg-gray-200" title="Change Font">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 4v1m6.364 1.636l-.707.707M21 12h-1m-1.636 6.364l-.707-.707M12 20v-1m-6.364-1.636l.707-.707M4 12H3m1.636-6.364l.707-.707M12 10.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm4.5 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm-7.5 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                </svg>
-            </button>
-            <button id="justify-btn" class="p-2 rounded-md hover:bg-gray-200" title="Justify Text">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                </svg>
-            </button>
-        </div>
-        <button id="plus-btn"
-            class="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-all text-2xl font-bold leading-none">
-            +
-        </button>
-    </div>
-
-    <div id="block-menu" class="hidden absolute z-30 p-4 bg-white rounded-lg shadow-lg">
-        <ul class="space-y-2">
-            <li><button class="block-type-btn p-2 rounded-md hover:bg-gray-100 w-full text-right"
-                    data-type="p">پیراگراف</button></li>
-            <li><button class="block-type-btn p-2 rounded-md hover:bg-gray-100 w-full text-right" data-type="h1">عنوان
-                    1</button></li>
-            <li><button class="block-type-btn p-2 rounded-md hover:bg-gray-100 w-full text-right" data-type="h2">عنوان
-                    2</button></li>
-            <li><button class="block-type-btn p-2 rounded-md hover:bg-gray-100 w-full text-right"
-                    data-type="blockquote">اقتباس</button></li>
-        </ul>
-    </div>
-
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const editor = document.getElementById('editor-container');
-            const toolbar = document.getElementById('toolbar');
-            const plusBtn = document.getElementById('plus-btn');
-            const blockMenu = document.getElementById('block-menu');
-            const blockTypeBtns = document.querySelectorAll('.block-type-btn');
+      const SIZES = {
+        A4:     { w: 794,  h: 1123, css: "A4" },
+        A5:     { w: 559,  h: 794,  css: "A5" },
+        A6:     { w: 420,  h: 595,  css: "A6" },
+        Letter: { w: 816,  h: 1056, css: "letter" },
+        Legal:  { w: 816,  h: 1344, css: "legal" },
+        Square: { w: 1080, h: 1080, css: "1080px 1080px" },
+        Story:  { w: 1080, h: 1920, css: "1080px 1920px" },
+      };
+      const STORE = "bookMakerV1";
+      const SAMPLE = "# پہلا باب\n\nیہ بیاض ایک سادہ کتاب ساز ہے۔ ہر صفحہ الگ دکھتا ہے اور پرنٹ/PDF میں الگ صفحے پر آتا ہے۔\n\n[sj]\nدل ہی تو ہے نہ سنگ و خشت درد سے بھر نہ آئے کیوں\nروئیں گے ہم ہزار بار کوئی ہمیں ستائے کیوں\n[/sj]\n\n---\n\n## دوسرا صفحہ\n\nنئے صفحے پر متن یہاں سے شروع ہوتا ہے۔";
 
-            let currentBlock = null;
-            let blockCounter = 1;
+      function book() {
+        return {
+          SIZES,
+          title: "", author: "", source: SAMPLE,
+          pageSize: "A4", fontName: "Payami", margin: "normal",
+          header: true, footer: true, zoom: 0.6, view: "preview",
+          fonts: ["Payami", "Mehr", "Emaad"],
+          _t: null,
 
-            // --- Core Block Management Functions ---
+          init() {
+            this.load();
+            this.registerFonts();
+            if (window.marked) marked.setOptions({ breaks: true, gfm: true });
+            this.apply();
+          },
 
-            function createBlock(tag = 'p', content = '', id = blockCounter++) {
-                const newBlock = document.createElement(tag);
-                newBlock.innerHTML = content || '<br>';
-                newBlock.dataset.blockId = id;
-                newBlock.className = 'relative';
+          get pages() {
+            return this.source.split(/\r?\n-{3,}\r?\n/).map((s) => s.trim());
+          },
 
-                const plusIcon = document.createElement('span');
-                plusIcon.className = 'add-block-btn';
-                plusIcon.innerHTML = `<button class="p-1 rounded-full bg-blue-500 text-white text-lg leading-none" title="Add Block">+</button>`;
-                newBlock.appendChild(plusIcon);
+          render(chunk) {
+            const withSj = this.preprocess(chunk);
+            return window.marked ? marked.parse(withSj) : withSj.replace(/\n/g, "<br>");
+          },
 
-                newBlock.addEventListener('click', () => {
-                    currentBlock = newBlock;
-                });
-                return newBlock;
-            }
-
-            function insertNewBlock(refBlock, content = '', type = 'p') {
-                const newBlock = createBlock(type, content);
-                if (refBlock && refBlock.nextSibling) {
-                    refBlock.parentNode.insertBefore(newBlock, refBlock.nextSibling);
-                } else {
-                    editor.appendChild(newBlock);
-                }
-                newBlock.focus();
-                const selection = window.getSelection();
-                const range = document.createRange();
-                range.setStart(newBlock, 0);
-                range.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(range);
-
-                hideBlockMenu();
-            }
-
-            // --- UI and Event Handlers ---
-
-            // Show/hide toolbar on focus
-            editor.addEventListener('focusin', () => toolbar.classList.remove('hidden'));
-            editor.addEventListener('focusout', (e) => {
-                if (!e.relatedTarget || !toolbar.contains(e.relatedTarget)) {
-                    toolbar.classList.add('hidden');
-                }
+          // Convert [sj ...]…[/sj] poetry blocks into ShakeebJustify markup.
+          preprocess(md) {
+            return md.replace(/\[sj(?:\s+format="([^"]*)")?\]\r?\n([\s\S]*?)\r?\n\[\/sj\]/g, (m, fmt, body) => {
+              const cls = "sj " + (fmt && fmt !== "custom" ? fmt : "sher");
+              const lines = body.split("\n").map((l) =>
+                l.trim() === ""
+                  ? '<div class="poetry-empty-line">&nbsp;</div>'
+                  : "<div>" + l.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</div>",
+              ).join("");
+              return '<div class="' + cls + '">' + lines + "</div>";
             });
+          },
 
-            plusBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                blockMenu.classList.toggle('hidden');
-                const rect = plusBtn.getBoundingClientRect();
-                blockMenu.style.bottom = `${window.innerHeight - rect.top + 10}px`;
-                blockMenu.style.left = `${rect.left}px`;
+          onInput() {
+            clearTimeout(this._t);
+            this._t = setTimeout(() => { this.save(); this.justify(); }, 300);
+          },
+
+          justify() {
+            this.$nextTick(() => { if (window.ShakeebJustify) { try { ShakeebJustify.apply(); } catch (e) {} } });
+          },
+
+          apply() {
+            const d = SIZES[this.pageSize] || SIZES.A4;
+            document.getElementById("pageStyle").textContent =
+              "@page{size:" + d.css + ";margin:0}" +
+              ".book-page{width:" + d.w + "px;min-height:" + d.h + "px}";
+            document.documentElement.style.setProperty("--book-font", "'" + this.fontName + "'");
+            this.save();
+            this.justify();
+          },
+
+          registerFonts() {
+            let saved = [];
+            try { saved = JSON.parse(localStorage.getItem("poetryCustomFontsV1") || "[]"); } catch (e) {}
+            saved.forEach((f) => {
+              if (!f || !f.name) return;
+              const id = "bf-" + f.name.replace(/[^a-z0-9_-]/gi, "_");
+              if (!document.getElementById(id)) {
+                const s = document.createElement("style");
+                s.id = id;
+                s.textContent = "@font-face{font-family:'" + f.name + "';src:local('" + f.name + "'),url('" + f.url + "');font-display:swap;}";
+                document.head.appendChild(s);
+              }
+              if (!this.fonts.includes(f.name)) this.fonts.push(f.name);
             });
+          },
 
-            document.addEventListener('click', (e) => {
-                if (!blockMenu.contains(e.target) && !plusBtn.contains(e.target)) {
-                    hideBlockMenu();
-                }
-            });
-
-            function hideBlockMenu() {
-                blockMenu.classList.add('hidden');
-            }
-
-            // Markdown conversion on keypress
-            editor.addEventListener('input', (e) => {
-                if (e.inputType === 'insertText' && e.data === ' ') {
-                    const block = window.getSelection().anchorNode.parentNode;
-                    const text = block.textContent.trim();
-                    let newTag = null;
-
-                    if (text === '#') newTag = 'h1';
-                    else if (text === '##') newTag = 'h2';
-                    else if (text === '>') newTag = 'blockquote';
-
-                    if (newTag) {
-                        const newElement = document.createElement(newTag);
-                        newElement.innerHTML = '<br>';
-                        newElement.className = block.className;
-                        block.replaceWith(newElement);
-
-                        const selection = window.getSelection();
-                        const range = document.createRange();
-                        range.selectNodeContents(newElement);
-                        range.collapse(false);
-                        selection.removeAllRanges();
-                        selection.addRange(range);
-                    }
-                }
-            });
-
-            // Enter key to create a new paragraph block
-            editor.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const selection = window.getSelection();
-                    const range = selection.getRangeAt(0);
-
-                    // Corrected way to find the parent element
-                    const block = range.startContainer.nodeType === 3
-                        ? range.startContainer.parentNode
-                        : range.startContainer;
-
-                    if (block.closest('[data-block-id]')) {
-                        insertNewBlock(block.closest('[data-block-id]'));
-                    }
-                }
-            });
-
-            // Handle block type changes from the menu
-            blockTypeBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const type = btn.dataset.type;
-                    const selection = window.getSelection();
-                    const block = selection.anchorNode.parentNode;
-
-                    if (block) {
-                        const newElement = document.createElement(type);
-                        newElement.innerHTML = block.innerHTML;
-                        newElement.className = block.className;
-                        block.replaceWith(newElement);
-                    }
-                    hideBlockMenu();
-                });
-            });
-
-            // Global style controls in the toolbar
-            document.getElementById('font-btn').addEventListener('click', () => {
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    const block = selection.anchorNode.parentNode;
-                    block.classList.toggle('amiri-font');
-                    block.classList.toggle('nastaleeq-font');
-                }
-            });
-
-            document.getElementById('justify-btn').addEventListener('click', () => {
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    const block = selection.anchorNode.parentNode;
-                    block.classList.toggle('justify-text');
-                }
-            });
-
-            // Initial block setup
-            const initialBlock = document.querySelector('[data-block-id]');
-            initialBlock.addEventListener('click', () => {
-                currentBlock = initialBlock;
-            });
-        });
+          save() {
+            localStorage.setItem(STORE, JSON.stringify({
+              title: this.title, author: this.author, source: this.source,
+              pageSize: this.pageSize, fontName: this.fontName, margin: this.margin,
+              header: this.header, footer: this.footer,
+            }));
+          },
+          load() {
+            try {
+              const s = JSON.parse(localStorage.getItem(STORE) || "null");
+              if (s) Object.assign(this, s);
+            } catch (e) {}
+          },
+        };
+      }
     </script>
-
-</body>
-
+  </body>
 </html>

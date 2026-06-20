@@ -1,0 +1,22 @@
+/* Shared Nastaliq @font-face definitions for Poetry Studio + Book Maker.
+   local() first → use a system copy with zero network. Mehr is self-hosted and
+   service-worker precached, so a real Urdu face always renders offline and
+   instantly as the fallback while heavier faces stream in (font-display: swap). */
+@font-face {
+  font-family: "Mehr";
+  src: local("Mehr Nastaliq Web"), local("Mehr Nastaliq"),
+    url("/assets/fonts/MehrNastaliqWeb.woff") format("woff");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Payami";
+  src: local("Payami Nastaleeq"), local("Payami Nastaliq"),
+    url("https://cdn.jsdelivr.net/gh/ShakesVision/PayamiTest@master/Payami%20Nastaleeq_Fixed.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Emaad";
+  src: local("Emad Nastaleeq"), local("Urdu Emad Nastaleeq"),
+    url("https://cdn.jsdelivr.net/gh/ShakesVision/EmaadNastaleeq@master/urduemadnastaleeqregular1.woff") format("woff");
+  font-display: swap;
+}
