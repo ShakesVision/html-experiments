@@ -1,359 +1,187 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="./inpage.png" />
-    <title>InPage INP Reader</title>
-    <style>
-      :root {
-        --bg-a: #f6f3eb;
-        --bg-b: #e9efe6;
-        --ink: #1b1e23;
-        --muted: #5b6270;
-        --card: rgba(255, 255, 255, 0.93);
-        --line: #ccd4dc;
-        --accent: #0f6d63;
-        --accent-ink: #fff;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        color: var(--ink);
-        background:
-          radial-gradient(
-            1200px 600px at 10% -10%,
-            #dcecdf 0%,
-            transparent 65%
-          ),
-          radial-gradient(900px 500px at 90% 0%, #efe1ce 0%, transparent 60%),
-          linear-gradient(160deg, var(--bg-a), var(--bg-b));
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        min-height: 100vh;
-      }
-      .wrap {
-        max-width: 1200px;
-        margin: 24px auto;
-        padding: 16px;
-        display: grid;
-        gap: 14px;
-      }
-      .panel {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        padding: 14px;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-      }
-      .toolbar {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-      }
-      .title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-right: auto;
-      }
-      button,
-      select,
-      input[type="file"] {
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 8px 10px;
-        background: #fff;
-        color: var(--ink);
-        font: inherit;
-      }
-      button {
-        border: none;
-        background: var(--accent);
-        color: var(--accent-ink);
-        cursor: pointer;
-      }
-      .meta {
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-      .layout {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 12px;
-      }
-      .page {
-        background: #fff;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 18px;
-        min-height: 480px;
-        direction: rtl;
-        text-align: right;
-        line-height: 1.9;
-        font-size: 1.2rem;
-        white-space: pre-wrap;
-        animation: fadeIn 0.18s ease-out;
-      }
-      .p {
-        margin: 0 0 0.9rem;
-      }
-      .aside {
-        background: #fff;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 12px;
-        max-height: 480px;
-        overflow: auto;
-        display: grid;
-        gap: 10px;
-        align-content: start;
-      }
-      .box {
-        border: 1px dashed var(--line);
-        border-radius: 8px;
-        padding: 8px;
-        font-size: 0.88rem;
-        background: #fafcfe;
-      }
-      .box h4 {
-        margin: 0 0 6px;
-        font-size: 0.9rem;
-      }
-      .mono {
-        font-family: Consolas, "Courier New", monospace;
-      }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(5px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      @media (max-width: 900px) {
-        .layout {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
-    <script defer src="../assets/js/shared-init.js"></script>
-    <link rel="canonical" href="https://tools.shakeeb.in/inpage/reader.html" />
-    <link rel="manifest" href="../manifest.webmanifest" />
-    <meta name="theme-color" content="#1b4965" />
-    <link rel="stylesheet" href="../assets/css/tailwind.css" />
-  </head>
-  <body>
-    <main class="wrap">
-      <section class="panel toolbar">
-        <div class="title">InPage Magical Reader (Direct `.inp`)</div>
-        <input
-          id="fileInput"
-          type="file"
-          accept=".inp,.json,application/json"
-        />
-        <button id="prevBtn">Previous</button>
-        <button id="nextBtn">Next</button>
-        <select id="pageSelect"></select>
-        <div id="meta" class="meta">
-          Upload `.inp` (or `.json` AST) to start.
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InPage Reader</title>
+  <link rel="stylesheet" href="../assets/css/tailwind.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap" />
+  <script defer src="../assets/js/shared-init.js"></script>
+  <link rel="canonical" href="https://shakeeb.in/inpage/reader.html">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#0f6d63">
+  <style>
+    :root {
+      --md-surface: #f4fbf8;
+      --md-surface-container: #ffffff;
+      --md-primary: #0f6d63;
+      --md-on-primary: #ffffff;
+      --md-outline: #d3e3dd;
+      --md-ink: #1b1e23;
+      --md-muted: #5b6270;
+      --reader-font: "Noori Nastaliq", "Jameel Noori Nastaleeq", "Noto Nastaliq Urdu", "Segoe UI", Tahoma, sans-serif;
+    }
+    body {
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #dcecdf 0%, transparent 65%),
+        radial-gradient(900px 500px at 90% 0%, #efe1ce 0%, transparent 60%),
+        linear-gradient(160deg, #f6f3eb, #e9efe6);
+      color: var(--md-ink);
+      min-height: 100vh;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+    .icon-btn { display:inline-flex; align-items:center; justify-content:center; }
+    .tab-btn.active {
+      background: var(--md-surface-container);
+      color: var(--md-primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Top reading-progress indicator */
+    #progressTrack { position: sticky; top: 0; z-index: 30; height: 3px; background: transparent; }
+    #progressBar { height: 100%; width: 0; background: var(--md-primary); transition: width .08s linear; }
+
+    /* Continuous reading column */
+    #reading {
+      direction: rtl;
+      text-align: right;
+      font-family: var(--reader-font);
+      line-height: 2.4;
+      color: #15201d;
+    }
+    .reader-line {
+      margin: 0 0 .35em 0;
+      white-space: pre-wrap;
+      tab-size: 4;
+      overflow-wrap: anywhere;
+      /* Cheap virtualization: the browser skips layout/paint for offscreen
+         lines, so even a 200-page book scrolls smoothly. */
+      content-visibility: auto;
+      contain-intrinsic-size: auto 2.6em;
+    }
+    .reader-spacer { height: 1.4em; }
+    mark.search-hit { background: #ffe082; color: inherit; border-radius: 3px; padding: 0 .05em; }
+    mark.search-hit.active { background: #ffb300; box-shadow: 0 0 0 2px rgba(255,179,0,.4); }
+  </style>
+</head>
+<body class="min-h-screen font-sans">
+  <div id="progressTrack"><div id="progressBar"></div></div>
+
+  <div class="mx-auto max-w-[68rem] px-4 py-5 sm:px-6">
+    <header class="mb-3 flex flex-wrap items-center gap-3">
+      <div class="mr-auto min-w-0">
+        <h1 class="text-lg font-bold tracking-tight sm:text-xl">InPage Reader</h1>
+        <p class="text-sm text-[var(--md-muted)]">Read <code>.inp</code> books &amp; convert Urdu ↔ InPage</p>
+      </div>
+      <nav class="flex rounded-xl bg-[var(--md-surface)] p-1" role="tablist" aria-label="InPage tools">
+        <button type="button" class="tab-btn active flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[var(--md-muted)] transition" data-tab="reader" role="tab" aria-selected="true">
+          <span class="material-symbols-outlined">menu_book</span> Reader
+        </button>
+        <button type="button" class="tab-btn flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[var(--md-muted)] transition" data-tab="converter" role="tab" aria-selected="false">
+          <span class="material-symbols-outlined">translate</span> Converter
+        </button>
+      </nav>
+    </header>
+
+    <!-- ============================ READER ============================ -->
+    <div id="tab-reader" class="tab-pane active" role="tabpanel">
+      <section class="sticky top-2 z-20 mb-3 rounded-2xl border border-[var(--md-outline)] bg-[var(--md-surface-container)]/95 p-2.5 shadow-sm backdrop-blur">
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[var(--md-primary)] px-3 py-2 text-sm font-medium text-[var(--md-on-primary)] shadow-sm hover:opacity-95">
+            <span class="material-symbols-outlined text-base">upload_file</span>
+            Open book
+            <input id="fileInput" type="file" accept=".inp,.json,application/json" class="sr-only">
+          </label>
+
+          <div class="relative min-w-[10rem] flex-1">
+            <span class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-base text-[var(--md-muted)]">search</span>
+            <input id="searchInput" type="search" dir="auto" placeholder="Search in book…"
+              class="w-full rounded-xl border border-[var(--md-outline)] bg-white py-2 pl-3 pr-9 text-sm outline-none focus:ring-2 focus:ring-[var(--md-primary)]/30" />
+          </div>
+          <span id="searchCount" class="min-w-[3.5rem] text-center text-xs text-[var(--md-muted)]"></span>
+          <button id="searchPrev" type="button" title="Previous match" class="icon-btn rounded-lg border border-[var(--md-outline)] bg-white p-2 hover:bg-[var(--md-surface)]"><span class="material-symbols-outlined text-base">expand_less</span></button>
+          <button id="searchNext" type="button" title="Next match" class="icon-btn rounded-lg border border-[var(--md-outline)] bg-white p-2 hover:bg-[var(--md-surface)]"><span class="material-symbols-outlined text-base">expand_more</span></button>
+
+          <div class="ml-1 flex items-center gap-1 rounded-xl bg-[var(--md-surface)] p-1">
+            <button id="zoomOut" type="button" title="Smaller text" class="icon-btn rounded-lg px-2 py-1 hover:bg-white"><span class="material-symbols-outlined text-base">text_decrease</span></button>
+            <button id="zoomIn" type="button" title="Larger text" class="icon-btn rounded-lg px-2 py-1 hover:bg-white"><span class="material-symbols-outlined text-base">text_increase</span></button>
+          </div>
+        </div>
+        <div class="mt-2 flex items-center gap-2 px-1">
+          <h2 id="docTitle" dir="auto" class="truncate text-sm font-semibold text-[var(--md-ink)]"></h2>
+          <span id="meta" class="ml-auto whitespace-nowrap text-xs text-[var(--md-muted)]"></span>
         </div>
       </section>
 
-      <section class="layout">
-        <article id="pageView" class="page"></article>
-        <aside class="aside">
-          <div class="box">
-            <h4>Footnotes</h4>
-            <div id="footnotesView"></div>
+      <article class="rounded-2xl border border-[var(--md-outline)] bg-white px-6 py-8 shadow-sm sm:px-10">
+        <div id="emptyState" class="py-16 text-center text-[var(--md-muted)]">
+          <span class="material-symbols-outlined mb-3 text-5xl opacity-50">auto_stories</span>
+          <p class="text-base font-medium">Open an InPage book to start reading</p>
+          <p class="mt-1 text-sm">Supports <code>.inp</code> files (InPage 100 &amp; 300) and exported <code>.json</code> ASTs. Everything renders in one continuous, scrollable page.</p>
+        </div>
+        <div id="reading" style="display:none"></div>
+      </article>
+    </div>
+
+    <!-- ============================ CONVERTER ============================ -->
+    <div id="tab-converter" class="tab-pane" role="tabpanel">
+      <section class="rounded-2xl border border-[var(--md-outline)] bg-[var(--md-surface-container)] p-4 shadow-sm">
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+          <fieldset class="flex rounded-xl bg-[var(--md-surface)] p-1">
+            <label class="cursor-pointer">
+              <input type="radio" name="conv-dir" value="uni2inp" class="peer sr-only" checked>
+              <span class="block rounded-lg px-3 py-2 text-sm font-medium text-[var(--md-muted)] peer-checked:bg-white peer-checked:text-[var(--md-primary)] peer-checked:shadow-sm">Unicode → InPage</span>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="conv-dir" value="inp2uni" class="peer sr-only">
+              <span class="block rounded-lg px-3 py-2 text-sm font-medium text-[var(--md-muted)] peer-checked:bg-white peer-checked:text-[var(--md-primary)] peer-checked:shadow-sm">InPage → Unicode</span>
+            </label>
+          </fieldset>
+          <div id="formatSelectContainer" class="inline-flex items-center gap-1.5">
+            <select id="convFormat" class="rounded-xl border border-[var(--md-outline)] bg-white px-3 py-2 text-sm">
+              <option value="ansi">Format: Standard ANSI (Windows-1252)</option>
+              <option value="prefixed">Format: InPage Unicode (0x04 Prefixed)</option>
+            </select>
           </div>
-          <div class="box">
-            <h4>Fonts</h4>
-            <div id="fontsView"></div>
-          </div>
-          <div class="box">
-            <h4>Styles</h4>
-            <div id="stylesView" class="mono"></div>
-          </div>
-          <div class="box">
-            <h4>Stream Stats</h4>
-            <div id="streamsView" class="mono"></div>
-          </div>
-        </aside>
+          <button id="convRunBtn" type="button" class="inline-flex items-center gap-1 rounded-xl bg-[var(--md-primary)] px-3 py-2 text-sm font-medium text-white">
+            <span class="material-symbols-outlined text-base">sync_alt</span> Convert
+          </button>
+          <button id="convCopyBtn" type="button" class="inline-flex items-center gap-1 rounded-xl border border-[var(--md-outline)] bg-white px-3 py-2 text-sm">
+            <span class="material-symbols-outlined text-base">content_copy</span> Copy
+          </button>
+          <button id="convClearBtn" type="button" class="inline-flex items-center gap-1 rounded-xl border border-[var(--md-outline)] bg-white px-3 py-2 text-sm">Clear</button>
+          <span id="convStatus" class="text-sm text-[var(--md-muted)]">Mappings load on first convert.</span>
+        </div>
+        <div class="grid gap-3 md:grid-cols-2">
+          <label class="block">
+            <span class="mb-1 block text-sm font-medium">Input</span>
+            <textarea id="convInput" dir="auto" rows="14" class="w-full rounded-xl border border-[var(--md-outline)] bg-white p-3 text-lg leading-loose outline-none focus:ring-2 focus:ring-[var(--md-primary)]/30" style="font-family: var(--reader-font);" placeholder="Paste Unicode or legacy InPage text…"></textarea>
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-sm font-medium">Output</span>
+            <textarea id="convOutput" dir="auto" rows="14" readonly class="w-full rounded-xl border border-[var(--md-outline)] bg-[var(--md-surface)] p-3 text-lg leading-loose outline-none" style="font-family: var(--reader-font);"></textarea>
+          </label>
+        </div>
+        <p class="mt-3 text-xs text-[var(--md-muted)]">Uses legacy UniToInpage / InpageToUni mapping tables from the original Naseem tooling.</p>
       </section>
-    </main>
+    </div>
 
-    <script src="./inp_browser_parser.js"></script>
-    <script>
-      const state = { doc: null, pageIndex: 0 };
-      const pageView = document.getElementById("pageView");
-      const pageSelect = document.getElementById("pageSelect");
-      const meta = document.getElementById("meta");
-      const footnotesView = document.getElementById("footnotesView");
-      const fontsView = document.getElementById("fontsView");
-      const stylesView = document.getElementById("stylesView");
-      const streamsView = document.getElementById("streamsView");
+    <footer class="mt-6 text-center text-xs text-[var(--md-muted)]">
+      © Shakeeb ·
+      <a class="text-[var(--md-primary)] underline underline-offset-2" href="https://shakeeb.in">shakeeb.in</a>
+      ·
+      <a class="text-[var(--md-primary)] underline underline-offset-2" href="../LICENSE">License</a>
+    </footer>
+  </div>
 
-      function clampPage(i) {
-        if (!state.doc) return 0;
-        return Math.max(0, Math.min(i, state.doc.pages.length - 1));
-      }
-
-      function renderAux(page) {
-        const footnotes = (state.doc.footnotes || [])
-          .filter(
-            (f) =>
-              typeof f.reference_offset === "number" &&
-              f.reference_offset >= page.source_offsets.start &&
-              f.reference_offset <= page.source_offsets.end,
-          )
-          .slice(0, 30);
-        footnotesView.innerHTML = footnotes.length
-          ? footnotes
-              .map(
-                (f) =>
-                  `<div>#${f.number} | ref=0x${f.reference_offset.toString(16)} | ${(f.body_text_preview || "(no body text)").slice(0, 80)}</div>`,
-              )
-              .join("")
-          : "No mapped footnotes for this page.";
-
-        fontsView.innerHTML = (state.doc.fonts || []).length
-          ? state.doc.fonts
-              .slice(0, 24)
-              .map((f) => `<div>${f.font_id}: ${f.name}</div>`)
-              .join("")
-          : "No font names extracted.";
-
-        stylesView.innerHTML =
-          (state.doc.styles || [])
-            .slice(0, 18)
-            .map(
-              (s) =>
-                `${s.style_id} occ=${s.occurrences} prefix=${s.key_prefix_hex}`,
-            )
-            .join("<br>") || "No styles extracted.";
-
-        const sm =
-          state.doc.extracted && state.doc.extracted.stream_manifest
-            ? state.doc.extracted.stream_manifest
-            : [];
-        const streams = sm.filter((x) => x.type === "stream");
-        const inpage = streams.find((x) => x.path === "/InPage300");
-        streamsView.innerHTML = [
-          `total_streams=${streams.length}`,
-          inpage
-            ? `InPage300 size=${inpage.size} chain=${inpage.chainLen}`
-            : "InPage300 not found",
-          state.doc.extracted && state.doc.extracted.run_stats
-            ? `runs=${state.doc.extracted.run_stats.total_runs}, content_runs=${state.doc.extracted.run_stats.content_runs}`
-            : "",
-        ]
-          .filter(Boolean)
-          .join("<br>");
-      }
-
-      function renderPage() {
-        if (!state.doc) {
-          pageView.textContent = "";
-          pageSelect.innerHTML = "";
-          footnotesView.textContent = "";
-          fontsView.textContent = "";
-          stylesView.textContent = "";
-          streamsView.textContent = "";
-          meta.textContent = "Upload `.inp` (or `.json` AST) to start.";
-          return;
-        }
-
-        state.pageIndex = clampPage(state.pageIndex);
-        const page = state.doc.pages[state.pageIndex];
-        pageView.innerHTML = "";
-
-        const paragraphs = page.paragraphs || [];
-        if (!paragraphs.length) {
-          pageView.textContent =
-            "(No paragraph content extracted for this page)";
-        } else {
-          for (const para of paragraphs) {
-            const p = document.createElement("p");
-            p.className = "p";
-            p.textContent = (para.runs || []).map((r) => r.text || "").join("");
-            pageView.appendChild(p);
-          }
-        }
-
-        pageSelect.innerHTML = "";
-        state.doc.pages.forEach((p, i) => {
-          const opt = document.createElement("option");
-          opt.value = String(i);
-          opt.textContent = `Page ${p.number}`;
-          if (i === state.pageIndex) opt.selected = true;
-          pageSelect.appendChild(opt);
-        });
-
-        const source =
-          state.doc.metadata && state.doc.metadata.source_file
-            ? state.doc.metadata.source_file
-            : "unknown";
-        const mode =
-          state.doc.metadata && state.doc.metadata.source_type
-            ? state.doc.metadata.source_type
-            : "ast";
-        meta.textContent = `${source} | mode=${mode} | page ${page.number}/${state.doc.pages.length} | styles=${(state.doc.styles || []).length} | footnotes=${(state.doc.footnotes || []).length}`;
-        renderAux(page);
-      }
-
-      async function loadInp(file) {
-        const bytes = await file.arrayBuffer();
-        state.doc = window.InpBrowserParser.parseInpArrayBuffer(
-          bytes,
-          file.name,
-        );
-        state.pageIndex = 0;
-        renderPage();
-      }
-
-      async function loadJson(file) {
-        const text = await file.text();
-        state.doc = JSON.parse(text);
-        state.pageIndex = 0;
-        renderPage();
-      }
-
-      document
-        .getElementById("fileInput")
-        .addEventListener("change", async (ev) => {
-          const file = ev.target.files && ev.target.files[0];
-          if (!file) return;
-          try {
-            if (file.name.toLowerCase().endsWith(".inp")) {
-              await loadInp(file);
-            } else {
-              await loadJson(file);
-            }
-          } catch (err) {
-            alert(`Failed to load file: ${err.message || err}`);
-          }
-        });
-
-      document.getElementById("prevBtn").addEventListener("click", () => {
-        state.pageIndex -= 1;
-        renderPage();
-      });
-
-      document.getElementById("nextBtn").addEventListener("click", () => {
-        state.pageIndex += 1;
-        renderPage();
-      });
-
-      pageSelect.addEventListener("change", () => {
-        state.pageIndex = Number(pageSelect.value || 0);
-        renderPage();
-      });
-
-      renderPage();
-    </script>
-  </body>
+  <script type="module" src="./reader-app.js"></script>
+</body>
 </html>

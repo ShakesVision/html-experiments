@@ -13,6 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@latest/dist/shakeeb-justify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="ur-phonetic.js"></script>
     <script defer src="../assets/js/shared-init.js"></script>
     <link rel="canonical" href="https://tools.shakeeb.in/editor/poetry2.html" />
     <link rel="manifest" href="../manifest.webmanifest" />
@@ -28,93 +29,80 @@
           <div
             class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3"
           >
-            <div class="toolbar-grid">
-              <button type="button" class="chip" onclick="insertHeading(1)">
-                H1
+            <div class="flex flex-wrap items-center gap-1 bg-gray-50 dark:bg-gray-900 p-2 rounded-xl mb-3 border border-gray-200/60 dark:border-gray-700/60">
+              <!-- Headings -->
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertHeading(1)" title="Heading 1">
+                <span class="material-symbols-outlined text-xl">looks_one</span>
               </button>
-              <button type="button" class="chip" onclick="insertHeading(2)">
-                H2
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertHeading(2)" title="Heading 2">
+                <span class="material-symbols-outlined text-xl">looks_two</span>
               </button>
-              <button type="button" class="chip" onclick="insertHeading(3)">
-                H3
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertHeading(3)" title="Heading 3">
+                <span class="material-symbols-outlined text-xl">looks_3</span>
               </button>
-              <button
-                type="button"
-                class="chip"
-                onclick="wrapSelection('**', '**')"
-              >
-                Bold
+              <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+              
+              <!-- Formatting -->
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="wrapSelection('**', '**')" title="Bold">
+                <span class="material-symbols-outlined text-xl">format_bold</span>
               </button>
-              <button
-                type="button"
-                class="chip"
-                onclick="wrapSelection('*', '*')"
-              >
-                Italic
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="wrapSelection('*', '*')" title="Italic">
+                <span class="material-symbols-outlined text-xl">format_italic</span>
               </button>
-              <button
-                type="button"
-                class="chip"
-                onclick="wrapSelection('~~', '~~')"
-              >
-                Strike
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="wrapSelection('~~', '~~')" title="Strike">
+                <span class="material-symbols-outlined text-xl">format_strikethrough</span>
               </button>
-              <button type="button" class="chip" onclick="insertParagraphTag()">
-                P
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertParagraphTag()" title="Paragraph">
+                <span class="material-symbols-outlined text-xl">paragraph</span>
               </button>
-              <button
-                type="button"
-                class="chip"
-                onclick="insertLinePrefix('- ')"
-              >
-                List
+              <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+              
+              <!-- Lists & Blocks -->
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertLinePrefix('- ')" title="Bullet List">
+                <span class="material-symbols-outlined text-xl">format_list_bulleted</span>
               </button>
-              <button type="button" class="chip" onclick="insertNumberedList()">
-                Numbered
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertNumberedList()" title="Numbered List">
+                <span class="material-symbols-outlined text-xl">format_list_numbered</span>
               </button>
-              <button type="button" class="chip" onclick="insertQuoteBlock()">
-                Quote
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertQuoteBlock()" title="Quote">
+                <span class="material-symbols-outlined text-xl">format_quote</span>
               </button>
-              <button type="button" class="chip" onclick="insertLink()">
-                Link
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertLink()" title="Link">
+                <span class="material-symbols-outlined text-xl">link</span>
               </button>
-              <button
-                type="button"
-                class="chip"
-                onclick="applyAlignment('right')"
-              >
-                Right
+              <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+              
+              <!-- Alignment -->
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="applyAlignment('right')" title="Align Right">
+                <span class="material-symbols-outlined text-xl">format_align_right</span>
               </button>
-              <button
-                type="button"
-                class="chip"
-                onclick="applyAlignment('center')"
-              >
-                Center
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="applyAlignment('center')" title="Align Center">
+                <span class="material-symbols-outlined text-xl">format_align_center</span>
               </button>
-              <button
-                type="button"
-                class="chip"
-                onclick="applyAlignment('left')"
-              >
-                Left
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="applyAlignment('left')" title="Align Left">
+                <span class="material-symbols-outlined text-xl">format_align_left</span>
               </button>
-              <button
-                type="button"
-                class="chip"
-                onclick="applyAlignment('justify')"
-              >
-                Justify
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="applyAlignment('justify')" title="Justify">
+                <span class="material-symbols-outlined text-xl">format_align_justify</span>
               </button>
-              <button type="button" class="chip" onclick="applyTextColor()">
-                Color
+              <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+              
+              <!-- Color & Modals -->
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="applyTextColor()" title="Text Color">
+                <span class="material-symbols-outlined text-xl">format_color_text</span>
               </button>
-              <button type="button" class="chip" onclick="toggleSjModal(true)">
-                [sj]
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="toggleSjModal(true)" title="Poetry Justify">
+                <span class="material-symbols-outlined text-xl">splitscreen</span>
               </button>
-              <button type="button" class="chip" onclick="toggleCssModal(true)">
-                Preview CSS
+              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="toggleCssModal(true)" title="Preview CSS">
+                <span class="material-symbols-outlined text-xl">css</span>
               </button>
+              
+              <!-- Urdu Keyboard Toggle -->
+              <label class="flex items-center space-x-2 cursor-pointer bg-pink-50 dark:bg-pink-950/40 px-3 py-1 rounded-full transition hover:opacity-90 ml-auto select-none mr-2">
+                <input type="checkbox" checked id="urduToggle" class="w-4 h-4 text-pink-600 focus:ring-pink-500 rounded border-gray-300">
+                <span class="text-xs font-medium text-pink-800 dark:text-pink-300">اردو کی بورڈ</span>
+              </label>
             </div>
 
             <textarea
@@ -1438,6 +1426,29 @@
           inputEl.addEventListener("input", function () {
             renderMarkdown();
             autoSaveActiveItem();
+          });
+
+          // Urdu Keyboard Mapping for Textarea
+          inputEl.addEventListener("keypress", function (event) {
+            const urduToggle = document.getElementById("urduToggle");
+            if (!urduToggle || !urduToggle.checked) return;
+
+            const key = event.key;
+            if (typeof keyboardMap === "undefined") return;
+
+            for (let i = 0; i < keyboardMap.length; i++) {
+              if (keyboardMap[i][0] === key) {
+                event.preventDefault();
+                const start = inputEl.selectionStart;
+                const end = inputEl.selectionEnd;
+                const val = inputEl.value;
+                const char = keyboardMap[i][1];
+                inputEl.value = val.substring(0, start) + char + val.substring(end);
+                inputEl.selectionStart = inputEl.selectionEnd = start + char.length;
+                inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+                break;
+              }
+            }
           });
         }
 

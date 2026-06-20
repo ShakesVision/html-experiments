@@ -1,0 +1,21 @@
+html-experiments
+Copyright (c) 2026 Shakeeb Ahmad
+https://shakeeb.in
+
+Required attribution (when using or deploying this project):
+  Based on tools by Shakeeb — https://shakeeb.in
+
+Third-party components:
+
+  MuPDF (inpage/pdf-texter/)
+    License: AGPL-3.0-or-later (or commercial license from Artifex)
+    Used via the mupdf npm package for PDF text extraction in pdf-texter.
+    If you ship pdf-texter with MuPDF, comply with AGPL or obtain a commercial license.
+
+  Legacy Unicode mapping tables (inpage/pdf-texter/UnicodeToInpage/*.xml)
+    Derived from the original Naseem PDF Texter / InPage tooling ecosystem.
+    Used under the same Attribution Required License as this repository unless
+    otherwise stated by the original authors.
+
+  Tailwind CSS, Google Fonts / Material Icons
+    Loaded from CDN or built assets; subject to their respective licenses.
