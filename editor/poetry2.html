@@ -1,15 +1,14 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ur" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>فارمیٹرِ شاعری</title>
-    <link rel="icon" type="image/x-icon" href="./poetry2.png" />
+    <title>شاعری اسٹوڈیو — Poetry Studio</title>
     <link rel="stylesheet" href="../assets/css/tailwind.css" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <!-- Toast UI Editor (Markdown ⇄ WYSIWYG). Cached offline by the service worker after first load. -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/3.2.2/toastui-editor.min.css" />
+    <script src="https://uicdn.toast.com/editor/3.2.2/toastui-editor-all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@latest/dist/shakeeb-justify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -18,283 +17,244 @@
     <link rel="canonical" href="https://tools.shakeeb.in/editor/poetry2.html" />
     <link rel="manifest" href="../manifest.webmanifest" />
     <meta name="theme-color" content="#1b4965" />
+
+    <style>
+      /* ---- Fonts: local() first (use a system copy with zero network), then
+             web font. Mehr is self-hosted + service-worker precached, so a real
+             Nastaliq face always renders offline and instantly as the fallback
+             while the heavier Payami streams in (font-display: swap). ---- */
+      @font-face {
+        font-family: "Mehr";
+        src: local("Mehr Nastaliq Web"), local("Mehr Nastaliq"),
+          url("../assets/fonts/MehrNastaliqWeb.woff") format("woff");
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Payami";
+        src: local("Payami Nastaleeq"), local("Payami Nastaliq"),
+          url("https://cdn.jsdelivr.net/gh/ShakesVision/PayamiTest@master/Payami%20Nastaleeq_Fixed.woff2") format("woff2");
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Emaad";
+        src: local("Emad Nastaleeq"), local("Urdu Emad Nastaleeq"),
+          url("https://cdn.jsdelivr.net/gh/ShakesVision/EmaadNastaleeq@master/urduemadnastaleeqregular1.woff") format("woff");
+        font-display: swap;
+      }
+
+      body { direction: rtl; }
+      .icon-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 8px; border-radius: 10px; color: #fff; cursor: pointer;
+        border: 0; transition: 0.2s;
+      }
+      .icon-btn:hover { opacity: 0.9; }
+      .material-symbols-outlined { font-size: 20px; }
+
+      .saved-item {
+        width: 100%; text-align: right; padding: 12px; border-radius: 14px;
+        background: #fff; border: 1px solid #f3e8ff; transition: 0.2s;
+      }
+      .saved-item:hover { border-color: #f9a8d4; transform: translateY(-1px); }
+      .saved-item.active {
+        background: linear-gradient(135deg, #fdf2f8, #eef2ff);
+        border-color: #ec4899; box-shadow: 0 8px 24px rgba(236, 72, 153, 0.12);
+      }
+
+      /* Toast UI in an RTL Urdu context */
+      .toastui-editor-defaultUI { border-radius: 14px; }
+      .toastui-editor-contents,
+      .toastui-editor-md-container .toastui-editor .CodeMirror,
+      .toastui-editor-ww-container .toastui-editor-contents {
+        direction: rtl; text-align: right;
+        font-family: "Payami", "Mehr", serif; font-size: 1.15rem; line-height: 2.1;
+      }
+      /* Poetry renders in our own justified preview → hide Toast's md preview. */
+      .toastui-editor-md-preview { display: none; }
+      .toastui-editor-md-splitter { display: none; }
+      .toastui-editor-md-container .toastui-editor { width: 100% !important; }
+
+      #print-area {
+        font-family: "Payami", "Mehr", serif;
+        white-space: normal; text-align: justify;
+        max-width: 100%; margin-inline: auto;
+      }
+      #print-area .poetry-empty-line { height: 1.6em; }
+      #print-area :first-child { margin-top: 0; }
+      #print-area :last-child { margin-bottom: 0; }
+      #print-area h1, #print-area h2, #print-area h3,
+      #print-area h4, #print-area h5, #print-area h6 { font-weight: 700; margin: 0.75em 0 0.35em; }
+      #print-area p, #print-area ul, #print-area ol,
+      #print-area blockquote, #print-area pre { margin: 0.6em 0; }
+      #print-area ul, #print-area ol { padding-right: 1.5em; }
+      #print-area blockquote { border-right: 4px solid #f9a8d4; padding-right: 1em; color: #475569; }
+      #print-area code { background: rgba(15, 23, 42, 0.08); border-radius: 0.4rem; padding: 0.1rem 0.35rem; font-size: 0.9em; }
+      #print-area pre code { display: block; padding: 1rem; overflow: auto; }
+      #print-area a { color: #db2777; text-decoration: underline; }
+
+      .unsplash-thumb { width: 100%; height: 56px; object-fit: cover; border-radius: 10px; cursor: pointer; border: 2px solid transparent; }
+      .unsplash-thumb:hover { border-color: #ec4899; }
+      input[type="color"] { width: 38px; height: 38px; padding: 0; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; cursor: pointer; }
+    </style>
   </head>
 
-  <body
-    class="bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 min-h-screen"
-  >
+  <body class="bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 min-h-screen">
     <div class="max-w-7xl mx-auto p-4 md:p-6">
+      <header class="mb-4 flex items-center gap-3">
+        <h1 class="text-2xl font-bold text-pink-800">شاعری اسٹوڈیو</h1>
+        <span class="text-sm text-pink-500/80">Poetry Studio</span>
+        <label class="ml-auto flex items-center gap-2 cursor-pointer bg-white/70 px-3 py-1.5 rounded-full select-none">
+          <input type="checkbox" checked id="urduToggle" class="w-4 h-4 text-pink-600 rounded border-gray-300" />
+          <span class="text-xs font-medium text-pink-800">اردو کی بورڈ</span>
+        </label>
+      </header>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- ============== AUTHORING COLUMN ============== -->
         <div class="space-y-5">
-          <div
-            class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3"
-          >
-            <div class="flex flex-wrap items-center gap-1 bg-gray-50 dark:bg-gray-900 p-2 rounded-xl mb-3 border border-gray-200/60 dark:border-gray-700/60">
-              <!-- Headings -->
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertHeading(1)" title="Heading 1">
-                <span class="material-symbols-outlined text-xl">looks_one</span>
+          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="insertPoetryBlock()" class="icon-btn bg-pink-500" title="شعر بلاک داخل کریں / Insert poetry block">
+                <span class="material-symbols-outlined">splitscreen</span>
               </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertHeading(2)" title="Heading 2">
-                <span class="material-symbols-outlined text-xl">looks_two</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertHeading(3)" title="Heading 3">
-                <span class="material-symbols-outlined text-xl">looks_3</span>
-              </button>
-              <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
-              
-              <!-- Formatting -->
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="wrapSelection('**', '**')" title="Bold">
-                <span class="material-symbols-outlined text-xl">format_bold</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="wrapSelection('*', '*')" title="Italic">
-                <span class="material-symbols-outlined text-xl">format_italic</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="wrapSelection('~~', '~~')" title="Strike">
-                <span class="material-symbols-outlined text-xl">format_strikethrough</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertParagraphTag()" title="Paragraph">
-                <span class="material-symbols-outlined text-xl">paragraph</span>
-              </button>
-              <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
-              
-              <!-- Lists & Blocks -->
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertLinePrefix('- ')" title="Bullet List">
-                <span class="material-symbols-outlined text-xl">format_list_bulleted</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertNumberedList()" title="Numbered List">
-                <span class="material-symbols-outlined text-xl">format_list_numbered</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertQuoteBlock()" title="Quote">
-                <span class="material-symbols-outlined text-xl">format_quote</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="insertLink()" title="Link">
-                <span class="material-symbols-outlined text-xl">link</span>
-              </button>
-              <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
-              
-              <!-- Alignment -->
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="applyAlignment('right')" title="Align Right">
-                <span class="material-symbols-outlined text-xl">format_align_right</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="applyAlignment('center')" title="Align Center">
-                <span class="material-symbols-outlined text-xl">format_align_center</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="applyAlignment('left')" title="Align Left">
-                <span class="material-symbols-outlined text-xl">format_align_left</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="applyAlignment('justify')" title="Justify">
-                <span class="material-symbols-outlined text-xl">format_align_justify</span>
-              </button>
-              <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
-              
-              <!-- Color & Modals -->
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="applyTextColor()" title="Text Color">
-                <span class="material-symbols-outlined text-xl">format_color_text</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="toggleSjModal(true)" title="Poetry Justify">
-                <span class="material-symbols-outlined text-xl">splitscreen</span>
-              </button>
-              <button type="button" class="p-1.5 rounded-lg hover:bg-pink-100 text-pink-700 transition" onclick="toggleCssModal(true)" title="Preview CSS">
-                <span class="material-symbols-outlined text-xl">css</span>
-              </button>
-              
-              <!-- Urdu Keyboard Toggle -->
-              <label class="flex items-center space-x-2 cursor-pointer bg-pink-50 dark:bg-pink-950/40 px-3 py-1 rounded-full transition hover:opacity-90 ml-auto select-none mr-2">
-                <input type="checkbox" checked id="urduToggle" class="w-4 h-4 text-pink-600 focus:ring-pink-500 rounded border-gray-300">
-                <span class="text-xs font-medium text-pink-800 dark:text-pink-300">اردو کی بورڈ</span>
-              </label>
-            </div>
-
-            <textarea
-              id="inputText"
-              rows="12"
-              class="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-300 outline-none text-lg text-right bg-white/60"
-              placeholder="ہر مصرع الگ لائن میں لکھیں..."
-            ></textarea>
-          </div>
-
-          <div
-            class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3"
-          >
-            <div class="flex gap-2">
-              <input
-                id="bgInput"
-                placeholder="پس منظر"
-                class="flex-1 border border-gray-200 p-2 rounded-lg text-right"
-              />
-              <input
-                id="colorInput"
-                placeholder="متن رنگ"
-                class="w-32 border border-gray-200 p-2 rounded-lg text-right"
-              />
-              <button onclick="applyStyles()" class="icon-btn bg-indigo-500">
-                <span class="material-symbols-outlined">palette</span>
-              </button>
-            </div>
-
-            <div class="flex gap-2 flex-wrap">
-              <select id="fontSelector" class="border p-2 rounded-lg">
-                <option value="Mehr">مہر نستعلیق</option>
+              <select id="fontSelector" class="border border-gray-200 p-2 rounded-lg text-sm">
                 <option value="Payami">پیامی نستعلیق</option>
+                <option value="Mehr">مہر نستعلیق</option>
                 <option value="Emaad">عماد نستعلیق</option>
               </select>
-
-              <input
-                id="fontUrlInput"
-                placeholder="فونٹ کا لنک"
-                class="flex-1 border p-2 rounded-lg text-right"
-              />
-
-              <button onclick="loadCustomFont()" class="icon-btn bg-pink-500">
-                <span class="material-symbols-outlined">font_download</span>
+              <button onclick="toggleCssModal(true)" class="icon-btn bg-slate-600" title="Preview CSS">
+                <span class="material-symbols-outlined">css</span>
               </button>
+              <span class="text-xs text-gray-500">Markdown ⇄ WYSIWYG سوئچ نیچے ہے</span>
+            </div>
+            <div id="editor"></div>
+          </div>
+
+          <!-- Appearance -->
+          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3">
+            <h3 class="text-sm font-semibold text-gray-700">پس منظر و رنگ — Background &amp; color</h3>
+            <div class="flex gap-2 items-center">
+              <input id="bgInput" placeholder="background: …  (color / gradient / url)" class="flex-1 border border-gray-200 p-2 rounded-lg text-right text-sm" />
+              <input type="color" id="bgColorPicker" title="پس منظر رنگ" />
+            </div>
+            <div class="flex gap-2 items-center">
+              <input id="colorInput" placeholder="متن کا رنگ — text color" class="flex-1 border border-gray-200 p-2 rounded-lg text-right text-sm" />
+              <input type="color" id="textColorPicker" title="متن رنگ" />
+            </div>
+
+            <!-- Gradient builder -->
+            <div class="flex gap-2 items-center flex-wrap">
+              <span class="text-xs text-gray-500">گریڈینٹ:</span>
+              <input type="color" id="grad1" value="#fde2e4" />
+              <input type="color" id="grad2" value="#e2ecf9" />
+              <input type="number" id="gradAngle" value="135" class="w-16 border border-gray-200 p-1.5 rounded-lg text-center text-sm" title="زاویہ" />
+              <button onclick="applyGradient()" class="icon-btn bg-indigo-500" title="گریڈینٹ لگائیں">
+                <span class="material-symbols-outlined">gradient</span>
+              </button>
+            </div>
+
+            <!-- Image background -->
+            <div class="flex gap-2 items-center flex-wrap">
+              <button onclick="document.getElementById('bgImageFile').click()" class="icon-btn bg-emerald-500" title="تصویر اپ لوڈ">
+                <span class="material-symbols-outlined">image</span>
+              </button>
+              <input id="bgImageFile" type="file" accept="image/*" class="hidden" />
+              <input id="bgImageUrl" placeholder="تصویر کا لنک — image URL" class="flex-1 border border-gray-200 p-2 rounded-lg text-right text-sm" />
+              <button onclick="applyImageUrl()" class="icon-btn bg-sky-500" title="لنک لگائیں">
+                <span class="material-symbols-outlined">add_link</span>
+              </button>
+              <button onclick="clearBackground()" class="icon-btn bg-rose-400" title="صاف کریں">
+                <span class="material-symbols-outlined">backspace</span>
+              </button>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 mb-1">Unsplash پس منظر</div>
+              <div id="unsplashGallery" class="grid grid-cols-6 gap-2"></div>
             </div>
           </div>
 
-          <div
-            class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3"
-          >
+          <!-- Page size + custom font -->
+          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3">
+            <h3 class="text-sm font-semibold text-gray-700">صفحے کا سائز — Page size</h3>
+            <div class="flex gap-2 items-center flex-wrap">
+              <select id="pageSizeSelect" class="border border-gray-200 p-2 rounded-lg text-sm">
+                <option value="auto">Auto (screen)</option>
+                <option value="794x1123">A4 (794×1123)</option>
+                <option value="559x794">A5 (559×794)</option>
+                <option value="420x595">A6 (420×595)</option>
+                <option value="816x1056">Letter (816×1056)</option>
+                <option value="816x1344">Legal (816×1344)</option>
+                <option value="1080x1080">Square (1080²)</option>
+                <option value="1080x1920">Story (1080×1920)</option>
+                <option value="custom">Custom…</option>
+              </select>
+              <div id="customSizeWrap" class="gap-2 items-center" style="display:none">
+                <input id="pageW" type="number" placeholder="W px" class="w-20 border border-gray-200 p-1.5 rounded-lg text-center text-sm" />
+                <span class="text-gray-400">×</span>
+                <input id="pageH" type="number" placeholder="H px" class="w-20 border border-gray-200 p-1.5 rounded-lg text-center text-sm" />
+                <button onclick="applyCustomSize()" class="icon-btn bg-indigo-500"><span class="material-symbols-outlined">check</span></button>
+              </div>
+            </div>
+            <div class="flex gap-2 items-center">
+              <input id="fontUrlInput" placeholder="اپنا فونٹ لنک — custom font URL" class="flex-1 border border-gray-200 p-2 rounded-lg text-right text-sm" />
+              <button onclick="loadCustomFont()" class="icon-btn bg-pink-500" title="فونٹ لوڈ"><span class="material-symbols-outlined">font_download</span></button>
+            </div>
+          </div>
+
+          <!-- Library -->
+          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 space-y-3">
             <div class="flex gap-2 flex-wrap">
-              <input
-                id="poetryTitle"
-                placeholder="اس آئٹم کا نام"
-                class="flex-1 min-w-[200px] border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-pink-300 outline-none text-right"
-              />
-              <button
-                onclick="createNewPoetryItem()"
-                class="icon-btn bg-sky-500"
-              >
-                <span class="material-symbols-outlined">note_add</span>
-              </button>
-              <button
-                onclick="savePoetryItem()"
-                class="icon-btn bg-emerald-500"
-              >
-                <span class="material-symbols-outlined">save</span>
-              </button>
-              <button onclick="deletePoetryItem()" class="icon-btn bg-rose-500">
-                <span class="material-symbols-outlined">delete</span>
-              </button>
-              <button
-                onclick="exportPoetryItems()"
-                class="icon-btn bg-amber-500"
-              >
-                <span class="material-symbols-outlined">upload_file</span>
-              </button>
-              <button onclick="triggerImport()" class="icon-btn bg-cyan-600">
-                <span class="material-symbols-outlined"
-                  >download_for_offline</span
-                >
-              </button>
+              <input id="poetryTitle" placeholder="اس آئٹم کا نام" class="flex-1 min-w-[160px] border border-gray-200 p-2 rounded-lg text-right" />
+              <button onclick="createNewPoetryItem()" class="icon-btn bg-sky-500" title="نیا"><span class="material-symbols-outlined">note_add</span></button>
+              <button onclick="savePoetryItem()" class="icon-btn bg-emerald-500" title="محفوظ"><span class="material-symbols-outlined">save</span></button>
+              <button onclick="deletePoetryItem()" class="icon-btn bg-rose-500" title="حذف"><span class="material-symbols-outlined">delete</span></button>
+              <button onclick="exportPoetryItems()" class="icon-btn bg-amber-500" title="ایکسپورٹ"><span class="material-symbols-outlined">upload_file</span></button>
+              <button onclick="triggerImport()" class="icon-btn bg-cyan-600" title="امپورٹ"><span class="material-symbols-outlined">download_for_offline</span></button>
             </div>
-
-            <input
-              id="importFileInput"
-              type="file"
-              accept="application/json"
-              class="hidden"
-            />
-
-            <div
-              id="savedPoetryList"
-              class="space-y-2 max-h-72 overflow-y-auto rounded-xl bg-white/60 p-2"
-            ></div>
+            <input id="importFileInput" type="file" accept="application/json" class="hidden" />
+            <div id="savedPoetryList" class="space-y-2 max-h-72 overflow-y-auto rounded-xl bg-white/60 p-2"></div>
           </div>
         </div>
 
-        <div class="flex flex-col items-start justify-start gap-6">
-          <div
-            class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 flex justify-center gap-3"
-          >
-            <button onclick="downloadImage()" class="icon-btn bg-green-500">
-              <span class="material-symbols-outlined">download</span>
-            </button>
-            <button onclick="window.print()" class="icon-btn bg-gray-700">
-              <span class="material-symbols-outlined">print</span>
-            </button>
+        <!-- ============== PREVIEW COLUMN ============== -->
+        <div class="flex flex-col items-stretch gap-4">
+          <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 flex justify-center gap-3">
+            <button onclick="downloadImage()" class="icon-btn bg-green-500" title="تصویر ڈاؤن لوڈ"><span class="material-symbols-outlined">download</span></button>
+            <button onclick="window.print()" class="icon-btn bg-gray-700" title="پرنٹ"><span class="material-symbols-outlined">print</span></button>
           </div>
-          <div
-            id="print-area"
-            class="w-full bg-white/80 backdrop-blur rounded-3xl shadow-xl px-10 py-12 text-center text-xl leading-loose min-h-[300px] transition-all overflow-hidden"
-          ></div>
+          <div class="overflow-auto rounded-3xl">
+            <div id="print-area" class="bg-white/80 backdrop-blur rounded-3xl shadow-xl px-10 py-12 text-center text-xl leading-loose min-h-[300px] transition-all"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div
-      id="cssModal"
-      class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center p-4 z-50"
-    >
-      <div
-        class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-5 space-y-4"
-      >
+    <!-- CSS modal -->
+    <div id="cssModal" class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center p-4 z-50">
+      <div class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-5 space-y-4">
         <div class="flex items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold text-slate-800">
-            Preview Custom CSS
-          </h2>
-          <button
-            type="button"
-            class="icon-btn bg-slate-700"
-            onclick="toggleCssModal(false)"
-          >
-            <span class="material-symbols-outlined">close</span>
-          </button>
+          <h2 class="text-lg font-semibold text-slate-800">Preview Custom CSS</h2>
+          <button type="button" class="icon-btn bg-slate-700" onclick="toggleCssModal(false)"><span class="material-symbols-outlined">close</span></button>
         </div>
-        <p class="text-sm text-slate-500 text-right">
-          صرف preview پر لگنے والے CSS declarations درج کریں۔ مثال:
-          <code>border: 3px solid #111; border-radius: 24px;</code>
-        </p>
-        <textarea
-          id="customCssInput"
-          rows="8"
-          class="w-full border border-slate-200 rounded-2xl p-4 text-left font-mono text-sm focus:ring-2 focus:ring-pink-300 outline-none"
-          placeholder="border: 3px solid #111;`r`nbox-shadow: 0 15px 30px rgba(0,0,0,.12);"
-        ></textarea>
+        <textarea id="customCssInput" rows="8" class="w-full border border-slate-200 rounded-2xl p-4 text-left font-mono text-sm" placeholder="border: 3px solid #111; box-shadow: 0 15px 30px rgba(0,0,0,.12);"></textarea>
         <div class="flex justify-end gap-2">
-          <button
-            type="button"
-            class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700"
-            onclick="toggleCssModal(false)"
-          >
-            Close
-          </button>
-          <button
-            type="button"
-            class="px-4 py-2 rounded-xl bg-pink-600 text-white"
-            onclick="saveCustomCssFromModal()"
-          >
-            Apply
-          </button>
+          <button type="button" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700" onclick="toggleCssModal(false)">Close</button>
+          <button type="button" class="px-4 py-2 rounded-xl bg-pink-600 text-white" onclick="saveCustomCssFromModal()">Apply</button>
         </div>
       </div>
     </div>
 
-    <div
-      id="sjModal"
-      class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center p-4 z-50"
-    >
-      <div
-        class="w-full max-w-xl bg-white rounded-3xl shadow-2xl p-5 space-y-4"
-      >
+    <!-- Poetry block modal -->
+    <div id="sjModal" class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center p-4 z-50">
+      <div class="w-full max-w-xl bg-white rounded-3xl shadow-2xl p-5 space-y-4">
         <div class="flex items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold text-slate-800">
-            Insert Poetry Block
-          </h2>
-          <button
-            type="button"
-            class="icon-btn bg-slate-700"
-            onclick="toggleSjModal(false)"
-          >
-            <span class="material-symbols-outlined">close</span>
-          </button>
+          <h2 class="text-lg font-semibold text-slate-800">Insert Poetry Block</h2>
+          <button type="button" class="icon-btn bg-slate-700" onclick="toggleSjModal(false)"><span class="material-symbols-outlined">close</span></button>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <label class="space-y-1 text-right">
             <span class="text-sm text-slate-600">Format</span>
-            <select
-              id="sjFormatSelect"
-              class="w-full border border-slate-200 rounded-xl p-3"
-            >
+            <select id="sjFormatSelect" class="w-full border border-slate-200 rounded-xl p-3">
               <option value="sher">شعر</option>
               <option value="sher2">دو کالم شعر</option>
               <option value="mukhammas">مخمس</option>
@@ -308,1205 +268,16 @@
           </label>
           <label class="space-y-1 text-right">
             <span class="text-sm text-slate-600">Custom Pattern</span>
-            <input
-              id="sjCustomPatternInput"
-              class="w-full border border-slate-200 rounded-xl p-3 text-right"
-              placeholder="جیسے ۴ یا ۳+۲"
-            />
+            <input id="sjCustomPatternInput" class="w-full border border-slate-200 rounded-xl p-3 text-right" placeholder="جیسے ۴ یا ۳+۲" />
           </label>
         </div>
         <div class="flex justify-end gap-2">
-          <button
-            type="button"
-            class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700"
-            onclick="toggleSjModal(false)"
-          >
-            Close
-          </button>
-          <button
-            type="button"
-            class="px-4 py-2 rounded-xl bg-pink-600 text-white"
-            onclick="insertPoetryBlockFromModal()"
-          >
-            Insert
-          </button>
+          <button type="button" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700" onclick="toggleSjModal(false)">Close</button>
+          <button type="button" class="px-4 py-2 rounded-xl bg-pink-600 text-white" onclick="insertPoetryBlockFromModal()">Insert</button>
         </div>
       </div>
     </div>
 
-    <style>
-      body {
-        direction: rtl;
-      }
-
-      .toolbar-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        background: #fdf2f8;
-        color: #9d174d;
-        font-size: 14px;
-        cursor: pointer;
-        transition: 0.2s;
-        border: 0;
-      }
-
-      .chip:hover {
-        background: #fbcfe8;
-      }
-
-      .icon-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px;
-        border-radius: 10px;
-        color: white;
-        cursor: pointer;
-        transition: 0.2s;
-        border: 0;
-      }
-
-      .icon-btn:hover {
-        opacity: 0.9;
-      }
-
-      .material-symbols-outlined {
-        font-size: 20px;
-      }
-
-      .saved-item {
-        width: 100%;
-        text-align: right;
-        padding: 12px;
-        border-radius: 14px;
-        background: white;
-        border: 1px solid #f3e8ff;
-        transition: 0.2s;
-      }
-      .saved-item:hover {
-        border-color: #f9a8d4;
-        transform: translateY(-1px);
-      }
-
-      .saved-item.active {
-        background: linear-gradient(135deg, #fdf2f8, #eef2ff);
-        border-color: #ec4899;
-        box-shadow: 0 8px 24px rgba(236, 72, 153, 0.12);
-      }
-
-      @font-face {
-        font-family: "Mehr";
-        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/MehrNastaleeq@master/MehrNastaliqWeb.woff")
-          format("woff");
-      }
-
-      @font-face {
-        font-family: "Payami";
-        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/PayamiTest@master/Payami%20Nastaleeq_Fixed.woff2")
-          format("woff2");
-      }
-
-      @font-face {
-        font-family: "Emaad";
-        src: url("https://cdn.jsdelivr.net/gh/ShakesVision/EmaadNastaleeq@master/urduemadnastaleeqregular1.woff")
-          format("woff");
-      }
-
-      #print-area {
-        font-family: "Mehr", serif;
-        white-space: normal;
-      }
-
-      #print-area .poetry-empty-line {
-        height: 1.6em;
-      }
-
-      #print-area :first-child {
-        margin-top: 0;
-      }
-
-      #print-area :last-child {
-        margin-bottom: 0;
-      }
-
-      #print-area h1,
-      #print-area h2,
-      #print-area h3,
-      #print-area h4,
-      #print-area h5,
-      #print-area h6 {
-        font-weight: 700;
-        margin: 0.75em 0 0.35em;
-      }
-
-      #print-area p,
-      #print-area ul,
-      #print-area ol,
-      #print-area blockquote,
-      #print-area pre {
-        margin: 0.6em 0;
-      }
-
-      #print-area ul,
-      #print-area ol {
-        padding-right: 1.5em;
-      }
-
-      #print-area blockquote {
-        border-right: 4px solid #f9a8d4;
-        padding-right: 1em;
-        color: #475569;
-      }
-
-      #print-area code {
-        background: rgba(15, 23, 42, 0.08);
-        border-radius: 0.4rem;
-        padding: 0.1rem 0.35rem;
-        font-size: 0.9em;
-      }
-
-      #print-area pre code {
-        display: block;
-        padding: 1rem;
-        overflow: auto;
-      }
-
-      #print-area a {
-        color: #db2777;
-        text-decoration: underline;
-      }
-    </style>
-
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const STORAGE_KEY = "poetryStudioItemsV2";
-        const ACTIVE_ITEM_KEY = "poetryStudioActiveItemV2";
-        let currentFont = "Mehr";
-        let currentPattern = "sher";
-        let savedItems = [];
-        let activeItemId = null;
-
-        const inputEl = document.getElementById("inputText");
-        const previewEl = document.getElementById("print-area");
-        const fontSelector = document.getElementById("fontSelector");
-        const titleEl = document.getElementById("poetryTitle");
-        const bgEl = document.getElementById("bgInput");
-        const colorEl = document.getElementById("colorInput");
-        const customPatternEl = document.getElementById("customPattern");
-        const fontUrlEl = document.getElementById("fontUrlInput");
-        const savedListEl = document.getElementById("savedPoetryList");
-        const importFileInput = document.getElementById("importFileInput");
-        const cssModalEl = document.getElementById("cssModal");
-        const customCssInput = document.getElementById("customCssInput");
-        const sjModalEl = document.getElementById("sjModal");
-        const sjFormatSelect = document.getElementById("sjFormatSelect");
-        const sjCustomPatternInput = document.getElementById(
-          "sjCustomPatternInput",
-        );
-
-        if (window.marked) {
-          marked.setOptions({ breaks: true, gfm: true });
-        }
-
-        function getDefaultTitle(text) {
-          const firstLine = text
-            .split("\n")
-            .map(function (line) {
-              return line.trim();
-            })
-            .find(Boolean);
-          return firstLine ? firstLine.slice(0, 30) : "نیا کلام";
-        }
-
-        function getStorageItems() {
-          try {
-            const parsed = JSON.parse(
-              localStorage.getItem(STORAGE_KEY) || "[]",
-            );
-            return Array.isArray(parsed) ? parsed : [];
-          } catch (error) {
-            return [];
-          }
-        }
-
-        function persistItems() {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(savedItems));
-          if (activeItemId) {
-            localStorage.setItem(ACTIVE_ITEM_KEY, activeItemId);
-          } else {
-            localStorage.removeItem(ACTIVE_ITEM_KEY);
-          }
-        }
-
-        function ensureCustomFontOption(fontName, fontLabel) {
-          if (!fontSelector || !fontName) return;
-
-          const exists = Array.from(fontSelector.options).some(
-            function (option) {
-              return option.value === fontName;
-            },
-          );
-          if (exists) return;
-
-          const option = document.createElement("option");
-          option.value = fontName;
-          option.textContent = fontLabel || "کسٹم فونٹ";
-          fontSelector.appendChild(option);
-        }
-
-        function registerCustomFont(fontName, url, fontLabel) {
-          if (!fontName || !url) return;
-
-          if (!document.getElementById(fontName)) {
-            const style = document.createElement("style");
-            style.id = fontName;
-            style.innerHTML =
-              "@font-face { font-family: '" +
-              fontName +
-              "'; src: url('" +
-              url +
-              "'); }";
-            document.head.appendChild(style);
-          }
-
-          ensureCustomFontOption(fontName, fontLabel);
-        }
-
-        function getCurrentState() {
-          return {
-            title: titleEl ? titleEl.value.trim() : "",
-            inputText: inputEl ? inputEl.value : "",
-            pattern: currentPattern,
-            customPattern: customPatternEl ? customPatternEl.value : "",
-            background: bgEl ? bgEl.value : "",
-            color: colorEl ? colorEl.value : "",
-            fontName: currentFont,
-            fontUrl: fontUrlEl ? fontUrlEl.value.trim() : "",
-            customCss: customCssInput ? customCssInput.value : "",
-            updatedAt: Date.now(),
-          };
-        }
-
-        function renderSavedItems() {
-          if (!savedListEl) return;
-
-          savedListEl.innerHTML = "";
-
-          if (!savedItems.length) {
-            const emptyState = document.createElement("div");
-            emptyState.className = "text-sm text-gray-500 text-center py-6";
-            emptyState.textContent = "ابھی کوئی محفوظ شاعری موجود نہیں";
-            savedListEl.appendChild(emptyState);
-            return;
-          }
-
-          const sortedItems = savedItems.slice().sort(function (a, b) {
-            return (b.updatedAt || 0) - (a.updatedAt || 0);
-          });
-
-          sortedItems.forEach(function (item) {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className =
-              "saved-item" + (item.id === activeItemId ? " active" : "");
-            button.onclick = function () {
-              window.loadPoetryItem(item.id);
-            };
-
-            const itemTitle = document.createElement("div");
-            itemTitle.className = "font-semibold text-gray-800";
-            itemTitle.textContent = item.title || "بغیر عنوان";
-
-            const itemMeta = document.createElement("div");
-            itemMeta.className = "text-xs text-gray-500 mt-1";
-            itemMeta.textContent = new Date(
-              item.updatedAt || Date.now(),
-            ).toLocaleString();
-
-            const itemPreview = document.createElement("div");
-            itemPreview.className = "text-sm text-gray-600 mt-2 truncate";
-            itemPreview.textContent = item.inputText || "خالی";
-
-            button.appendChild(itemTitle);
-            button.appendChild(itemMeta);
-            button.appendChild(itemPreview);
-            savedListEl.appendChild(button);
-          });
-        }
-
-        function applyFont() {
-          if (!previewEl || !inputEl) return;
-          previewEl.style.fontFamily = currentFont;
-          inputEl.style.fontFamily = currentFont;
-        }
-
-        function getPreviewCssText() {
-          const baseStyles = [];
-          if (bgEl && bgEl.value) baseStyles.push("background: " + bgEl.value);
-          if (colorEl && colorEl.value)
-            baseStyles.push("color: " + colorEl.value);
-          if (currentFont)
-            baseStyles.push("font-family: '" + currentFont + "', serif");
-          if (customCssInput && customCssInput.value.trim()) {
-            baseStyles.push(customCssInput.value.trim());
-          }
-          return baseStyles.join("; ");
-        }
-
-        function applyPreviewStyles(shouldSave) {
-          if (!previewEl) return;
-          previewEl.setAttribute("style", getPreviewCssText());
-          if (shouldSave !== false) {
-            autoSaveActiveItem();
-          }
-        }
-
-        function preserveEmptyLines(text) {
-          const lines = text.split("\n");
-          const output = [];
-          let blankRun = 0;
-
-          lines.forEach(function (line) {
-            if (line.trim() === "") {
-              blankRun += 1;
-              return;
-            }
-
-            if (blankRun > 0) {
-              output.push("");
-              for (let i = 1; i < blankRun; i += 1) {
-                output.push("");
-                output.push("<p>&nbsp;</p>");
-                output.push("");
-              }
-              blankRun = 0;
-            }
-
-            output.push(line);
-          });
-
-          if (blankRun > 0) {
-            output.push("");
-            for (let i = 1; i < blankRun; i += 1) {
-              output.push("");
-              output.push("<p>&nbsp;</p>");
-              output.push("");
-            }
-          }
-
-          return output.join("\n");
-        }
-
-        function parseSjAttributes(rawTag) {
-          const attributes = {};
-          const attributeRegex = /(\w+)=["']([^"']*)["']/g;
-          let match = attributeRegex.exec(rawTag);
-
-          while (match) {
-            attributes[match[1]] = match[2];
-            match = attributeRegex.exec(rawTag);
-          }
-
-          return attributes;
-        }
-
-        function buildPoetryHtml(lines, patternName, customPattern) {
-          const classAttr = patternName
-            ? ' class="sj ' + patternName + '"'
-            : "";
-          const patternAttr =
-            !patternName && customPattern
-              ? ' data-pattern="' + customPattern.replace(/"/g, "&quot;") + '"'
-              : "";
-          const poetryLines = lines
-            .map(function (line) {
-              if (line.trim() === "") {
-                return '<div class="poetry-empty-line">&nbsp;</div>';
-              }
-              return (
-                "<div>" +
-                line.replace(/</g, "&lt;").replace(/>/g, "&gt;") +
-                "</div>"
-              );
-            })
-            .join("");
-
-          return (
-            "<div" + classAttr + patternAttr + ">" + poetryLines + "</div>"
-          );
-        }
-
-        function preprocessInput(rawText) {
-          const lines = rawText.split("\n");
-          const chunks = [];
-          let buffer = [];
-          let poetryBuffer = [];
-          let inPoetry = false;
-          let poetryMeta = null;
-
-          function flushBuffer() {
-            if (!buffer.length) return;
-            chunks.push(preserveEmptyLines(buffer.join("\n")));
-            buffer = [];
-          }
-
-          lines.forEach(function (line) {
-            const trimmed = line.trim();
-            const sjMatch = trimmed.match(/^\[sj(?:\s+([^\]]+))?\]$/i);
-
-            if (sjMatch) {
-              flushBuffer();
-              inPoetry = true;
-              poetryBuffer = [];
-              const attributes = parseSjAttributes(sjMatch[1] || "");
-              poetryMeta = {
-                format:
-                  typeof attributes.format !== "undefined"
-                    ? attributes.format
-                    : currentPattern,
-                custom:
-                  typeof attributes.custom !== "undefined"
-                    ? attributes.custom
-                    : customPatternEl
-                      ? customPatternEl.value
-                      : "",
-              };
-              return;
-            }
-
-            if (trimmed.toLowerCase() === "[/sj]") {
-              if (inPoetry) {
-                const resolvedFormat =
-                  poetryMeta && poetryMeta.format === "custom"
-                    ? null
-                    : poetryMeta
-                      ? poetryMeta.format
-                      : currentPattern;
-                const resolvedCustom =
-                  poetryMeta && poetryMeta.format === "custom"
-                    ? poetryMeta.custom
-                    : poetryMeta && poetryMeta.custom
-                      ? poetryMeta.custom
-                      : customPatternEl
-                        ? customPatternEl.value
-                        : "";
-                chunks.push(
-                  buildPoetryHtml(poetryBuffer, resolvedFormat, resolvedCustom),
-                );
-              }
-              inPoetry = false;
-              poetryBuffer = [];
-              poetryMeta = null;
-              return;
-            }
-
-            if (inPoetry) {
-              poetryBuffer.push(line);
-            } else {
-              buffer.push(line);
-            }
-          });
-
-          flushBuffer();
-
-          if (inPoetry && poetryBuffer.length) {
-            const resolvedFormat =
-              poetryMeta && poetryMeta.format === "custom"
-                ? null
-                : poetryMeta
-                  ? poetryMeta.format
-                  : currentPattern;
-            const resolvedCustom =
-              poetryMeta && poetryMeta.format === "custom"
-                ? poetryMeta.custom
-                : poetryMeta && poetryMeta.custom
-                  ? poetryMeta.custom
-                  : customPatternEl
-                    ? customPatternEl.value
-                    : "";
-            chunks.push(
-              buildPoetryHtml(poetryBuffer, resolvedFormat, resolvedCustom),
-            );
-          }
-
-          console.log("Preprocessed chunks:", chunks);
-          return chunks.join("\n");
-        }
-
-        function renderMarkdown() {
-          if (!inputEl || !previewEl) return;
-
-          const prepared = preprocessInput(inputEl.value);
-          if (window.marked) {
-            previewEl.innerHTML = marked.parse(prepared);
-          } else {
-            previewEl.innerHTML = prepared.replace(/\n/g, "<br>");
-          }
-
-          if (window.ShakeebJustify) {
-            ShakeebJustify.apply();
-          }
-        }
-
-        function upsertActiveItem() {
-          const state = getCurrentState();
-          const resolvedTitle = state.title || getDefaultTitle(state.inputText);
-
-          if (titleEl && !titleEl.value.trim()) {
-            titleEl.value = resolvedTitle;
-          }
-
-          if (!activeItemId) {
-            activeItemId = "poetry-" + Date.now();
-          }
-
-          const payload = {
-            id: activeItemId,
-            title: resolvedTitle,
-            inputText: state.inputText,
-            pattern: state.pattern,
-            customPattern: state.customPattern,
-            background: state.background,
-            color: state.color,
-            fontName: state.fontName,
-            fontUrl: state.fontUrl,
-            customCss: state.customCss,
-            updatedAt: state.updatedAt,
-          };
-
-          const existingIndex = savedItems.findIndex(function (item) {
-            return item.id === activeItemId;
-          });
-
-          if (existingIndex >= 0) {
-            savedItems[existingIndex] = payload;
-          } else {
-            savedItems.push(payload);
-          }
-
-          persistItems();
-          renderSavedItems();
-        }
-
-        function autoSaveActiveItem() {
-          upsertActiveItem();
-        }
-
-        function applyItemState(item) {
-          if (!item) return;
-
-          activeItemId = item.id;
-          currentPattern = item.pattern || "sher";
-          currentFont = item.fontName || "Mehr";
-
-          if (titleEl) titleEl.value = item.title || "";
-          if (inputEl) inputEl.value = item.inputText || "";
-          if (customPatternEl) customPatternEl.value = item.customPattern || "";
-          if (bgEl) bgEl.value = item.background || "";
-          if (colorEl) colorEl.value = item.color || "";
-          if (fontUrlEl) fontUrlEl.value = item.fontUrl || "";
-          if (customCssInput) customCssInput.value = item.customCss || "";
-
-          if (item.fontUrl && item.fontName) {
-            registerCustomFont(item.fontName, item.fontUrl, "کسٹم فونٹ");
-          }
-
-          if (fontSelector) {
-            ensureCustomFontOption(currentFont, "کسٹم فونٹ");
-            fontSelector.value = currentFont;
-          }
-
-          applyFont();
-          applyPreviewStyles(false);
-          renderMarkdown();
-          persistItems();
-          renderSavedItems();
-        }
-
-        function updateInput(newValue, selectionStart, selectionEnd) {
-          if (!inputEl) return;
-          inputEl.value = newValue;
-          inputEl.focus();
-          inputEl.setSelectionRange(selectionStart, selectionEnd);
-          renderMarkdown();
-          autoSaveActiveItem();
-        }
-
-        function getSelectionState() {
-          const start = inputEl.selectionStart || 0;
-          const end = inputEl.selectionEnd || 0;
-          const value = inputEl.value || "";
-          return {
-            start: start,
-            end: end,
-            value: value,
-            selected: value.slice(start, end),
-          };
-        }
-
-        function getExpandedLineSelection(state) {
-          const lineStart = state.value.lastIndexOf("\n", state.start - 1) + 1;
-          const lineEndIndex = state.value.indexOf("\n", state.end);
-          const lineEnd =
-            lineEndIndex === -1 ? state.value.length : lineEndIndex;
-
-          return {
-            start: lineStart,
-            end: lineEnd,
-            text: state.value.slice(lineStart, lineEnd),
-          };
-        }
-
-        function replaceSelection(
-          state,
-          replacement,
-          selectionStartOffset,
-          selectionEndOffset,
-        ) {
-          const updated =
-            state.value.slice(0, state.start) +
-            replacement +
-            state.value.slice(state.end);
-          updateInput(
-            updated,
-            state.start + selectionStartOffset,
-            state.start + selectionEndOffset,
-          );
-        }
-
-        window.wrapSelection = function (before, after) {
-          const state = getSelectionState();
-          const selected = state.selected || "متن";
-          const replacement = before + selected + after;
-          replaceSelection(
-            state,
-            replacement,
-            before.length,
-            before.length + selected.length,
-          );
-        };
-
-        window.insertHeading = function (level) {
-          const state = getSelectionState();
-          const prefix = "#".repeat(level) + " ";
-          const selected = state.selected || "سرخی";
-          replaceSelection(
-            state,
-            prefix + selected,
-            prefix.length,
-            prefix.length + selected.length,
-          );
-        };
-
-        window.insertParagraphTag = function () {
-          const state = getSelectionState();
-          const selected = state.selected || "متن";
-          const html = "<p>" + selected.replace(/\n/g, "<br>\n") + "</p>";
-          replaceSelection(state, html, 3, html.length - 4);
-        };
-
-        window.insertLinePrefix = function (prefix) {
-          const state = getSelectionState();
-          const target = state.selected
-            ? state
-            : getExpandedLineSelection(state);
-          const selected = state.selected
-            ? state.selected
-            : target.text || "آئٹم";
-          const lines = selected
-            .split("\n")
-            .map(function (line) {
-              return prefix + line;
-            })
-            .join("\n");
-          updateInput(
-            state.value.slice(0, target.start) +
-              lines +
-              state.value.slice(target.end),
-            target.start,
-            target.start + lines.length,
-          );
-        };
-
-        window.insertNumberedList = function () {
-          const state = getSelectionState();
-          const target = state.selected
-            ? state
-            : getExpandedLineSelection(state);
-          const selected = state.selected
-            ? state.selected
-            : target.text || "آئٹم";
-          const lines = selected
-            .split("\n")
-            .map(function (line, index) {
-              return index + 1 + ". " + line;
-            })
-            .join("\n");
-          updateInput(
-            state.value.slice(0, target.start) +
-              lines +
-              state.value.slice(target.end),
-            target.start,
-            target.start + lines.length,
-          );
-        };
-
-        window.insertQuoteBlock = function () {
-          const state = getSelectionState();
-          const target = state.selected
-            ? state
-            : getExpandedLineSelection(state);
-          const selected = state.selected
-            ? state.selected
-            : target.text || "اقتباس";
-          const lines = selected
-            .split("\n")
-            .map(function (line) {
-              return line.trim() ? "> " + line : ">";
-            })
-            .join("\n");
-          updateInput(
-            state.value.slice(0, target.start) +
-              lines +
-              state.value.slice(target.end),
-            target.start,
-            target.start + lines.length,
-          );
-        };
-
-        window.insertLink = function () {
-          const state = getSelectionState();
-          const label = state.selected || "لنک";
-          const url = prompt("URL درج کریں", "https://");
-          if (url === null) return;
-          const snippet = "[" + label + "](" + (url.trim() || "https://") + ")";
-          const updated =
-            state.value.slice(0, state.start) +
-            snippet +
-            state.value.slice(state.end);
-          updateInput(updated, state.start, state.start + snippet.length);
-        };
-
-        window.applyAlignment = function (alignment) {
-          const state = getSelectionState();
-          const selected = state.selected || "متن";
-          const snippet =
-            '<p style="text-align:' +
-            alignment +
-            ';">' +
-            selected.replace(/\n/g, "<br>\n") +
-            "</p>";
-          replaceSelection(state, snippet, 3, snippet.length - 4);
-        };
-
-        window.applyTextColor = function () {
-          const state = getSelectionState();
-          const selected = state.selected || "متن";
-          const color = prompt("رنگ درج کریں", "#d62828");
-          if (color === null) return;
-          const snippet =
-            '<span style="color:' +
-            (color.trim() || "#d62828") +
-            ';">' +
-            selected +
-            "</span>";
-          const openingTag =
-            '<span style="color:' + (color.trim() || "#d62828") + ';">';
-          replaceSelection(
-            state,
-            snippet,
-            openingTag.length,
-            openingTag.length + selected.length,
-          );
-        };
-
-        window.toggleSjModal = function (show) {
-          if (!sjModalEl) return;
-          if (show) {
-            if (sjFormatSelect) {
-              sjFormatSelect.value = currentPattern || "sher";
-            }
-            if (sjCustomPatternInput) {
-              sjCustomPatternInput.value = customPatternEl
-                ? customPatternEl.value
-                : "";
-            }
-          }
-          sjModalEl.classList.toggle("hidden", !show);
-          sjModalEl.classList.toggle("flex", !!show);
-        };
-
-        window.insertPoetryBlockFromModal = function () {
-          const state = getSelectionState();
-          const selected = state.selected || "پہلا مصرع\nدوسرا مصرع";
-          const formatValue = sjFormatSelect ? sjFormatSelect.value : "sher";
-          const customValue = sjCustomPatternInput
-            ? sjCustomPatternInput.value.trim()
-            : "";
-          const attributes = [];
-
-          if (formatValue) {
-            attributes.push('format="' + formatValue + '"');
-          }
-          if (formatValue === "custom" && customValue) {
-            attributes.push(
-              'custom="' + customValue.replace(/"/g, "&quot;") + '"',
-            );
-          }
-
-          const openingTag = attributes.length
-            ? "[sj " + attributes.join(" ") + "]"
-            : "[sj]";
-          const snippet = openingTag + "\n" + selected + "\n[/sj]";
-          replaceSelection(
-            state,
-            snippet,
-            openingTag.length + 1,
-            openingTag.length + 1 + selected.length,
-          );
-          window.toggleSjModal(false);
-        };
-
-        window.toggleCssModal = function (show) {
-          if (!cssModalEl) return;
-          cssModalEl.classList.toggle("hidden", !show);
-          cssModalEl.classList.toggle("flex", !!show);
-        };
-
-        window.saveCustomCssFromModal = function () {
-          applyPreviewStyles();
-          toggleCssModal(false);
-        };
-
-        window.loadCustomFont = function () {
-          if (!fontUrlEl) return;
-          const url = fontUrlEl.value.trim();
-          if (!url) return alert("Font URL درج کریں");
-
-          const fontName = "CustomFont_" + Date.now();
-          registerCustomFont(fontName, url, "کسٹم فونٹ");
-
-          if (fontSelector) {
-            fontSelector.value = fontName;
-          }
-
-          currentFont = fontName;
-          applyFont();
-          applyPreviewStyles(false);
-          autoSaveActiveItem();
-        };
-
-        window.setPattern = function (pattern) {
-          currentPattern = pattern;
-          renderMarkdown();
-          autoSaveActiveItem();
-        };
-
-        window.applyCustomPattern = function () {
-          currentPattern = null;
-          renderMarkdown();
-          autoSaveActiveItem();
-        };
-
-        window.applyStyles = function () {
-          applyPreviewStyles();
-        };
-
-        window.downloadImage = function () {
-          if (!previewEl || !window.html2canvas) return;
-
-          html2canvas(previewEl).then(function (canvas) {
-            const suggestedName =
-              (titleEl && titleEl.value.trim()) ||
-              getDefaultTitle(inputEl ? inputEl.value : "");
-            const fileName = prompt("فائل کا نام درج کریں", suggestedName);
-            if (fileName === null) return;
-
-            const safeName = (
-              fileName.trim() ||
-              suggestedName ||
-              "poetry"
-            ).replace(/[\\/:*?"<>|]/g, "_");
-            const link = document.createElement("a");
-            link.download = safeName.endsWith(".png")
-              ? safeName
-              : safeName + ".png";
-            link.href = canvas.toDataURL();
-            link.click();
-          });
-        };
-
-        window.savePoetryItem = function () {
-          upsertActiveItem();
-        };
-
-        window.createNewPoetryItem = function () {
-          activeItemId = "poetry-" + Date.now();
-          currentPattern = "sher";
-          currentFont = "Mehr";
-
-          if (titleEl) titleEl.value = "";
-          if (inputEl) inputEl.value = "";
-          if (customPatternEl) customPatternEl.value = "";
-          if (bgEl) bgEl.value = "";
-          if (colorEl) colorEl.value = "";
-          if (fontUrlEl) fontUrlEl.value = "";
-          if (customCssInput) customCssInput.value = "";
-          if (fontSelector) fontSelector.value = "Mehr";
-
-          applyFont();
-          applyPreviewStyles(false);
-          renderMarkdown();
-          upsertActiveItem();
-        };
-
-        window.loadPoetryItem = function (itemId) {
-          const item = savedItems.find(function (entry) {
-            return entry.id === itemId;
-          });
-          applyItemState(item);
-        };
-
-        window.deletePoetryItem = function () {
-          if (!activeItemId) return;
-          if (!confirm("اس محفوظ شاعری کو حذف کرنا ہے؟")) return;
-
-          savedItems = savedItems.filter(function (item) {
-            return item.id !== activeItemId;
-          });
-          activeItemId = null;
-          persistItems();
-
-          if (savedItems.length) {
-            applyItemState(savedItems[0]);
-            return;
-          }
-
-          currentPattern = "sher";
-          currentFont = "Mehr";
-          if (titleEl) titleEl.value = "";
-          if (inputEl) inputEl.value = "";
-          if (customPatternEl) customPatternEl.value = "";
-          if (bgEl) bgEl.value = "";
-          if (colorEl) colorEl.value = "";
-          if (fontUrlEl) fontUrlEl.value = "";
-          if (customCssInput) customCssInput.value = "";
-          if (fontSelector) fontSelector.value = "Mehr";
-
-          applyFont();
-          applyPreviewStyles(false);
-          renderMarkdown();
-          renderSavedItems();
-        };
-
-        window.exportPoetryItems = function () {
-          const exportPayload = {
-            version: 1,
-            exportedAt: new Date().toISOString(),
-            activeItemId: activeItemId,
-            items: savedItems,
-          };
-
-          const suggestedName =
-            "poetry-notes-" + new Date().toISOString().slice(0, 10);
-          const fileName = prompt("Export file name", suggestedName);
-          if (fileName === null) return;
-
-          const safeName = (fileName.trim() || suggestedName).replace(
-            /[\\/:*?"<>|]/g,
-            "_",
-          );
-          const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
-            type: "application/json",
-          });
-          const link = document.createElement("a");
-          link.download = safeName.endsWith(".json")
-            ? safeName
-            : safeName + ".json";
-          link.href = URL.createObjectURL(blob);
-          link.click();
-          setTimeout(function () {
-            URL.revokeObjectURL(link.href);
-          }, 1000);
-        };
-
-        window.triggerImport = function () {
-          if (!importFileInput) return;
-          importFileInput.click();
-        };
-
-        function importPoetryItems(file) {
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = function (event) {
-            try {
-              const parsed = JSON.parse(event.target.result);
-              const importedItems = Array.isArray(parsed)
-                ? parsed
-                : parsed.items;
-              if (!Array.isArray(importedItems)) {
-                alert("درست JSON فائل منتخب کریں");
-                return;
-              }
-
-              savedItems = importedItems.map(function (item, index) {
-                return {
-                  id: item.id || "poetry-import-" + Date.now() + "-" + index,
-                  title: item.title || getDefaultTitle(item.inputText || ""),
-                  inputText: item.inputText || "",
-                  pattern:
-                    typeof item.pattern === "undefined" ? "sher" : item.pattern,
-                  customPattern: item.customPattern || "",
-                  background: item.background || "",
-                  color: item.color || "",
-                  fontName: item.fontName || "Mehr",
-                  fontUrl: item.fontUrl || "",
-                  customCss: item.customCss || "",
-                  updatedAt: item.updatedAt || Date.now(),
-                };
-              });
-
-              const nextActiveId =
-                parsed.activeItemId || (savedItems[0] && savedItems[0].id);
-              persistItems();
-              if (nextActiveId) {
-                localStorage.setItem(ACTIVE_ITEM_KEY, nextActiveId);
-              }
-              renderSavedItems();
-              if (savedItems.length) {
-                applyItemState(
-                  savedItems.find(function (item) {
-                    return item.id === nextActiveId;
-                  }) || savedItems[0],
-                );
-              }
-            } catch (error) {
-              alert("فائل import نہیں ہو سکی");
-            }
-          };
-          reader.readAsText(file, "utf-8");
-        }
-
-        function initializeFromStorage() {
-          savedItems = getStorageItems();
-
-          if (!savedItems.length) {
-            window.createNewPoetryItem();
-            return;
-          }
-
-          const storedActiveId = localStorage.getItem(ACTIVE_ITEM_KEY);
-          const initialItem =
-            savedItems.find(function (item) {
-              return item.id === storedActiveId;
-            }) || savedItems[0];
-
-          applyItemState(initialItem);
-        }
-
-        if (fontSelector) {
-          fontSelector.addEventListener("change", function () {
-            currentFont = this.value;
-            applyFont();
-            applyPreviewStyles(false);
-            autoSaveActiveItem();
-          });
-        }
-
-        if (inputEl) {
-          inputEl.addEventListener("input", function () {
-            renderMarkdown();
-            autoSaveActiveItem();
-          });
-
-          // Urdu Keyboard Mapping for Textarea
-          inputEl.addEventListener("keypress", function (event) {
-            const urduToggle = document.getElementById("urduToggle");
-            if (!urduToggle || !urduToggle.checked) return;
-
-            const key = event.key;
-            if (typeof keyboardMap === "undefined") return;
-
-            for (let i = 0; i < keyboardMap.length; i++) {
-              if (keyboardMap[i][0] === key) {
-                event.preventDefault();
-                const start = inputEl.selectionStart;
-                const end = inputEl.selectionEnd;
-                const val = inputEl.value;
-                const char = keyboardMap[i][1];
-                inputEl.value = val.substring(0, start) + char + val.substring(end);
-                inputEl.selectionStart = inputEl.selectionEnd = start + char.length;
-                inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-                break;
-              }
-            }
-          });
-        }
-
-        if (titleEl) {
-          titleEl.addEventListener("input", autoSaveActiveItem);
-        }
-
-        if (customPatternEl) {
-          customPatternEl.addEventListener("input", function () {
-            if (!currentPattern) {
-              renderMarkdown();
-            }
-            autoSaveActiveItem();
-          });
-        }
-
-        [bgEl, colorEl].forEach(function (el) {
-          if (!el) return;
-          el.addEventListener("input", function () {
-            applyPreviewStyles();
-          });
-        });
-
-        if (fontUrlEl) {
-          fontUrlEl.addEventListener("change", autoSaveActiveItem);
-        }
-
-        if (customCssInput) {
-          customCssInput.addEventListener("input", function () {
-            applyPreviewStyles(false);
-          });
-        }
-
-        if (importFileInput) {
-          importFileInput.addEventListener("change", function (event) {
-            importPoetryItems(event.target.files && event.target.files[0]);
-            event.target.value = "";
-          });
-        }
-
-        if (cssModalEl) {
-          cssModalEl.addEventListener("click", function (event) {
-            if (event.target === cssModalEl) {
-              toggleCssModal(false);
-            }
-          });
-        }
-
-        if (sjModalEl) {
-          sjModalEl.addEventListener("click", function (event) {
-            if (event.target === sjModalEl) {
-              toggleSjModal(false);
-            }
-          });
-        }
-
-        initializeFromStorage();
-      });
-    </script>
+    <script src="poetry2-app.js"></script>
   </body>
 </html>

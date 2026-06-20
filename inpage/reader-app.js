@@ -205,12 +205,13 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
 
 /* ----------------------------- Converter ----------------------------- */
 
+const INP_ESCAPE = String.fromCharCode(4); // 0x04 InPage Unicode prefix byte
+
 async function ensureConverter() {
   if (converter) return converter;
-  const status = el("convStatus");
-  status.textContent = "Loading mapping tables…";
+  el("convStatus").textContent = "Loading mapping tables…";
   converter = createBidiConverter(await loadBidiMappings());
-  status.textContent = "Mappings ready.";
+  el("convStatus").textContent = "Converts live as you type.";
   return converter;
 }
 
@@ -218,40 +219,68 @@ function getConvDirection() {
   return document.querySelector('input[name="conv-dir"]:checked')?.value || "uni2inp";
 }
 
-el("convRunBtn").addEventListener("click", async () => {
+function updateConverterChrome() {
+  const uni2inp = getConvDirection() === "uni2inp";
+  el("formatSelectContainer").style.display = uni2inp ? "inline-flex" : "none";
+  el("convInLabel").textContent = uni2inp ? "Unicode" : "InPage (legacy)";
+  el("convOutLabel").textContent = uni2inp ? "InPage (legacy)" : "Unicode";
+  el("convInput").placeholder = uni2inp
+    ? "Type or paste Unicode Urdu…"
+    : "Paste legacy InPage text…";
+}
+
+async function runConvert() {
   const input = el("convInput").value;
   const output = el("convOutput");
+  el("convInCount").textContent = String(input.length);
+  if (!input) {
+    output.value = "";
+    el("convOutCount").textContent = "0";
+    return;
+  }
   try {
     const conv = await ensureConverter();
     if (getConvDirection() === "uni2inp") {
-      const format = el("convFormat").value;
-      const legacyText = conv.unicodeToInpageLegacyText(input);
-      if (format === "prefixed") {
-        let prefixed = "";
-        for (let i = 0; i < legacyText.length; i++) prefixed += "" + legacyText[i];
-        output.value = prefixed;
-      } else {
-        output.value = legacyText;
-      }
+      const legacy = conv.unicodeToInpageLegacyText(input);
+      output.value =
+        el("convFormat").value === "prefixed"
+          ? [...legacy].map((ch) => INP_ESCAPE + ch).join("")
+          : legacy;
       output.dir = "rtl";
     } else {
-      const cleanInput = input.includes("") ? input.replace(//g, "") : input;
-      output.value = conv.wrapRtlPreview(conv.inpageLegacyTextToUnicode(cleanInput));
+      const clean = input.split(INP_ESCAPE).join("");
+      output.value = conv.wrapRtlPreview(conv.inpageLegacyTextToUnicode(clean));
       output.dir = "auto";
     }
+    el("convOutCount").textContent = String(output.value.length);
   } catch (err) {
     el("convStatus").textContent = `Error: ${err.message || err}`;
   }
+}
+
+let convTimer = null;
+function scheduleConvert() {
+  clearTimeout(convTimer);
+  convTimer = setTimeout(runConvert, 120);
+}
+
+el("convInput").addEventListener("input", scheduleConvert);
+el("convFormat").addEventListener("change", runConvert);
+document.querySelectorAll('input[name="conv-dir"]').forEach((r) => {
+  r.addEventListener("change", () => {
+    updateConverterChrome();
+    runConvert();
+  });
 });
 
-const formatSelectContainer = el("formatSelectContainer");
-function updateFormatSelectorVisibility() {
-  formatSelectContainer.style.display = getConvDirection() === "uni2inp" ? "inline-flex" : "none";
-}
-document.querySelectorAll('input[name="conv-dir"]').forEach((r) => {
-  r.addEventListener("change", updateFormatSelectorVisibility);
+el("convSwapBtn").addEventListener("click", () => {
+  const previousOutput = el("convOutput").value;
+  const other = getConvDirection() === "uni2inp" ? "inp2uni" : "uni2inp";
+  document.querySelector(`input[name="conv-dir"][value="${other}"]`).checked = true;
+  updateConverterChrome();
+  el("convInput").value = previousOutput; // round-trip: output becomes new input
+  runConvert();
 });
-updateFormatSelectorVisibility();
 
 el("convCopyBtn").addEventListener("click", async () => {
   const text = el("convOutput").value;
@@ -259,10 +288,16 @@ el("convCopyBtn").addEventListener("click", async () => {
   await navigator.clipboard.writeText(text);
   el("convStatus").textContent = "Copied.";
 });
+
 el("convClearBtn").addEventListener("click", () => {
   el("convInput").value = "";
   el("convOutput").value = "";
+  el("convInCount").textContent = "0";
+  el("convOutCount").textContent = "0";
+  el("convInput").focus();
 });
+
+updateConverterChrome();
 
 /* ----------------------------- Init ----------------------------- */
 

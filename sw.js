@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tools-hub-2026-05-04";
+const CACHE_VERSION = "tools-hub-2026-06-21";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const ASSET_MANIFEST_URL = "/assets/data/pwa-assets.json";
@@ -13,12 +13,30 @@ const DEFAULT_ASSETS = [
   "/assets/js/shared-init.js",
   "/assets/images/icon.png",
   "/assets/images/project.png",
+  // Self-hosted Urdu font: guarantees at least one Nastaliq face is available
+  // offline even with no network and no system-installed Urdu font.
+  "/assets/fonts/MehrNastaliqWeb.woff",
   "/manifest.webmanifest",
   OFFLINE_URL,
 ];
 
+// Cross-origin CDNs we are willing to cache at runtime so fonts and libraries
+// keep working offline after the first successful online load. Everything
+// else cross-origin is left to the network (e.g. ads, analytics).
+const CACHEABLE_CROSS_ORIGIN = [
+  "fonts.googleapis.com",
+  "fonts.gstatic.com",
+  "cdn.jsdelivr.net",
+  "unpkg.com",
+  "uicdn.toast.com",
+];
+
 function sameOrigin(request) {
   return new URL(request.url).origin === self.location.origin;
+}
+
+function isCacheableCrossOrigin(url) {
+  return CACHEABLE_CROSS_ORIGIN.includes(url.hostname);
 }
 
 async function readAssetManifest() {
@@ -37,7 +55,13 @@ async function readAssetManifest() {
 async function installStaticAssets() {
   const assets = await readAssetManifest();
   const cache = await caches.open(STATIC_CACHE);
-  await cache.addAll(Array.from(new Set([...DEFAULT_ASSETS, ...assets])));
+  // addAll fails atomically if any asset 404s; add individually so one missing
+  // file never blocks the whole precache.
+  await Promise.all(
+    Array.from(new Set([...DEFAULT_ASSETS, ...assets])).map((asset) =>
+      cache.add(asset).catch(() => {}),
+    ),
+  );
 }
 
 self.addEventListener("install", (event) => {
@@ -92,14 +116,38 @@ async function cacheFirst(request) {
   return response;
 }
 
+// Serve cached copy immediately, refresh in the background. Handles CORS
+// (response.ok) and opaque (no-cors, type "opaque") responses so cross-origin
+// fonts/stylesheets/scripts survive offline once seen.
+async function staleWhileRevalidate(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  const network = fetch(request)
+    .then((response) => {
+      if (response && (response.ok || response.type === "opaque")) {
+        cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => cached);
+  return cached || network;
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-
-  if (request.method !== "GET" || !sameOrigin(request)) {
+  if (request.method !== "GET") {
     return;
   }
 
   const url = new URL(request.url);
+
+  if (!sameOrigin(request)) {
+    if (isCacheableCrossOrigin(url)) {
+      event.respondWith(staleWhileRevalidate(request, RUNTIME_CACHE));
+    }
+    return;
+  }
+
   if (url.pathname === "/projects.json" || url.pathname.endsWith("/tools-manifest.json")) {
     event.respondWith(networkFirst(request));
     return;
@@ -107,7 +155,7 @@ self.addEventListener("fetch", (event) => {
 
   if (
     request.mode === "navigate" ||
-    /\.(?:html|css|js|json|webmanifest|png|jpg|jpeg|webp|svg|woff2?|txt|xml)$/i.test(url.pathname)
+    /\.(?:html|css|js|mjs|json|webmanifest|png|jpg|jpeg|webp|svg|woff2?|ttf|otf|txt|xml|wasm)$/i.test(url.pathname)
   ) {
     event.respondWith(cacheFirst(request));
   }
