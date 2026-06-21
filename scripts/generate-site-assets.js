@@ -99,6 +99,19 @@ function buildRobots() {
   ].join("\n");
 }
 
+// Secondary runtime assets (per-tool JS/data, shared fonts, vendored libs) that
+// aren't a project `link`/`img` or a scanned page, but must be precached so the
+// tools work fully offline. Only existing files are included.
+const EXTRA_ASSETS = [
+  "/assets/css/nastaliq-fonts.css",
+  "/assets/fonts/MehrNastaliqWeb.woff",
+  "/assets/vendor/tone.js",
+  "/dhun/script.js",
+  "/dhun/buhoor.json",
+  "/interlocutor/app.js",
+  "/editor/poetry-studio-app.js",
+];
+
 function buildServiceWorkerManifest(projects, pages) {
   const assets = new Set([
     "/",
@@ -124,6 +137,12 @@ function buildServiceWorkerManifest(projects, pages) {
 
   pages.forEach((page) => {
     assets.add(`/${page.path}`);
+  });
+
+  EXTRA_ASSETS.forEach((asset) => {
+    if (fs.existsSync(path.join(ROOT, asset.replace(/^\//, "")))) {
+      assets.add(asset);
+    }
   });
 
   return {

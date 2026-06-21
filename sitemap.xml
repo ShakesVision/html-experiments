@@ -46,9 +46,24 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://tools.shakeeb.in/dhun/index.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://tools.shakeeb.in/editor/index.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.shakeeb.in/editor/poetry-classic.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://tools.shakeeb.in/editor/poetry-studio.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://tools.shakeeb.in/editor/poetry.html</loc>
@@ -109,6 +124,11 @@
     <loc>https://tools.shakeeb.in/inpage/reader.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://tools.shakeeb.in/interlocutor/index.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://tools.shakeeb.in/json-ui/index.html</loc>
@@ -174,6 +194,11 @@
     <loc>https://tools.shakeeb.in/rekhta-reader/index.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.shakeeb.in/rekhta-reader/test-nav-logic.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://tools.shakeeb.in/rss-reader/index.html</loc>
@@ -247,11 +272,6 @@
   </url>
   <url>
     <loc>https://tools.shakeeb.in/urdu-dashboard/index.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tools.shakeeb.in/wp-dp-dw/index.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

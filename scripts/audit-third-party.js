@@ -6,6 +6,14 @@ const EXCLUDED_DIRS = new Set([".git", "node_modules", ".vscode"]);
 const URL_PATTERN = /https?:\/\/[^"'\s)<>]+/g;
 
 const APPROVED_REMOTE_HOSTS = new Set([
+  // tool integrations: Toast UI editor + Unsplash (poetry-studio),
+  // CORS proxy (scraper / super-scrape), and npm attribution links
+  "uicdn.toast.com",
+  "unsplash.com",
+  "api.unsplash.com",
+  "images.unsplash.com",
+  "corsproxy.io",
+  "www.npmjs.com",
   "ajax.googleapis.com",
   "api.allorigins.win",
   "api.github.com",

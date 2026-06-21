@@ -1,6 +1,6 @@
 {
   "generatedAt": "deterministic",
-  "count": 54,
+  "count": 55,
   "entries": [
     {
       "path": "alphabet/index.html",
@@ -76,7 +76,7 @@
       "path": "editor/poetry-classic.html",
       "folder": "editor",
       "isIndex": false,
-      "title": "Poetry (classic)",
+      "title": "editor/poetry",
       "isRoot": false
     },
     {
@@ -84,6 +84,20 @@
       "folder": "editor",
       "isIndex": false,
       "title": "شاعری اسٹوڈیو — Poetry Studio",
+      "isRoot": false
+    },
+    {
+      "path": "editor/poetry.html",
+      "folder": "editor",
+      "isIndex": false,
+      "title": "Moved → Poetry (classic)",
+      "isRoot": false
+    },
+    {
+      "path": "editor/poetry2.html",
+      "folder": "editor",
+      "isIndex": false,
+      "title": "Moved → Poetry Studio",
       "isRoot": false
     },
     {
@@ -143,13 +157,6 @@
       "isRoot": true
     },
     {
-      "path": "interlocutor/index.html",
-      "folder": "interlocutor",
-      "isIndex": true,
-      "title": "Interlocutor — جدال",
-      "isRoot": false
-    },
-    {
       "path": "inpage/pdf-texter/index.html",
       "folder": "inpage",
       "isIndex": true,
@@ -160,7 +167,14 @@
       "path": "inpage/reader.html",
       "folder": "inpage",
       "isIndex": false,
-      "title": "InPage INP Reader",
+      "title": "InPage Reader",
+      "isRoot": false
+    },
+    {
+      "path": "interlocutor/index.html",
+      "folder": "interlocutor",
+      "isIndex": true,
+      "title": "Interlocutor — جدال",
       "isRoot": false
     },
     {
@@ -188,7 +202,7 @@
       "path": "mockup/skew.html",
       "folder": "mockup",
       "isIndex": false,
-      "title": "ShakeVision — 3D Tilt Studio (Perfect Export)",
+      "title": "3D Tilt Studio — WebGL Export Perfect",
       "isRoot": false
     },
     {
@@ -252,6 +266,13 @@
       "folder": "rekhta-reader",
       "isIndex": true,
       "title": "Rekhta Book Downloader",
+      "isRoot": false
+    },
+    {
+      "path": "rekhta-reader/test-nav-logic.html",
+      "folder": "rekhta-reader",
+      "isIndex": false,
+      "title": "Navigation Logic Test",
       "isRoot": false
     },
     {
@@ -321,7 +342,7 @@
       "path": "text-aggregator/index.html",
       "folder": "text-aggregator",
       "isIndex": true,
-      "title": "Story Collection",
+      "title": "Text Aggregator",
       "isRoot": false
     },
     {
