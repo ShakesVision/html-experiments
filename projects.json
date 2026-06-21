@@ -600,7 +600,7 @@
     "category": "Urdu & language",
     "status": "alpha",
     "tags": ["urdu", "music", "poetry"],
-    "offlineSupport": "shell-cache",
+    "offlineSupport": "full",
     "external": false,
     "featured": false,
     "lastReviewed": "2026-06-21",

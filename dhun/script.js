@@ -15,13 +15,18 @@ const App = {
   syllables: [], // text per cell (parallel to cells)
   contour: [], // arrow per cell
   melody: [], // [{idx, midi, weight, syllable, ornament, west, sarg}]
+  antaraMelody: [], // octave-up repeat
+  antara: false,
   bpm: 84,
   glide: 40, // meend %
+  noteRate: 1, // melody pace vs beat: 0.5 | 1 | 2
   notation: "sargam", // 'sargam' | 'western'
   sa: 60, // MIDI of Sa
   scale: "bilawal",
   style: "simple",
 };
+
+const CUSTOM_KEY = "dhun:customMeters";
 
 /* ----------------------------------------------------------
    MUSIC DATA
@@ -183,6 +188,11 @@ function arrowDelta(a) {
 /* ----------------------------------------------------------
    REALIZE: contour + cells → melody (pitches)
 ---------------------------------------------------------- */
+function noteFields(idx) {
+  const midi = idxToMidi(idx);
+  return { idx, midi, west: midiToWest(midi), sarg: midiToSargam(midi) };
+}
+
 function realize() {
   const st = STYLES[App.style] || STYLES.simple;
   let idx = 0;
@@ -192,19 +202,18 @@ function realize() {
     idx = clamp(idx + arrowDelta(arrow), -3, st.range + 2);
     // final note pulls to Sa for resolution
     if (i === App.cells.length - 1) idx = 0;
-    const midi = idxToMidi(idx);
     return {
-      idx,
-      midi,
+      ...noteFields(idx),
       weight: cell.weight,
       accent: cell.accent,
       rukn: cell.rukn,
       syllable: App.syllables[i] || "",
       ornament,
-      west: midiToWest(midi),
-      sarg: midiToSargam(midi),
     };
   });
+  // antara = the same shape one octave higher (taar saptak)
+  const oct = SCALES[App.scale].steps.length;
+  App.antaraMelody = App.melody.map((m) => ({ ...m, ...noteFields(m.idx + oct) }));
 }
 
 /* ----------------------------------------------------------
@@ -213,20 +222,49 @@ function realize() {
 async function loadBuhoor() {
   const res = await fetch("buhoor.json");
   App.buhoor = await res.json();
+  App.buhoor = App.buhoor.concat(loadCustomMeters());
+}
+
+function loadCustomMeters() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]");
+    return Array.isArray(arr) ? arr : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveCustomMeter(meter) {
+  const arr = loadCustomMeters();
+  arr.push(meter);
+  try {
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(arr));
+  } catch (_) {}
+}
+
+// Label for a meter option: prefer "name — arkaan"; fall back to whichever exists.
+function meterLabel(b) {
+  if (b.name && b.arkan) return `${b.name} — ${b.arkan}`;
+  return b.arkan || b.name || b.adad || "(meter)";
 }
 
 function populateControls() {
   const meter = $("meterSelect");
+  const prev = meter.value;
   meter.innerHTML = "";
   App.buhoor.forEach((b, i) => {
     const o = document.createElement("option");
     o.value = i;
-    o.textContent = b.name;
+    o.textContent = (b.custom ? "★ " : "") + meterLabel(b);
     meter.appendChild(o);
   });
-  // default to a commonly-used meter if present
-  const def = App.buhoor.findIndex((b) => /مستعمل/.test(b.use || "") && !/غیر|کم/.test(b.use));
-  meter.value = def >= 0 ? def : 0;
+  // default to Mutaqarib Musamman Salim if present, else first commonly-used meter
+  const mutaqarib = App.buhoor.findIndex((b) => /متقارب مثمن سالم$/.test(b.name || ""));
+  const def =
+    mutaqarib >= 0
+      ? mutaqarib
+      : App.buhoor.findIndex((b) => /^مستعمل/.test(b.use || ""));
+  meter.value = prev !== "" && prev != null && meter.options[prev] ? prev : def >= 0 ? def : 0;
 
   const sa = $("saSelect");
   sa.innerHTML = "";
@@ -285,7 +323,6 @@ function updateBahr() {
   $("meterCells").textContent = App.cells.length;
   renderBeads();
   rebuildSyllables();
-  renderLetterChips();
 }
 
 function renderBeads() {
@@ -315,24 +352,55 @@ function renderBeads() {
   });
 }
 
-/* split state: boundaries is a Set of letter indices after which we cut */
-let letters = [];
-let boundaries = new Set();
+/* split state: units are graphemes; a space in the misra is a default boundary */
+let units = []; // [{ch, wordEnd}]
+let boundaries = new Set(); // unit indices after which we cut
+
+function segmentGraphemes(text) {
+  const t = text || "";
+  if (typeof Intl !== "undefined" && Intl.Segmenter) {
+    try {
+      const seg = new Intl.Segmenter("ur", { granularity: "grapheme" });
+      return [...seg.segment(t)].map((s) => s.segment);
+    } catch (_) {
+      /* fall through */
+    }
+  }
+  return [...t];
+}
+
+function computeUnits(text) {
+  const tokens = (text || "").trim().split(/\s+/).filter(Boolean);
+  const u = [];
+  tokens.forEach((tok) => {
+    const gs = segmentGraphemes(tok);
+    gs.forEach((g, i) => u.push({ ch: g, wordEnd: i === gs.length - 1 }));
+  });
+  return u;
+}
+
+// Re-read the misra: rebuild units and reset splits to the spaces (one cell per word).
+function refreshMisra() {
+  units = computeUnits($("misraInput").value);
+  boundaries = new Set();
+  units.forEach((u, i) => {
+    if (u.wordEnd && i < units.length - 1) boundaries.add(i);
+  });
+  renderLetterChips();
+  rebuildSyllables();
+}
 
 function renderLetterChips() {
   const box = $("letterChips");
-  const misra = $("misraInput").value;
-  letters = segmentLetters(misra);
-  // keep only valid boundaries
-  boundaries = new Set([...boundaries].filter((i) => i < letters.length - 1));
   box.innerHTML = "";
-  letters.forEach((ch, i) => {
+  units.forEach((u, i) => {
     const span = document.createElement("button");
     span.className =
       "chip-letter px-1 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/40";
-    span.textContent = ch;
+    if (u.wordEnd && i < units.length - 1) span.style.marginInlineEnd = "0.6rem"; // word gap
+    span.textContent = u.ch;
     if (boundaries.has(i)) span.dataset.boundary = "true";
-    if (i < letters.length - 1) {
+    if (i < units.length - 1) {
       span.onclick = () => {
         if (boundaries.has(i)) boundaries.delete(i);
         else boundaries.add(i);
@@ -342,30 +410,14 @@ function renderLetterChips() {
     }
     box.appendChild(span);
   });
-  rebuildSyllables();
 }
 
-// Break the raw line into letter units (graphemes), best-effort.
-function segmentLetters(text) {
-  const t = (text || "").trim();
-  if (!t) return [];
-  if (typeof Intl !== "undefined" && Intl.Segmenter) {
-    try {
-      const seg = new Intl.Segmenter("ur", { granularity: "grapheme" });
-      return [...seg.segment(t)].map((s) => s.segment).filter((s) => s.trim() !== "");
-    } catch (_) {
-      /* fall through */
-    }
-  }
-  return [...t].filter((s) => s.trim() !== "");
-}
-
-// Cut letters into chunks at boundaries → syllable text per cell.
+// Cut units into chunks at boundaries → syllable text per cell.
 function rebuildSyllables() {
   const chunks = [];
   let cur = "";
-  letters.forEach((ch, i) => {
-    cur += ch;
+  units.forEach((u, i) => {
+    cur += u.ch;
     if (boundaries.has(i)) {
       chunks.push(cur);
       cur = "";
@@ -421,7 +473,25 @@ function generate() {
 function renderAll() {
   renderArrows();
   renderNotes();
+  renderAntara();
   renderMelodyMap();
+}
+
+function renderAntara() {
+  const card = $("antaraCard");
+  if (!App.antara || !App.antaraMelody.length) {
+    card.classList.add("hidden");
+    return;
+  }
+  card.classList.remove("hidden");
+  const box = $("antaraOutput");
+  box.innerHTML = "";
+  App.antaraMelody.forEach((m) => {
+    const s = document.createElement("span");
+    s.className = m.accent ? "text-indigo-600 dark:text-indigo-400 font-semibold" : "";
+    s.textContent = App.notation === "western" ? m.west : m.sarg;
+    box.appendChild(s);
+  });
 }
 
 function renderArrows() {
@@ -470,9 +540,15 @@ function renderMelodyMap() {
   const padBottom = 46;
   const h = 260;
 
+  const seq =
+    App.antara && App.antaraMelody.length
+      ? App.melody.concat(App.antaraMelody)
+      : App.melody;
+  const dividerAt = App.antara && App.antaraMelody.length ? App.melody.length : -1;
+
   // x positions: centre of each held note
   let beat = 0;
-  const pts = App.melody.map((m) => {
+  const pts = seq.map((m) => {
     const x = padX + (beat + m.weight / 2) * pxPerBeat;
     beat += m.weight;
     return { x, idx: m.idx, m };
@@ -500,7 +576,7 @@ function renderMelodyMap() {
   // beat gridlines + rukn accents
   let bx = padX;
   let r = -1;
-  App.melody.forEach((m) => {
+  seq.forEach((m, i) => {
     const isRukn = m.rukn !== r;
     r = m.rukn;
     const line = document.createElementNS(ns, "line");
@@ -513,6 +589,16 @@ function renderMelodyMap() {
     line.setAttribute("stroke-dasharray", isRukn ? "" : "3 4");
     line.setAttribute("class", isRukn ? "" : "opacity-70");
     svg.appendChild(line);
+    // antara divider label
+    if (i === dividerAt) {
+      const lbl = document.createElementNS(ns, "text");
+      lbl.setAttribute("x", bx + 4);
+      lbl.setAttribute("y", padTop - 16);
+      lbl.setAttribute("font-size", "11");
+      lbl.setAttribute("fill", "#16a34a");
+      lbl.textContent = "antara ↑";
+      svg.appendChild(lbl);
+    }
     bx += m.weight * pxPerBeat;
   });
 
@@ -691,39 +777,40 @@ async function togglePlay() {
 function startPlayback() {
   playing = true;
   setPlayUI(true);
-  voice.portamento = (App.glide / 100) * (60 / App.bpm); // meend glide time
   const beatDur = 60 / App.bpm;
+  const step = beatDur / App.noteRate; // melody pace: note time per beat-unit
+  voice.portamento = (App.glide / 100) * step; // meend glide time
   const useClick = $("clickChk").checked;
   const countIn = $("countInChk").checked;
   const loop = $("loopChk").checked;
   const lead = countIn ? 4 : 0;
 
-  const phraseBeats = App.melody.reduce((s, m) => s + m.weight, 0);
-  const phraseSec = phraseBeats * beatDur;
+  const seq =
+    App.antara && App.antaraMelody.length
+      ? App.melody.concat(App.antaraMelody)
+      : App.melody;
+  const phraseBeats = seq.reduce((s, m) => s + m.weight, 0);
+  const phraseSec = phraseBeats * step; // melody length (scaled by pace)
   const t0 = Tone.now() + 0.15;
   const melodyStart = t0 + lead * beatDur;
 
-  // count-in clicks
+  // count-in clicks (always at the steady beat)
   if (useClick) {
     for (let i = 0; i < lead; i++) click.triggerAttackRelease("C2", "16n", t0 + i * beatDur);
   }
 
   const scheduleCycle = (cycleStart) => {
-    // beat clicks
+    // metronome stays on the steady beat across the cycle window
     if (useClick) {
-      for (let b = 0; b < phraseBeats; b++) {
-        const m = noteAtBeat(b);
-        click.triggerAttackRelease(m && m.accent ? "C3" : "C2", "16n", cycleStart + b * beatDur);
+      const clicks = Math.max(1, Math.round(phraseSec / beatDur));
+      for (let b = 0; b < clicks; b++) {
+        click.triggerAttackRelease(b === 0 ? "C3" : "C2", "16n", cycleStart + b * beatDur);
       }
     }
-    // melody notes
+    // melody notes (plus antara), paced by step
     let beat = 0;
-    App.melody.forEach((m) => {
-      voice.triggerAttackRelease(
-        midiToFreq(m.midi),
-        Math.max(0.12, m.weight * beatDur * 0.92),
-        cycleStart + beat * beatDur
-      );
+    seq.forEach((m) => {
+      scheduleNote(m, cycleStart + beat * step, step);
       beat += m.weight;
     });
   };
@@ -743,17 +830,21 @@ function startPlayback() {
   }
 }
 
-function noteAtBeat(b) {
-  let acc = 0;
-  for (const m of App.melody) {
-    if (b >= acc && b < acc + m.weight) return m;
-    acc += m.weight;
-  }
-  return null;
-}
-
 function midiToFreq(midi) {
   return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+// Play one note; ∩/∪ get a quick neighbor grace note first (murki-ish).
+function scheduleNote(m, when, step) {
+  const full = Math.max(0.1, m.weight * step * 0.92);
+  if (m.ornament) {
+    const neighbor = idxToMidi(m.idx + (m.ornament === "arch" ? 1 : -1));
+    const gd = Math.min(0.12, m.weight * step * 0.35);
+    voice.triggerAttackRelease(midiToFreq(neighbor), gd, when);
+    voice.triggerAttackRelease(midiToFreq(m.midi), Math.max(0.08, full - gd), when + gd);
+  } else {
+    voice.triggerAttackRelease(midiToFreq(m.midi), full, when);
+  }
 }
 
 function stopPlayback() {
@@ -779,14 +870,14 @@ function animatePlayhead(startTime, phraseSec, loop) {
   const head = $("playhead");
   if (!head || !App._map) return;
   const { padX, pxPerBeat } = App._map;
-  const beatDur = 60 / App.bpm;
+  const step = 60 / App.bpm / App.noteRate;
   head.setAttribute("opacity", "1");
   const tick = () => {
     if (!playing) return;
     let elapsed = Tone.now() - startTime;
     if (elapsed < 0) elapsed = 0;
-    let pos = elapsed / beatDur;
-    if (loop) pos = pos % (phraseSec / beatDur);
+    let pos = elapsed / step;
+    if (loop) pos = pos % (phraseSec / step);
     const x = padX + pos * pxPerBeat;
     head.setAttribute("x1", x);
     head.setAttribute("x2", x);
@@ -833,7 +924,7 @@ async function copyMelody() {
     `Bahr: ${App.bahr?.name || ""}\n` +
     `Arkaan: ${App.bahr?.arkan || ""}  |  Adad: ${App.bahr?.adad || ""}\n` +
     `Key: Sa=${midiToWest(App.sa)}  |  Scale: ${SCALES[App.scale].label}\n` +
-    `Tempo: ${App.bpm} BPM  |  Meend: ${App.glide}%\n\n` +
+    `Tempo: ${App.bpm} BPM  |  Pace: ${App.noteRate}×  |  Meend: ${App.glide}%\n\n` +
     `Contour: ${App.contour.join(" ")}\n` +
     `Sargam:  ${App.melody.map((m) => m.sarg).join(" ")}\n` +
     `Western: ${App.melody.map((m) => m.west).join(" ")}\n` +
@@ -865,10 +956,52 @@ function initTheme() {
 }
 
 /* ----------------------------------------------------------
+   CUSTOM METER
+---------------------------------------------------------- */
+function wireCustomMeter() {
+  const form = $("customForm");
+  $("customToggle").addEventListener("click", () => form.classList.toggle("hidden"));
+  $("customAdd").addEventListener("click", () => {
+    const adad = ($("customAdad").value || "").trim();
+    if (!/^[12\s]+$/.test(adad) || !/[12]/.test(adad)) {
+      toast("Adad must be 1s and 2s, e.g. 122 122 122 122");
+      return;
+    }
+    const meter = {
+      name: ($("customName").value || "").trim() || "میری بحر",
+      arkan: ($("customArkan").value || "").trim(),
+      adad: adad.replace(/\s+/g, " "),
+      use: "custom",
+      custom: true,
+    };
+    saveCustomMeter(meter);
+    App.buhoor.push(meter);
+    populateControls();
+    $("meterSelect").value = App.buhoor.length - 1;
+    updateBahr();
+    rebuildSyllables();
+    form.classList.add("hidden");
+    $("customAdad").value = $("customArkan").value = $("customName").value = "";
+    toast("Custom meter added");
+  });
+}
+
+/* ----------------------------------------------------------
    WIRING
 ---------------------------------------------------------- */
+// Render with locally-served Mehr immediately; swap to Payami only once the
+// big CDN font is fully downloaded (no mid-render flash, works offline).
+function loadPayamiDeferred() {
+  if (!document.fonts || !document.fonts.load) return;
+  document.fonts
+    .load('1em "Payami"')
+    .then(() => document.documentElement.classList.add("payami-ready"))
+    .catch(() => {});
+}
+
 async function init() {
   initTheme();
+  loadPayamiDeferred();
 
   // help modal
   const help = $("helpModal");
@@ -887,13 +1020,19 @@ async function init() {
   await loadBuhoor();
   populateControls();
   updateBahr();
+  refreshMisra();
   setNotation("sargam");
+  wireCustomMeter();
 
-  $("meterSelect").addEventListener("change", () => {
-    boundaries = new Set();
-    updateBahr();
+  $("meterSelect").addEventListener("change", updateBahr);
+  $("misraInput").addEventListener("input", refreshMisra);
+  $("paceSelect").addEventListener("change", (e) => {
+    App.noteRate = parseFloat(e.target.value);
   });
-  $("misraInput").addEventListener("input", renderLetterChips);
+  $("antaraChk").addEventListener("change", (e) => {
+    App.antara = e.target.checked;
+    if (App.melody.length) renderAll();
+  });
   $("saSelect").addEventListener("change", (e) => {
     App.sa = parseInt(e.target.value, 10);
     if (App.melody.length) { realize(); renderAll(); }
@@ -908,7 +1047,7 @@ async function init() {
   $("meendRange").addEventListener("input", (e) => {
     App.glide = parseInt(e.target.value, 10);
     $("meendValue").textContent = App.glide;
-    if (voice) voice.portamento = (App.glide / 100) * (60 / App.bpm);
+    if (voice) voice.portamento = (App.glide / 100) * (60 / App.bpm / App.noteRate);
     renderMelodyMap();
   });
   $("tapTempo").addEventListener("click", tapTempo);
