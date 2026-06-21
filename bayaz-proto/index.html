@@ -99,8 +99,8 @@
         </button>
         <span class="w-px h-6 bg-stone-200"></span>
 
-        <input x-model="title" @input="save()" placeholder="کتاب کا نام — title" class="border border-stone-300 rounded-lg p-1.5 text-sm w-36 text-right" />
-        <input x-model="author" @input="save()" placeholder="مصنف — author" class="border border-stone-300 rounded-lg p-1.5 text-sm w-28 text-right" />
+        <input x-model="title" @input="save();rebuild()" placeholder="کتاب کا نام — title" class="border border-stone-300 rounded-lg p-1.5 text-sm w-36 text-right" />
+        <input x-model="author" @input="save();rebuild()" placeholder="مصنف — author" class="border border-stone-300 rounded-lg p-1.5 text-sm w-28 text-right" />
 
         <span class="w-px h-6 bg-stone-200"></span>
         <select x-model="pageSize" @change="apply()" title="Page size" class="border border-stone-300 rounded-lg p-1.5 text-sm">
@@ -134,6 +134,10 @@
             <button @click="copyBook(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">content_copy</span> پوری کتاب کاپی</button>
             <button @click="copyChapter(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">content_paste</span> موجودہ باب کاپی</button>
             <button @click="downloadTxt(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">download</span> TXT ڈاؤن لوڈ</button>
+            <div class="my-1 border-t border-stone-100"></div>
+            <button @click="exportMd(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">data_object</span> Markdown (.md)</button>
+            <button @click="exportHtml(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">html</span> اسٹینڈ اَلون HTML</button>
+            <button @click="exportBookJson(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">save</span> کتاب JSON (بیک اپ)</button>
           </div>
         </div>
 
@@ -203,14 +207,14 @@
             <div class="mt-2 space-y-2 text-sm">
               <label class="block">
                 <span class="text-xs text-stone-500">Header template</span>
-                <input x-model="headerTpl" @input="save()" dir="auto" class="w-full border border-stone-200 rounded-lg p-1.5" placeholder="{title} | {chapter}" />
+                <input x-model="headerTpl" @input="save();rebuild()" dir="auto" class="w-full border border-stone-200 rounded-lg p-1.5" placeholder="{title} | {chapter}" />
               </label>
               <label class="block">
                 <span class="text-xs text-stone-500">Footer template</span>
-                <input x-model="footerTpl" @input="save()" dir="auto" class="w-full border border-stone-200 rounded-lg p-1.5" placeholder="{page}" />
+                <input x-model="footerTpl" @input="save();rebuild()" dir="auto" class="w-full border border-stone-200 rounded-lg p-1.5" placeholder="{page}" />
               </label>
               <p class="text-[11px] text-stone-400">ٹوکنز: <code>{title}</code> <code>{author}</code> <code>{chapter}</code> <code>{page}</code> <code>{total}</code> · کالم کے لیے <code>|</code> استعمال کریں۔</p>
-              <label class="flex items-center gap-2"><input type="checkbox" x-model="toc" @change="save();justify()" /> <span class="text-stone-600">فہرست کا صفحہ شامل کریں — Table of contents</span></label>
+              <label class="flex items-center gap-2"><input type="checkbox" x-model="toc" @change="save();rebuild();justify()" /> <span class="text-stone-600">فہرست کا صفحہ شامل کریں — Table of contents</span></label>
             </div>
           </details>
         </div>
@@ -242,6 +246,11 @@
           <button @click="newBook()" class="w-full inline-flex items-center justify-center gap-1 rounded-lg bg-pink-600 text-white px-3 py-2 text-sm hover:opacity-90">
             <span class="material-symbols-outlined">add</span> نئی کاوش — New book
           </button>
+          <div class="flex gap-2 mt-2">
+            <button @click="$refs.importInput.click()" class="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-xs hover:bg-stone-100"><span class="material-symbols-outlined text-base">upload</span> اِمپورٹ</button>
+            <button @click="exportLibraryJson()" class="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-xs hover:bg-stone-100"><span class="material-symbols-outlined text-base">download</span> سب ایکسپورٹ</button>
+          </div>
+          <input x-ref="importInput" type="file" accept=".json,application/json" class="hidden" @change="if($event.target.files[0]) importJson($event.target.files[0]); $event.target.value=''" />
           <p class="text-[11px] text-stone-400 mt-1 text-center">(ترتیب بدلنے کے لیے ڈریگ کریں)</p>
         </div>
         <div class="flex-1 overflow-y-auto p-2 space-y-2">
@@ -374,6 +383,7 @@
           libraryOpen: false, outOpen: false, toast: "",
           fonts: ["Payami", "Mehr", "Emaad"],
           books: [], activeId: null, dragId: null, dragOverId: null,
+          renderedPages: [], _cache: null,
           db: null, _t: null, _save: null, _toastT: null,
 
           async init() {
@@ -453,6 +463,7 @@
           },
           loadInto(b) {
             if (!b) return;
+            this._cache = new Map(); // switching books → render the new one fresh
             this.id = b.id; this.activeId = b.id;
             this.title = b.title || ""; this.author = b.author || ""; this.source = b.source || "";
             this.pageSize = b.pageSize || "A4"; this.fontName = b.fontName || "Payami"; this.margin = b.margin || "normal";
@@ -521,7 +532,11 @@
             return cols.map(function (c) { return "<span>" + c + "</span>"; }).join("");
           },
 
-          get renderedPages() {
+          // Rebuild the page list. Markdown parsing (the expensive part) is cached
+          // per source-chunk, so editing one page never re-parses the rest, and
+          // unrelated state changes (drawer, toast, zoom) don't trigger any parse.
+          // Called explicitly only when content/structure/templates change.
+          rebuild() {
             var content = this.pages;
             var tocOffset = this.toc ? 1 : 0;
             var total = content.length + tocOffset;
@@ -534,6 +549,13 @@
               });
             });
             var self = this, out = [];
+            var prev = this._cache || new Map(), fresh = new Map();
+            function body(chunk) {
+              if (fresh.has(chunk)) return fresh.get(chunk);
+              var html = prev.has(chunk) ? prev.get(chunk) : self.render(chunk);
+              fresh.set(chunk, html);
+              return html;
+            }
             if (this.toc) {
               var rows = headings.map(function (h) {
                 return '<div class="toc-row' + (h.level > 1 ? " lvl2" : "") + '"><span>' + esc(h.text) + '</span><span class="toc-dots"></span><span>' + h.page + "</span></div>";
@@ -545,9 +567,10 @@
               var num = ci + 1 + tocOffset, ch = null;
               for (var k = headings.length - 1; k >= 0; k--) { if (headings[k].level === 1 && headings[k].page <= num) { ch = headings[k].text; break; } }
               var ctx = { chapter: ch || self.title || "", page: num, total: total };
-              out.push({ headerHtml: self.hf(self.headerTpl, ctx), bodyHtml: self.render(chunk), footerHtml: self.hf(self.footerTpl, ctx) });
+              out.push({ headerHtml: self.hf(self.headerTpl, ctx), bodyHtml: body(chunk), footerHtml: self.hf(self.footerTpl, ctx) });
             });
-            return out;
+            this._cache = fresh; // prune chunks no longer present
+            this.renderedPages = out;
           },
 
           /* ---------- editor toolbar ---------- */
@@ -610,12 +633,71 @@
             var chapter = lines.slice(startLine, endLine).join("\n");
             this.copy(this.plainText(chapter), "موجودہ باب کاپی ہوگیا");
           },
-          downloadTxt() {
-            var blob = new Blob([this.plainText(this.source)], { type: "text/plain;charset=utf-8" });
+          safeName(ext) { return (this.title || "bayaz").replace(/[^a-z0-9؀-ۿ]+/gi, "_") + ext; },
+          download(name, text, type) {
+            var blob = new Blob([text], { type: type || "text/plain;charset=utf-8" });
             var url = URL.createObjectURL(blob), a = document.createElement("a");
-            a.href = url; a.download = (this.title || "bayaz").replace(/[^a-z0-9؀-ۿ]+/gi, "_") + ".txt";
-            document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-            this.flash("TXT ڈاؤن لوڈ ہوگئی");
+            a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+          },
+          downloadTxt() { this.download(this.safeName(".txt"), this.plainText(this.source)); this.flash("TXT ڈاؤن لوڈ ہوگئی"); },
+          exportMd() { this.download(this.safeName(".md"), this.source, "text/markdown;charset=utf-8"); this.flash("Markdown ایکسپورٹ ہوگئی"); },
+
+          // Self-contained HTML: rendered pages + inlined CSS + the ShakeebJustify
+          // CDN so poetry justifies on open. Opens/prints anywhere, offline of our app.
+          exportHtml() {
+            this.rebuild();
+            var d = SIZES[this.pageSize] || SIZES.A4;
+            var pad = { narrow: 38, normal: 64, wide: 96 }[this.margin] || 64;
+            var pagesHtml = this.renderedPages.map((p) =>
+              '<div class="book-page">' +
+              (this.header ? '<div class="book-head">' + p.headerHtml + "</div>" : "") +
+              '<div class="book-body">' + p.bodyHtml + "</div>" +
+              (this.footer ? '<div class="book-foot">' + p.footerHtml + "</div>" : "") +
+              "</div>").join("\n");
+            var css =
+              "@page{size:" + d.css + ";margin:0}" +
+              "@font-face{font-family:'Payami';src:local('Payami Nastaleeq'),url('https://cdn.jsdelivr.net/gh/ShakesVision/PayamiTest@master/Payami%20Nastaleeq_Fixed.woff2') format('woff2');font-display:swap}" +
+              "body{margin:0;background:#e7e5e4;font-family:'" + this.fontName + "','Mehr','Noto Nastaliq Urdu',serif}" +
+              ".book-page{width:" + d.w + "px;min-height:" + d.h + "px;background:#fff;margin:0 auto 24px;padding:" + pad + "px;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.14)}" +
+              ".book-head,.book-foot{flex:0 0 auto;color:#8a8275;font-size:13px;display:flex;justify-content:space-between;gap:1em}" +
+              ".book-head{border-bottom:1px solid #efe9dd;padding-bottom:8px;margin-bottom:14px}.book-foot{border-top:1px solid #efe9dd;padding-top:8px;margin-top:14px}" +
+              ".book-body{flex:1 1 auto;text-align:justify;color:#15110c;font-size:" + this.fontSize + "px;line-height:" + this.lineHeight + ";font-weight:" + this.fontWeight + "}" +
+              ".book-body h1,.book-body h2,.book-body h3{font-weight:700;margin:.6em 0 .35em;text-align:center}.book-body p{margin:0 0 .7em}" +
+              ".book-body blockquote{border-right:4px solid #d8cdb6;padding-right:1em;color:#5b5346}.book-body .ov{text-decoration:overline}.book-body .poetry-empty-line{height:1.4em}" +
+              ".toc-title{text-align:center;font-weight:700;font-size:1.6rem;margin-bottom:1em}.toc-row{display:flex;align-items:baseline;gap:.5em;margin:.35em 0;font-size:1.1rem}.toc-row.lvl2{padding-inline-start:1.5em;font-size:1rem;color:#4b4438}.toc-row .toc-dots{flex:1 1 auto;border-bottom:2px dotted #c8bfa9;transform:translateY(-.3em)}" +
+              "@media print{body{background:#fff}.book-page{margin:0;box-shadow:none;break-after:page}@page{margin:0}}";
+            var doc =
+              '<!doctype html>\n<html lang="ur" dir="rtl">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>' +
+              esc(this.title || "بیاض") + "</title>\n<style>" + css + "</style>\n" +
+              '<script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@latest/dist/shakeeb-justify.min.js"><\/script>\n</head>\n<body>\n' +
+              pagesHtml +
+              '\n<script>window.addEventListener("load",function(){try{ShakeebJustify.apply()}catch(e){}});<\/script>\n</body>\n</html>';
+            this.download(this.safeName(".html"), doc, "text/html;charset=utf-8");
+            this.flash("HTML ایکسپورٹ ہوگئی");
+          },
+
+          exportBookJson() { this.download(this.safeName(".json"), JSON.stringify(this.collect(), null, 2), "application/json"); this.flash("کتاب JSON ایکسپورٹ"); },
+          async exportLibraryJson() {
+            var all = this.db ? await this.dbGetAll() : this.books;
+            this.download("bayaz-library.json", JSON.stringify({ format: "bayaz-library-v1", exportedAt: nowIso(), books: all }, null, 2), "application/json");
+            this.flash(all.length + " کتب کی لائبریری ایکسپورٹ");
+          },
+          async importJson(file) {
+            try {
+              var data = JSON.parse(await file.text());
+              var incoming = Array.isArray(data) ? data : Array.isArray(data.books) ? data.books : (data.source !== undefined || data.title !== undefined) ? [data] : [];
+              if (!incoming.length) { this.flash("کوئی کتاب نہیں ملی"); return; }
+              var order = this.books.length, last = null;
+              for (var raw of incoming) {
+                var b = this.defaultBook();
+                Object.assign(b, raw, { id: uid(), order: order++, createdAt: raw.createdAt || nowIso(), updatedAt: nowIso() });
+                this.books.push(b); last = b;
+                if (this.db) { try { await this.dbPut(b); } catch (e) {} }
+              }
+              if (last) { await this.flushSave(); this.loadInto(last); this.apply(); }
+              this.libraryOpen = true;
+              this.flash(incoming.length + " کتاب اِمپورٹ ہوئیں");
+            } catch (e) { this.flash("اِمپورٹ ناکام — فائل درست نہیں"); }
           },
 
           /* ---------- render ---------- */
@@ -628,7 +710,7 @@
             });
           },
 
-          onInput() { clearTimeout(this._t); this._t = setTimeout(() => { this.save(); this.justify(); }, 300); },
+          onInput() { clearTimeout(this._t); this._t = setTimeout(() => { this.save(); this.rebuild(); this.justify(); }, 300); },
           undo() { const t = document.getElementById("bookSource"); if (!t) return; t.focus(); document.execCommand("undo"); this.source = t.value; this.onInput(); },
           redo() { const t = document.getElementById("bookSource"); if (!t) return; t.focus(); document.execCommand("redo"); this.source = t.value; this.onInput(); },
           justify() { this.$nextTick(() => { if (window.ShakeebJustify) { try { ShakeebJustify.apply(); } catch (e) {} } }); },
@@ -642,6 +724,7 @@
             root.setProperty("--book-lh", this.lineHeight || 2.05);
             root.setProperty("--book-fw", this.fontWeight || "400");
             this.save();
+            this.rebuild();
             this.justify();
           },
 
