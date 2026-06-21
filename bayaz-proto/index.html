@@ -64,6 +64,11 @@
       .book-body .poetry-empty-line { height: 1.4em; }
       .book-body .ov { text-decoration: overline; }
 
+      /* Cover page (unnumbered, centered) */
+      .book-cover { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1rem; }
+      .book-cover .bc-title { font-size: 2.4rem; font-weight: 700; line-height: 1.4; }
+      .book-cover .bc-author { font-size: 1.3rem; color: #5b5346; }
+
       /* mirror typography into the editor textarea */
       #bookSource { font-weight: var(--book-fw, 400); }
 
@@ -215,6 +220,11 @@
               </label>
               <p class="text-[11px] text-stone-400">ٹوکنز: <code>{title}</code> <code>{author}</code> <code>{chapter}</code> <code>{page}</code> <code>{total}</code> · کالم کے لیے <code>|</code> استعمال کریں۔</p>
               <label class="flex items-center gap-2"><input type="checkbox" x-model="toc" @change="save();rebuild();justify()" /> <span class="text-stone-600">فہرست کا صفحہ شامل کریں — Table of contents</span></label>
+              <label class="flex items-center gap-2"><input type="checkbox" x-model="cover" @change="save();rebuild()" /> <span class="text-stone-600">سرورق کا صفحہ — Cover page (title &amp; author)</span></label>
+              <label class="flex items-center justify-between gap-2">
+                <span class="text-stone-600">صفحہ نمبر کہاں سے — Page numbers start at</span>
+                <input type="number" x-model.number="pageStart" @input="save();rebuild()" min="0" class="w-16 border border-stone-200 rounded-lg p-1 text-center" />
+              </label>
             </div>
           </details>
         </div>
@@ -225,9 +235,9 @@
         <div id="book" :style="`zoom:${zoom}`" x-effect="renderedPages.length; justify()">
           <template x-for="(pg, i) in renderedPages" :key="i">
             <div class="book-page" :class="'book-pad-'+margin" :style="`--book-font:'${fontName}'`">
-              <div class="book-head" x-show="header" x-html="pg.headerHtml"></div>
+              <div class="book-head" x-show="header && !pg.bare" x-html="pg.headerHtml"></div>
               <div class="book-body" x-html="pg.bodyHtml"></div>
-              <div class="book-foot" x-show="footer" x-html="pg.footerHtml"></div>
+              <div class="book-foot" x-show="footer && !pg.bare" x-html="pg.footerHtml"></div>
             </div>
           </template>
         </div>
@@ -377,6 +387,7 @@
           pageSize: "A4", fontName: "Payami", margin: "normal",
           header: true, footer: true, zoom: 0.6, view: "preview",
           headerTpl: "{title} | {chapter}", footerTpl: "{page}", toc: false,
+          cover: false, pageStart: 1,
           fontSize: 20, lineHeight: 2.05, fontWeight: "400",
           // ---- ui ----
           about: false, sjOpen: false, sjFormat: "sher",
@@ -418,6 +429,7 @@
               id: uid(), title: "", author: "", source: SAMPLE,
               pageSize: "A4", fontName: "Payami", margin: "normal",
               header: true, footer: true, headerTpl: "{title} | {chapter}", footerTpl: "{page}", toc: false,
+              cover: false, pageStart: 1,
               fontSize: 20, lineHeight: 2.05, fontWeight: "400",
               order: this.books.length, createdAt: nowIso(), updatedAt: nowIso(),
             }, extra || {});
@@ -457,6 +469,7 @@
               id: this.id, title: this.title, author: this.author, source: this.source,
               pageSize: this.pageSize, fontName: this.fontName, margin: this.margin,
               header: this.header, footer: this.footer, headerTpl: this.headerTpl, footerTpl: this.footerTpl, toc: this.toc,
+              cover: this.cover, pageStart: this.pageStart,
               fontSize: this.fontSize, lineHeight: this.lineHeight, fontWeight: this.fontWeight,
               order: this._order, createdAt: this._createdAt, updatedAt: nowIso(),
             };
@@ -469,6 +482,7 @@
             this.pageSize = b.pageSize || "A4"; this.fontName = b.fontName || "Payami"; this.margin = b.margin || "normal";
             this.header = b.header !== false; this.footer = b.footer !== false;
             this.headerTpl = b.headerTpl || "{title} | {chapter}"; this.footerTpl = b.footerTpl || "{page}"; this.toc = !!b.toc;
+            this.cover = !!b.cover; this.pageStart = b.pageStart || 1;
             this.fontSize = b.fontSize || 20; this.lineHeight = b.lineHeight || 2.05; this.fontWeight = b.fontWeight || "400";
             this._order = b.order || 0; this._createdAt = b.createdAt || nowIso();
             localStorage.setItem(LAST_KEY, b.id);
@@ -539,7 +553,10 @@
           rebuild() {
             var content = this.pages;
             var tocOffset = this.toc ? 1 : 0;
-            var total = content.length + tocOffset;
+            var numbered = content.length + tocOffset;   // numbered pages (toc + content)
+            var start = parseInt(this.pageStart, 10) || 1;
+            var totalDisp = start + numbered - 1;          // last displayed page number
+            var disp = function (idx) { return start + idx - 1; }; // idx = 1-based numbered position
             var headings = [];
             content.forEach(function (chunk, ci) {
               var pageNum = ci + 1 + tocOffset;
@@ -556,17 +573,23 @@
               fresh.set(chunk, html);
               return html;
             }
+            // Cover page: unnumbered, no header/footer (bare).
+            if (this.cover) {
+              out.push({ bare: true, headerHtml: "", footerHtml: "",
+                bodyHtml: '<div class="book-cover"><div class="bc-title">' + esc(this.title || "بے نام کتاب") + "</div>" +
+                  (this.author ? '<div class="bc-author">' + esc(this.author) + "</div>" : "") + "</div>" });
+            }
             if (this.toc) {
               var rows = headings.map(function (h) {
-                return '<div class="toc-row' + (h.level > 1 ? " lvl2" : "") + '"><span>' + esc(h.text) + '</span><span class="toc-dots"></span><span>' + h.page + "</span></div>";
+                return '<div class="toc-row' + (h.level > 1 ? " lvl2" : "") + '"><span>' + esc(h.text) + '</span><span class="toc-dots"></span><span>' + disp(h.page) + "</span></div>";
               }).join("");
-              var tctx = { chapter: "فہرست", page: 1, total: total };
+              var tctx = { chapter: "فہرست", page: disp(1), total: totalDisp };
               out.push({ headerHtml: this.hf(this.headerTpl, tctx), bodyHtml: '<div class="toc-title">فہرست</div>' + (rows || '<p style="text-align:center;color:#999">سرخی کے لیے # لگائیں</p>'), footerHtml: this.hf(this.footerTpl, tctx) });
             }
             content.forEach(function (chunk, ci) {
               var num = ci + 1 + tocOffset, ch = null;
               for (var k = headings.length - 1; k >= 0; k--) { if (headings[k].level === 1 && headings[k].page <= num) { ch = headings[k].text; break; } }
-              var ctx = { chapter: ch || self.title || "", page: num, total: total };
+              var ctx = { chapter: ch || self.title || "", page: disp(num), total: totalDisp };
               out.push({ headerHtml: self.hf(self.headerTpl, ctx), bodyHtml: body(chunk), footerHtml: self.hf(self.footerTpl, ctx) });
             });
             this._cache = fresh; // prune chunks no longer present
@@ -650,9 +673,9 @@
             var pad = { narrow: 38, normal: 64, wide: 96 }[this.margin] || 64;
             var pagesHtml = this.renderedPages.map((p) =>
               '<div class="book-page">' +
-              (this.header ? '<div class="book-head">' + p.headerHtml + "</div>" : "") +
+              (this.header && !p.bare ? '<div class="book-head">' + p.headerHtml + "</div>" : "") +
               '<div class="book-body">' + p.bodyHtml + "</div>" +
-              (this.footer ? '<div class="book-foot">' + p.footerHtml + "</div>" : "") +
+              (this.footer && !p.bare ? '<div class="book-foot">' + p.footerHtml + "</div>" : "") +
               "</div>").join("\n");
             var css =
               "@page{size:" + d.css + ";margin:0}" +
