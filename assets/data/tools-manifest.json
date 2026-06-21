@@ -1,6 +1,6 @@
 {
   "generatedAt": "deterministic",
-  "count": 52,
+  "count": 53,
   "entries": [
     {
       "path": "alphabet/index.html",
@@ -56,6 +56,13 @@
       "folder": "bloggerflux",
       "isIndex": true,
       "title": "BlogFlux – Blogger Archive Extractor",
+      "isRoot": false
+    },
+    {
+      "path": "dhun/index.html",
+      "folder": "dhun",
+      "isIndex": true,
+      "title": "دھن — Melody Studio",
       "isRoot": false
     },
     {

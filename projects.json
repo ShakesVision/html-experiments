@@ -590,5 +590,21 @@
     "lastReviewed": "2026-05-04",
     "img": "assets/images/project.png",
     "link": "zip-editor/index.html"
+  },
+  {
+    "id": 40,
+    "slug": "dhun",
+    "title": "دھن — Melody Studio",
+    "description": "Put a tune on already-written Urdu lyrics: pick a bahr, lay each syllable on a beat grid, shape the contour, and hear it with meend (glide) over a metronome — in sargam or Western notes.",
+    "desc": "Put a tune on already-written Urdu lyrics: pick a bahr, lay each syllable on a beat grid, shape the contour, and hear it with meend (glide) over a metronome — in sargam or Western notes.",
+    "category": "Urdu & language",
+    "status": "alpha",
+    "tags": ["urdu", "music", "poetry"],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-06-21",
+    "img": "assets/images/project.png",
+    "link": "dhun/index.html"
   }
 ]
