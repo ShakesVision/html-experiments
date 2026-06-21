@@ -49,15 +49,30 @@
       /* Editor formatting toolbar */
       .ed-btn { display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border-radius: 8px; color: #44403c; background: #f5f5f4; border: 0; cursor: pointer; font-size: 14px; }
       .ed-btn:hover { background: #e7e5e4; }
-      .book-body { flex: 1 1 auto; text-align: justify; line-height: 2.05; font-size: 1.25rem; color: #15110c; }
+
+      /* Book body — typography driven by per-book CSS vars */
+      .book-body {
+        flex: 1 1 auto; text-align: justify; color: #15110c;
+        font-size: var(--book-fs, 20px);
+        line-height: var(--book-lh, 2.05);
+        font-weight: var(--book-fw, 400);
+      }
       .book-body :first-child { margin-top: 0; }
       .book-body h1, .book-body h2, .book-body h3 { font-weight: 700; margin: .6em 0 .35em; text-align: center; }
       .book-body p { margin: 0 0 .7em; }
       .book-body blockquote { border-right: 4px solid #d8cdb6; padding-right: 1em; color: #5b5346; }
       .book-body .poetry-empty-line { height: 1.4em; }
+      .book-body .ov { text-decoration: overline; }
 
-      #bookScroll { /* perf: skip painting offscreen pages on long books */ }
+      /* mirror typography into the editor textarea */
+      #bookSource { font-weight: var(--book-fw, 400); }
+
       .book-page { content-visibility: auto; contain-intrinsic-size: auto 1123px; }
+
+      /* Library drawer */
+      .lib-card { border: 1px solid #e7e2d8; transition: border-color .15s, box-shadow .15s; }
+      .lib-card.active { border-color: #db2777; box-shadow: 0 0 0 1px #db2777 inset; }
+      .lib-card.drag-over { border-color: #db2777; border-style: dashed; }
 
       @media print {
         body * { visibility: hidden; }
@@ -73,34 +88,57 @@
   </head>
 
   <body class="bg-stone-200 min-h-screen" x-data="book()" x-init="init()" x-cloak>
-    <!-- Toolbar -->
+    <!-- Toolbar: document & output setup -->
     <header class="no-print sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-stone-300 px-4 py-2">
       <div class="max-w-7xl mx-auto flex flex-wrap items-center gap-2">
-        <h1 class="text-lg font-bold text-stone-800 ml-2">بیاض <span class="text-xs font-normal text-stone-400">Book Maker</span></h1>
+        <h1 class="text-lg font-bold text-stone-800 ml-1">بیاض <span class="text-xs font-normal text-stone-400">Book Maker</span></h1>
+        <button @click="libraryOpen=true" title="کتابیں — Library" class="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm hover:bg-stone-100">
+          <span class="material-symbols-outlined">menu_book</span>
+          <span class="hidden sm:inline">کتابیں</span>
+          <span class="text-xs text-stone-400" x-text="'(' + library.length + ')'"></span>
+        </button>
+        <span class="w-px h-6 bg-stone-200"></span>
+
         <input x-model="title" @input="save()" placeholder="کتاب کا نام — title" class="border border-stone-300 rounded-lg p-1.5 text-sm w-36 text-right" />
         <input x-model="author" @input="save()" placeholder="مصنف — author" class="border border-stone-300 rounded-lg p-1.5 text-sm w-28 text-right" />
-        <select x-model="pageSize" @change="apply()" class="border border-stone-300 rounded-lg p-1.5 text-sm">
+
+        <span class="w-px h-6 bg-stone-200"></span>
+        <select x-model="pageSize" @change="apply()" title="Page size" class="border border-stone-300 rounded-lg p-1.5 text-sm">
           <template x-for="k in Object.keys(SIZES)" :key="k"><option :value="k" x-text="k"></option></template>
         </select>
-        <select x-model="fontName" @change="apply()" class="border border-stone-300 rounded-lg p-1.5 text-sm">
+        <select x-model="fontName" @change="apply()" title="Font" class="border border-stone-300 rounded-lg p-1.5 text-sm">
           <template x-for="f in fonts" :key="f"><option :value="f" x-text="f"></option></template>
         </select>
-        <select x-model="margin" @change="apply()" class="border border-stone-300 rounded-lg p-1.5 text-sm">
+        <select x-model="margin" @change="apply()" title="Margins" class="border border-stone-300 rounded-lg p-1.5 text-sm">
           <option value="narrow">Narrow</option><option value="normal">Normal</option><option value="wide">Wide</option>
         </select>
         <label class="flex items-center gap-1 text-xs text-stone-600"><input type="checkbox" x-model="header" @change="save()" /> Header</label>
         <label class="flex items-center gap-1 text-xs text-stone-600"><input type="checkbox" x-model="footer" @change="save()" /> Footer</label>
-        <span class="text-xs text-stone-500 flex items-center gap-1">
+        <span class="text-xs text-stone-500 flex items-center gap-1" title="Zoom preview">
           <span class="material-symbols-outlined">zoom_out</span>
           <input type="range" min="0.3" max="1" step="0.05" x-model.number="zoom" />
         </span>
+        <button @click="fitToScreen()" title="فٹ — Fit to screen" class="inline-flex items-center rounded-lg border border-stone-300 bg-white px-2 py-1.5 hover:bg-stone-100"><span class="material-symbols-outlined">fit_screen</span></button>
+
         <span class="ml-auto text-xs text-stone-500" x-text="pages.length + ' صفحے'"></span>
         <button @click="undo()" title="واپس — Undo (Ctrl+Z)" class="inline-flex items-center rounded-lg border border-stone-300 bg-white px-2 py-1.5 hover:bg-stone-100"><span class="material-symbols-outlined">undo</span></button>
         <button @click="redo()" title="دوبارہ — Redo" class="inline-flex items-center rounded-lg border border-stone-300 bg-white px-2 py-1.5 hover:bg-stone-100"><span class="material-symbols-outlined">redo</span></button>
+
+        <!-- Output menu -->
+        <div class="relative" @click.outside="outOpen=false">
+          <button @click="outOpen=!outOpen" class="inline-flex items-center gap-1 rounded-lg bg-stone-800 text-white px-3 py-1.5 text-sm hover:opacity-90">
+            <span class="material-symbols-outlined">ios_share</span> Output
+          </button>
+          <div x-show="outOpen" x-cloak class="absolute left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-stone-200 p-1 z-30 text-sm">
+            <button @click="window.print(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">picture_as_pdf</span> Print / PDF</button>
+            <button @click="copyBook(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">content_copy</span> پوری کتاب کاپی</button>
+            <button @click="copyChapter(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">content_paste</span> موجودہ باب کاپی</button>
+            <button @click="downloadTxt(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">download</span> TXT ڈاؤن لوڈ</button>
+          </div>
+        </div>
+
         <button @click="about=true" title="About — powered by shakeeb-justify" class="inline-flex items-center rounded-lg bg-pink-600 text-white px-2 py-1.5"><span class="material-symbols-outlined">auto_awesome</span></button>
-        <button @click="window.print()" class="inline-flex items-center gap-1 rounded-lg bg-stone-800 text-white px-3 py-1.5 text-sm hover:opacity-90">
-          <span class="material-symbols-outlined">picture_as_pdf</span> Print / PDF
-        </button>
+
         <!-- mobile view switch -->
         <div class="flex lg:hidden rounded-lg bg-stone-100 p-0.5">
           <button @click="view='edit'" :class="view==='edit'?'bg-white shadow':''" class="px-2 py-1 rounded text-xs">Edit</button>
@@ -115,18 +153,44 @@
         <div class="bg-white rounded-xl shadow p-3 sticky top-16 space-y-2">
           <!-- formatting toolbar -->
           <div class="flex flex-wrap items-center gap-1">
-            <button class="ed-btn font-bold" title="موٹا — Bold" @click="wrapMd('**','**')">B</button>
-            <button class="ed-btn italic" title="ترچھا — Italic" @click="wrapMd('*','*')">I</button>
+            <button class="ed-btn font-bold" title="موٹا — Bold" @click="wrap('**','**')">B</button>
+            <button class="ed-btn italic" title="ترچھا — Italic" @click="wrap('*','*')">I</button>
+            <button class="ed-btn underline" title="خط کشیدہ — Underline" @click="wrap('<u>','</u>')">U</button>
+            <button class="ed-btn line-through" title="خط زدہ — Strikethrough" @click="wrap('<s>','</s>')">S</button>
+            <button class="ed-btn" style="text-decoration:overline" title="خط بالا — Overline" @click="wrap('<span class=&quot;ov&quot;>','</span>')">O</button>
+            <span class="w-px h-5 bg-stone-200 mx-1"></span>
             <button class="ed-btn" title="سرخی — Heading" @click="linePrefix('# ')"><span class="material-symbols-outlined">title</span></button>
             <button class="ed-btn" title="اقتباس — Quote" @click="linePrefix('> ')"><span class="material-symbols-outlined">format_quote</span></button>
             <button class="ed-btn" title="فہرست — List" @click="linePrefix('- ')"><span class="material-symbols-outlined">format_list_bulleted</span></button>
             <span class="w-px h-5 bg-stone-200 mx-1"></span>
             <button class="ed-btn text-pink-700" title="شعر داخل کریں — Insert poetry" @click="openSj()"><span class="material-symbols-outlined">splitscreen</span> شعر</button>
             <button class="ed-btn" title="نیا صفحہ — Page break" @click="insertText('\n\n---\n\n')"><span class="material-symbols-outlined">insert_page_break</span></button>
-            <span class="ml-auto text-xs text-stone-400" x-text="wordCount + ' لفظ · ' + pages.length + ' ص'"></span>
           </div>
+
+          <!-- typography controls -->
+          <div class="flex flex-wrap items-center gap-3 rounded-lg bg-stone-50 border border-stone-200 px-2 py-1.5 text-stone-600">
+            <span class="inline-flex items-center gap-1" title="حجم — Font size">
+              <button class="ed-btn" @click="bumpSize(-1)">A−</button>
+              <span class="text-xs w-7 text-center" x-text="fontSize"></span>
+              <button class="ed-btn" @click="bumpSize(1)">A+</button>
+            </span>
+            <span class="inline-flex items-center gap-1" title="سطری فاصلہ — Line spacing">
+              <span class="material-symbols-outlined">format_line_spacing</span>
+              <input type="range" min="1.4" max="3" step="0.05" x-model.number="lineHeight" @input="apply()" />
+            </span>
+            <label class="inline-flex items-center gap-1 text-xs" title="وزن — Weight">
+              وزن
+              <select x-model="fontWeight" @change="apply()" class="border border-stone-300 rounded-lg p-1 text-xs">
+                <option value="300">باریک</option>
+                <option value="400">عام</option>
+                <option value="600">نیم موٹا</option>
+                <option value="700">موٹا</option>
+              </select>
+            </label>
+          </div>
+
           <textarea id="bookSource" x-model="source" @input="onInput()" dir="rtl"
-            class="w-full h-[58vh] border border-stone-200 rounded-lg p-3 text-lg leading-loose outline-none focus:ring-2 focus:ring-stone-300"
+            class="w-full h-[54vh] border border-stone-200 rounded-lg p-3 text-lg leading-loose outline-none focus:ring-2 focus:ring-stone-300"
             style="font-family: var(--book-font, 'Payami'), 'Mehr', serif;"
             placeholder="یہاں اپنی کتاب لکھیں…"></textarea>
           <p class="text-[11px] text-stone-400">
@@ -165,6 +229,48 @@
         </div>
       </section>
     </main>
+
+    <!-- LIBRARY DRAWER -->
+    <div x-show="libraryOpen" x-cloak class="no-print fixed inset-0 z-40 flex">
+      <div class="flex-1 bg-stone-900/40" @click="libraryOpen=false"></div>
+      <aside class="w-80 max-w-[85vw] bg-stone-50 h-full shadow-2xl flex flex-col" dir="rtl">
+        <div class="flex items-center justify-between p-3 border-b border-stone-200 bg-white">
+          <h2 class="font-bold text-stone-800 flex items-center gap-1"><span class="material-symbols-outlined">menu_book</span> کتابیں</h2>
+          <button @click="libraryOpen=false" class="text-stone-500"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-2">
+          <button @click="newBook()" class="w-full inline-flex items-center justify-center gap-1 rounded-lg bg-pink-600 text-white px-3 py-2 text-sm hover:opacity-90">
+            <span class="material-symbols-outlined">add</span> نئی کاوش — New book
+          </button>
+          <p class="text-[11px] text-stone-400 mt-1 text-center">(ترتیب بدلنے کے لیے ڈریگ کریں)</p>
+        </div>
+        <div class="flex-1 overflow-y-auto p-2 space-y-2">
+          <template x-for="b in library" :key="b.id">
+            <div class="lib-card rounded-xl bg-white p-2.5 cursor-pointer"
+              :class="{ 'active': b.id===activeId, 'drag-over': b.id===dragOverId }"
+              draggable="true"
+              @click="switchTo(b.id)"
+              @dragstart="dragId=b.id"
+              @dragover.prevent="dragOverId=b.id"
+              @dragleave="dragOverId===b.id && (dragOverId=null)"
+              @drop.prevent="onDrop(b.id)"
+              @dragend="dragId=null; dragOverId=null">
+              <div class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-stone-300 mt-0.5 cursor-grab">drag_indicator</span>
+                <div class="min-w-0 flex-1">
+                  <div class="text-sm font-semibold text-stone-800 truncate" x-text="b.title || 'بے نام کتاب'"></div>
+                  <div class="text-[11px] text-stone-500 truncate" x-text="(b.author || '—') + ' · ' + b.pages + ' ص'"></div>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <button @click.stop="duplicateBook(b.id)" title="نقل — Duplicate" class="text-stone-400 hover:text-stone-700"><span class="material-symbols-outlined text-base">content_copy</span></button>
+                  <button @click.stop="deleteBook(b.id)" title="حذف — Delete" class="text-stone-400 hover:text-red-600"><span class="material-symbols-outlined text-base">delete</span></button>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </aside>
+    </div>
 
     <!-- About / credits -->
     <div x-show="about" x-cloak @click.self="about=false" class="no-print fixed inset-0 bg-stone-900/50 flex items-center justify-center p-4 z-50">
@@ -213,6 +319,9 @@
       </div>
     </div>
 
+    <!-- toast -->
+    <div x-show="toast" x-cloak x-transition class="no-print fixed bottom-5 left-1/2 -translate-x-1/2 bg-stone-900 text-white px-4 py-2 rounded-xl shadow-xl z-50 text-sm" x-text="toast"></div>
+
     <footer class="no-print text-center text-xs text-stone-400 py-4">
       Powered by
       <a href="https://www.npmjs.com/package/shakeeb-justify" target="_blank" rel="noopener" class="text-pink-600 font-semibold underline">✨ shakeeb-justify</a>
@@ -229,52 +338,189 @@
         Square: { w: 1080, h: 1080, css: "1080px 1080px" },
         Story:  { w: 1080, h: 1920, css: "1080px 1920px" },
       };
-      const STORE = "bookMakerV1";
+      const LEGACY_STORE = "bookMakerV1";
+      const LAST_KEY = "bayaz:lastBook";
+      const DB_NAME = "bayazDB";
+      const DB_VERSION = 1;
+      const STORE = "books";
       const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "bk-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+      const nowIso = () => new Date().toISOString();
       const SAMPLE = "# پہلا باب\n\nیہ بیاض ایک سادہ کتاب ساز ہے۔ ہر صفحہ الگ دکھتا ہے اور پرنٹ/PDF میں الگ صفحے پر آتا ہے۔\n\n[sj]\nدل ہی تو ہے نہ سنگ و خشت درد سے بھر نہ آئے کیوں\nروئیں گے ہم ہزار بار کوئی ہمیں ستائے کیوں\n[/sj]\n\n---\n\n## دوسرا صفحہ\n\nنئے صفحے پر متن یہاں سے شروع ہوتا ہے۔";
+
+      /* ---- IndexedDB (robust multi-book store; pattern shared with quoter/interlocutor) ---- */
+      function openDb() {
+        return new Promise((resolve, reject) => {
+          if (!window.indexedDB) return reject(new Error("no idb"));
+          const r = indexedDB.open(DB_NAME, DB_VERSION);
+          r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: "id" }); };
+          r.onsuccess = () => resolve(r.result);
+          r.onerror = () => reject(r.error || new Error("idb open failed"));
+        });
+      }
 
       function book() {
         return {
           SIZES,
+          // ---- active book fields (bound by the editor) ----
+          id: null,
           title: "", author: "", source: SAMPLE,
           pageSize: "A4", fontName: "Payami", margin: "normal",
-          header: true, footer: true, zoom: 0.6, view: "preview", about: false,
+          header: true, footer: true, zoom: 0.6, view: "preview",
           headerTpl: "{title} | {chapter}", footerTpl: "{page}", toc: false,
-          sjOpen: false, sjFormat: "sher",
+          fontSize: 20, lineHeight: 2.05, fontWeight: "400",
+          // ---- ui ----
+          about: false, sjOpen: false, sjFormat: "sher",
+          libraryOpen: false, outOpen: false, toast: "",
           fonts: ["Payami", "Mehr", "Emaad"],
-          _t: null,
+          books: [], activeId: null, dragId: null, dragOverId: null,
+          db: null, _t: null, _save: null, _toastT: null,
 
-          init() {
-            this.load();
+          async init() {
             this.registerFonts();
             if (window.marked) marked.setOptions({ breaks: true, gfm: true });
+            try {
+              this.db = await openDb();
+              let all = await this.dbGetAll();
+              if (!all.length) all = [await this.migrateOrSeed()];
+              this.books = all;
+              const wantId = localStorage.getItem(LAST_KEY);
+              const start = this.books.find((b) => b.id === wantId) || this.sortedBooks()[0];
+              this.loadInto(start);
+            } catch (e) {
+              // no IndexedDB → single in-memory book (still usable)
+              const b = this.migrateLegacySync() || this.defaultBook();
+              this.books = [b];
+              this.loadInto(b);
+              this.flash("بغیر اسٹوریج کے چل رہا ہے");
+            }
             this.apply();
           },
 
-          get pages() {
-            return this.source.split(/\r?\n-{3,}\r?\n/).map((s) => s.trim());
+          /* ---------- data helpers ---------- */
+          dbTx(mode) { return this.db.transaction(STORE, mode).objectStore(STORE); },
+          dbGetAll() { return new Promise((res, rej) => { const r = this.dbTx("readonly").getAll(); r.onsuccess = () => res(r.result || []); r.onerror = () => rej(r.error); }); },
+          dbPut(b) { return new Promise((res, rej) => { const r = this.dbTx("readwrite").put(JSON.parse(JSON.stringify(b))); r.onsuccess = () => res(); r.onerror = () => rej(r.error); }); },
+          dbDelete(id) { return new Promise((res, rej) => { const r = this.dbTx("readwrite").delete(id); r.onsuccess = () => res(); r.onerror = () => rej(r.error); }); },
+
+          defaultBook(extra) {
+            return Object.assign({
+              id: uid(), title: "", author: "", source: SAMPLE,
+              pageSize: "A4", fontName: "Payami", margin: "normal",
+              header: true, footer: true, headerTpl: "{title} | {chapter}", footerTpl: "{page}", toc: false,
+              fontSize: 20, lineHeight: 2.05, fontWeight: "400",
+              order: this.books.length, createdAt: nowIso(), updatedAt: nowIso(),
+            }, extra || {});
           },
 
-          get wordCount() {
-            return (this.source.replace(/[#>*_\-\[\]`]/g, " ").match(/\S+/g) || []).length;
+          migrateLegacySync() {
+            try {
+              const s = JSON.parse(localStorage.getItem(LEGACY_STORE) || "null");
+              if (s && (s.source || s.title)) return this.defaultBook(s);
+            } catch (e) {}
+            return null;
+          },
+          async migrateOrSeed() {
+            const b = this.migrateLegacySync() || this.defaultBook();
+            // Deterministic id for the very first book → a repeated seed (Alpine
+            // double-init / rapid double-load) overwrites the same key instead of
+            // creating a duplicate.
+            b.id = "bayaz-first";
+            await this.dbPut(b);
+            return b;
           },
 
-          // Header/footer template: substitute tokens, split into columns on `|`.
+          sortedBooks() { return this.books.slice().sort((a, b) => (a.order || 0) - (b.order || 0) || String(a.createdAt).localeCompare(b.createdAt)); },
+
+          // library list for the drawer (live page count)
+          get library() {
+            return this.sortedBooks().map((b) => ({
+              id: b.id, title: b.id === this.activeId ? this.title : b.title,
+              author: b.id === this.activeId ? this.author : b.author,
+              pages: (b.id === this.activeId ? this.source : b.source || "").split(/\r?\n-{3,}\r?\n/).length,
+            }));
+          },
+
+          // copy active editor fields into the active record
+          collect() {
+            return {
+              id: this.id, title: this.title, author: this.author, source: this.source,
+              pageSize: this.pageSize, fontName: this.fontName, margin: this.margin,
+              header: this.header, footer: this.footer, headerTpl: this.headerTpl, footerTpl: this.footerTpl, toc: this.toc,
+              fontSize: this.fontSize, lineHeight: this.lineHeight, fontWeight: this.fontWeight,
+              order: this._order, createdAt: this._createdAt, updatedAt: nowIso(),
+            };
+          },
+          loadInto(b) {
+            if (!b) return;
+            this.id = b.id; this.activeId = b.id;
+            this.title = b.title || ""; this.author = b.author || ""; this.source = b.source || "";
+            this.pageSize = b.pageSize || "A4"; this.fontName = b.fontName || "Payami"; this.margin = b.margin || "normal";
+            this.header = b.header !== false; this.footer = b.footer !== false;
+            this.headerTpl = b.headerTpl || "{title} | {chapter}"; this.footerTpl = b.footerTpl || "{page}"; this.toc = !!b.toc;
+            this.fontSize = b.fontSize || 20; this.lineHeight = b.lineHeight || 2.05; this.fontWeight = b.fontWeight || "400";
+            this._order = b.order || 0; this._createdAt = b.createdAt || nowIso();
+            localStorage.setItem(LAST_KEY, b.id);
+          },
+
+          /* ---------- library actions ---------- */
+          async switchTo(id) {
+            if (id === this.activeId) { this.libraryOpen = false; return; }
+            await this.flushSave();
+            const b = this.books.find((x) => x.id === id);
+            if (b) { this.loadInto(b); this.apply(); this.libraryOpen = false; }
+          },
+          async newBook() {
+            await this.flushSave();
+            const b = this.defaultBook({ source: "# نئی کتاب\n\nیہاں لکھیں…" });
+            this.books.push(b);
+            try { await this.dbPut(b); } catch (e) {}
+            this.loadInto(b); this.apply();
+            this.flash("نئی کتاب بن گئی");
+          },
+          async duplicateBook(id) {
+            const src = id === this.activeId ? this.collect() : this.books.find((x) => x.id === id);
+            if (!src) return;
+            const copy = Object.assign(JSON.parse(JSON.stringify(src)), { id: uid(), title: (src.title || "بے نام") + " (نقل)", order: this.books.length, createdAt: nowIso(), updatedAt: nowIso() });
+            this.books.push(copy);
+            try { await this.dbPut(copy); } catch (e) {}
+            this.flash("نقل بن گئی");
+          },
+          async deleteBook(id) {
+            if (this.books.length <= 1) { this.flash("کم از کم ایک کتاب رہنی چاہیے"); return; }
+            if (!confirm("یہ کتاب حذف کریں؟")) return;
+            this.books = this.books.filter((x) => x.id !== id);
+            try { await this.dbDelete(id); } catch (e) {}
+            if (id === this.activeId) { this.loadInto(this.sortedBooks()[0]); this.apply(); }
+            this.flash("کتاب حذف ہوگئی");
+          },
+          async onDrop(targetId) {
+            if (!this.dragId || this.dragId === targetId) { this.dragOverId = null; return; }
+            const list = this.sortedBooks();
+            const from = list.findIndex((b) => b.id === this.dragId);
+            const to = list.findIndex((b) => b.id === targetId);
+            if (from < 0 || to < 0) return;
+            const [moved] = list.splice(from, 1);
+            list.splice(to, 0, moved);
+            list.forEach((b, i) => (b.order = i));
+            this.dragId = null; this.dragOverId = null;
+            try { for (const b of list) await this.dbPut(b); } catch (e) {}
+          },
+
+          /* ---------- derived ---------- */
+          get pages() { return this.source.split(/\r?\n-{3,}\r?\n/).map((s) => s.trim()); },
+          get wordCount() { return (this.source.replace(/[#>*_\-\[\]`]/g, " ").match(/\S+/g) || []).length; },
+
           hf(tpl, ctx) {
             if (!tpl) return "";
             var sub = String(tpl)
-              .replace(/\{title\}/g, esc(this.title))
-              .replace(/\{author\}/g, esc(this.author))
-              .replace(/\{chapter\}/g, esc(ctx.chapter || ""))
-              .replace(/\{page\}/g, ctx.page)
-              .replace(/\{total\}/g, ctx.total);
+              .replace(/\{title\}/g, esc(this.title)).replace(/\{author\}/g, esc(this.author))
+              .replace(/\{chapter\}/g, esc(ctx.chapter || "")).replace(/\{page\}/g, ctx.page).replace(/\{total\}/g, ctx.total);
             var cols = sub.split("|");
             if (cols.length === 1) return '<span style="margin-inline:auto">' + cols[0] + "</span>";
             return cols.map(function (c) { return "<span>" + c + "</span>"; }).join("");
           },
 
-          // Build the rendered page list: optional TOC page (from # / ## headings
-          // with their page numbers) + content pages with a running chapter.
           get renderedPages() {
             var content = this.pages;
             var tocOffset = this.toc ? 1 : 0;
@@ -290,43 +536,25 @@
             var self = this, out = [];
             if (this.toc) {
               var rows = headings.map(function (h) {
-                return '<div class="toc-row' + (h.level > 1 ? " lvl2" : "") + '"><span>' +
-                  esc(h.text) + '</span><span class="toc-dots"></span><span>' + h.page + "</span></div>";
+                return '<div class="toc-row' + (h.level > 1 ? " lvl2" : "") + '"><span>' + esc(h.text) + '</span><span class="toc-dots"></span><span>' + h.page + "</span></div>";
               }).join("");
               var tctx = { chapter: "فہرست", page: 1, total: total };
-              out.push({
-                headerHtml: this.hf(this.headerTpl, tctx),
-                bodyHtml: '<div class="toc-title">فہرست</div>' +
-                  (rows || '<p style="text-align:center;color:#999">سرخی کے لیے # لگائیں</p>'),
-                footerHtml: this.hf(this.footerTpl, tctx),
-              });
+              out.push({ headerHtml: this.hf(this.headerTpl, tctx), bodyHtml: '<div class="toc-title">فہرست</div>' + (rows || '<p style="text-align:center;color:#999">سرخی کے لیے # لگائیں</p>'), footerHtml: this.hf(this.footerTpl, tctx) });
             }
             content.forEach(function (chunk, ci) {
               var num = ci + 1 + tocOffset, ch = null;
-              for (var k = headings.length - 1; k >= 0; k--) {
-                if (headings[k].level === 1 && headings[k].page <= num) { ch = headings[k].text; break; }
-              }
+              for (var k = headings.length - 1; k >= 0; k--) { if (headings[k].level === 1 && headings[k].page <= num) { ch = headings[k].text; break; } }
               var ctx = { chapter: ch || self.title || "", page: num, total: total };
-              out.push({
-                headerHtml: self.hf(self.headerTpl, ctx),
-                bodyHtml: self.render(chunk),
-                footerHtml: self.hf(self.footerTpl, ctx),
-              });
+              out.push({ headerHtml: self.hf(self.headerTpl, ctx), bodyHtml: self.render(chunk), footerHtml: self.hf(self.footerTpl, ctx) });
             });
             return out;
           },
 
-          /* --- Editor toolbar. setRangeText is reliable AND native-undoable;
-                 the dispatched input event keeps Alpine's x-model in sync. --- */
+          /* ---------- editor toolbar ---------- */
           ta() { var t = document.getElementById("bookSource"); if (t) t.focus(); return t; },
           fire(t) { t.dispatchEvent(new Event("input", { bubbles: true })); },
-          insertText(str) {
-            var t = this.ta(); if (!t) return;
-            var s = t.selectionStart, e = t.selectionEnd;
-            t.setRangeText(str, s, e, "end");
-            this.fire(t);
-          },
-          wrapMd(before, after) {
+          insertText(str) { var t = this.ta(); if (!t) return; var s = t.selectionStart, e = t.selectionEnd; t.setRangeText(str, s, e, "end"); this.fire(t); },
+          wrap(before, after) {
             var t = this.ta(); if (!t) return;
             var s = t.selectionStart, e = t.selectionEnd, sel = t.value.slice(s, e) || "متن";
             t.setRangeText(before + sel + after, s, e, "end");
@@ -351,45 +579,78 @@
             if (t) { t.setRangeText(snippet, s, e, "end"); this.fire(t); }
           },
 
-          render(chunk) {
-            const withSj = this.preprocess(chunk);
-            return window.marked ? marked.parse(withSj) : withSj.replace(/\n/g, "<br>");
+          /* ---------- typography ---------- */
+          bumpSize(d) { this.fontSize = Math.max(12, Math.min(48, (this.fontSize || 20) + d)); this.apply(); },
+
+          /* ---------- copy / export ---------- */
+          plainText(src) {
+            return String(src || "")
+              .replace(/\[sj[^\]]*\]\r?\n?/g, "").replace(/\r?\n?\[\/sj\]/g, "")
+              .replace(/^\s*-{3,}\s*$/gm, "\n")
+              .replace(/^#{1,6}\s+/gm, "").replace(/^>\s?/gm, "").replace(/^[-*]\s+/gm, "")
+              .replace(/<\/?[^>]+>/g, "")
+              .replace(/\*\*|__|\*|_|`/g, "")
+              .replace(/\n{3,}/g, "\n\n").trim();
+          },
+          async copy(text, msg) {
+            try { await navigator.clipboard.writeText(text); this.flash(msg || "کاپی ہوگیا"); }
+            catch (e) { this.flash("کاپی ناکام"); }
+          },
+          copyBook() { this.copy(this.plainText(this.source), "پوری کتاب کاپی ہوگئی"); },
+          copyChapter() {
+            var t = document.getElementById("bookSource");
+            var caret = t ? t.selectionStart : 0;
+            var lines = this.source.split("\n"), pos = 0, startLine = 0;
+            for (var i = 0; i < lines.length; i++) {
+              if (/^#\s+/.test(lines[i]) && pos <= caret) startLine = i;
+              pos += lines[i].length + 1;
+            }
+            var endLine = lines.length;
+            for (var j = startLine + 1; j < lines.length; j++) { if (/^#\s+/.test(lines[j])) { endLine = j; break; } }
+            var chapter = lines.slice(startLine, endLine).join("\n");
+            this.copy(this.plainText(chapter), "موجودہ باب کاپی ہوگیا");
+          },
+          downloadTxt() {
+            var blob = new Blob([this.plainText(this.source)], { type: "text/plain;charset=utf-8" });
+            var url = URL.createObjectURL(blob), a = document.createElement("a");
+            a.href = url; a.download = (this.title || "bayaz").replace(/[^a-z0-9؀-ۿ]+/gi, "_") + ".txt";
+            document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+            this.flash("TXT ڈاؤن لوڈ ہوگئی");
           },
 
-          // Convert [sj ...]…[/sj] poetry blocks into ShakeebJustify markup.
+          /* ---------- render ---------- */
+          render(chunk) { const withSj = this.preprocess(chunk); return window.marked ? marked.parse(withSj) : withSj.replace(/\n/g, "<br>"); },
           preprocess(md) {
             return md.replace(/\[sj(?:\s+format="([^"]*)")?\]\r?\n([\s\S]*?)\r?\n\[\/sj\]/g, (m, fmt, body) => {
               const cls = "sj " + (fmt && fmt !== "custom" ? fmt : "sher");
-              const lines = body.split("\n").map((l) =>
-                l.trim() === ""
-                  ? '<div class="poetry-empty-line">&nbsp;</div>'
-                  : "<div>" + l.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</div>",
-              ).join("");
+              const lines = body.split("\n").map((l) => l.trim() === "" ? '<div class="poetry-empty-line">&nbsp;</div>' : "<div>" + l.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</div>").join("");
               return '<div class="' + cls + '">' + lines + "</div>";
             });
           },
 
-          onInput() {
-            clearTimeout(this._t);
-            this._t = setTimeout(() => { this.save(); this.justify(); }, 300);
-          },
-
-          // Undo/redo via the textarea's native history (covers all edits).
+          onInput() { clearTimeout(this._t); this._t = setTimeout(() => { this.save(); this.justify(); }, 300); },
           undo() { const t = document.getElementById("bookSource"); if (!t) return; t.focus(); document.execCommand("undo"); this.source = t.value; this.onInput(); },
           redo() { const t = document.getElementById("bookSource"); if (!t) return; t.focus(); document.execCommand("redo"); this.source = t.value; this.onInput(); },
-
-          justify() {
-            this.$nextTick(() => { if (window.ShakeebJustify) { try { ShakeebJustify.apply(); } catch (e) {} } });
-          },
+          justify() { this.$nextTick(() => { if (window.ShakeebJustify) { try { ShakeebJustify.apply(); } catch (e) {} } }); },
 
           apply() {
             const d = SIZES[this.pageSize] || SIZES.A4;
-            document.getElementById("pageStyle").textContent =
-              "@page{size:" + d.css + ";margin:0}" +
-              ".book-page{width:" + d.w + "px;min-height:" + d.h + "px}";
-            document.documentElement.style.setProperty("--book-font", "'" + this.fontName + "'");
+            document.getElementById("pageStyle").textContent = "@page{size:" + d.css + ";margin:0}.book-page{width:" + d.w + "px;min-height:" + d.h + "px}";
+            const root = document.documentElement.style;
+            root.setProperty("--book-font", "'" + this.fontName + "'");
+            root.setProperty("--book-fs", (this.fontSize || 20) + "px");
+            root.setProperty("--book-lh", this.lineHeight || 2.05);
+            root.setProperty("--book-fw", this.fontWeight || "400");
             this.save();
             this.justify();
+          },
+
+          fitToScreen() {
+            const wrap = document.getElementById("bookScroll");
+            const d = SIZES[this.pageSize] || SIZES.A4;
+            if (!wrap) return;
+            const avail = wrap.clientWidth - 24;
+            this.zoom = Math.max(0.3, Math.min(1, +(avail / d.w).toFixed(2)));
           },
 
           registerFonts() {
@@ -399,8 +660,7 @@
               if (!f || !f.name) return;
               const id = "bf-" + f.name.replace(/[^a-z0-9_-]/gi, "_");
               if (!document.getElementById(id)) {
-                const s = document.createElement("style");
-                s.id = id;
+                const s = document.createElement("style"); s.id = id;
                 s.textContent = "@font-face{font-family:'" + f.name + "';src:local('" + f.name + "'),url('" + f.url + "');font-display:swap;}";
                 document.head.appendChild(s);
               }
@@ -408,20 +668,23 @@
             });
           },
 
+          // keep the active record in memory current + debounce the DB write
           save() {
-            localStorage.setItem(STORE, JSON.stringify({
-              title: this.title, author: this.author, source: this.source,
-              pageSize: this.pageSize, fontName: this.fontName, margin: this.margin,
-              header: this.header, footer: this.footer,
-              headerTpl: this.headerTpl, footerTpl: this.footerTpl, toc: this.toc,
-            }));
+            if (!this.id) return;
+            const rec = this.collect();
+            const i = this.books.findIndex((b) => b.id === this.id);
+            if (i >= 0) this.books[i] = rec; else this.books.push(rec);
+            localStorage.setItem(LAST_KEY, this.id);
+            clearTimeout(this._save);
+            this._save = setTimeout(() => { if (this.db) this.dbPut(rec).catch(() => {}); }, 350);
           },
-          load() {
-            try {
-              const s = JSON.parse(localStorage.getItem(STORE) || "null");
-              if (s) Object.assign(this, s);
-            } catch (e) {}
+          // force-write before switching books so nothing is lost
+          async flushSave() {
+            clearTimeout(this._save);
+            if (this.db && this.id) { try { await this.dbPut(this.collect()); } catch (e) {} }
           },
+
+          flash(msg) { this.toast = msg; clearTimeout(this._toastT); this._toastT = setTimeout(() => (this.toast = ""), 2200); },
         };
       }
     </script>
