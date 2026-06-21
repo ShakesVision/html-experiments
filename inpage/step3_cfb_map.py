@@ -319,15 +319,19 @@ def write_outputs(results: List[Dict], out_json: str, out_txt: str) -> None:
 
 
 def main() -> None:
-    files = ["inpage/juz_29.inp", "inpage/juz_30.inp"]
+    from inp_samples import discover_inp_files
+
+    files = discover_inp_files()
+    if not files:
+        raise FileNotFoundError("No .inp sample files found in inpage/")
     results = []
     for fp in files:
-        if not os.path.exists(fp):
-            raise FileNotFoundError(fp)
         cfb = CfbFile(fp)
         results.append(cfb.stream_manifest())
-    write_outputs(results, "inpage/step3_ole_map.json", "inpage/step3_ole_map.txt")
-    print("Wrote inpage/step3_ole_map.json and inpage/step3_ole_map.txt")
+    out_json = os.path.join(os.path.dirname(__file__), "step3_ole_map.json")
+    out_txt = os.path.join(os.path.dirname(__file__), "step3_ole_map.txt")
+    write_outputs(results, out_json, out_txt)
+    print(f"Wrote {out_json} and {out_txt} ({len(files)} files)")
 
 
 if __name__ == "__main__":

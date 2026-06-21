@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
 import unicodedata
-from collections import defaultdict
 from typing import Dict, List, Tuple
 
 from step3_cfb_map import CfbFile
@@ -90,16 +90,21 @@ def find_stream_bytes(cfb: CfbFile, stream_path: str) -> Tuple[bytes, str]:
 
 
 def main() -> None:
-    with open("inpage/step4_stream_compare.json", "r", encoding="utf-8") as f:
-        comp = json.load(f)
+    from inp_samples import discover_inp_files, find_content_stream_path
 
-    candidate_by_file: Dict[str, List[str]] = defaultdict(list)
-    for c in comp["candidate_streams"]:
-        candidate_by_file[c["file"]].append(c["path"])
+    files = discover_inp_files()
+    if not files:
+        raise FileNotFoundError("No .inp sample files found")
 
     out_files = []
-    for file_path, paths in candidate_by_file.items():
+    for file_path in files:
         cfb = CfbFile(file_path)
+        content_path = find_content_stream_path(cfb)
+        paths = [content_path] if content_path else []
+        doc_path = find_stream_bytes(cfb, "/DocumentInfo")
+        if doc_path[0]:
+            paths.append("/DocumentInfo")
+
         stream_items = []
         for path in sorted(set(paths)):
             data, alloc = find_stream_bytes(cfb, path)
@@ -116,7 +121,10 @@ def main() -> None:
         out_files.append({"file": file_path, "streams": stream_items})
 
     out = {"files": out_files}
-    with open("inpage/step5_text_runs.json", "w", encoding="utf-8") as f:
+    base = os.path.dirname(__file__) or "."
+    json_path = os.path.join(base, "step5_text_runs.json")
+    txt_path = os.path.join(base, "step5_text_runs.txt")
+    with open(json_path, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2, ensure_ascii=False)
 
     lines = []
@@ -139,10 +147,10 @@ def main() -> None:
             if s["run_count"] > 20:
                 lines.append(f"    ... {s['run_count'] - 20} more runs")
 
-    with open("inpage/step5_text_runs.txt", "w", encoding="utf-8") as f:
+    with open(txt_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
-    print("Wrote inpage/step5_text_runs.json and inpage/step5_text_runs.txt")
+    print(f"Wrote {json_path} and {txt_path}")
 
 
 if __name__ == "__main__":

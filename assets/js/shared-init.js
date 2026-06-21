@@ -120,9 +120,20 @@
     });
   }
 
+  function logAttribution() {
+    if (window.__htmlExperimentsAttributed) {
+      return;
+    }
+    window.__htmlExperimentsAttributed = true;
+    console.info(
+      "html-experiments by Shakeeb — https://shakeeb.in (Attribution Required License)",
+    );
+  }
+
   registerServiceWorker();
   installErrorBoundary();
   injectAdSense();
+  logAttribution();
 
   if ("requestIdleCallback" in window) {
     window.requestIdleCallback(function () {

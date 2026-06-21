@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WYSIWYG Editor with Urdu Keyboard</title>    <link rel="stylesheet" href="../assets/css/tailwind.css" />
+    <title>WYSIWYG Editor with Urdu Keyboard</title>
+    <link rel="stylesheet" href="../assets/css/tailwind.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <script src="ur-phonetic.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=Gulzar&display=swap');
@@ -30,9 +32,9 @@
 <body
     class="bg-gray-100 text-black dark:bg-gray-900 dark:text-white min-h-screen flex items-center justify-center transition-colors duration-300">
     <!-- Poetry Editor -->
-    <a href="poetry.html"
+    <a href="poetry-studio.html"
         class="absolute top-4 left-4 px-3 py-2 text-sm rounded bg-green-600 text-white dark:bg-green-200 dark:text-black shadow-md">
-        🖋️ Poetry Editor
+        🖋️ Poetry Studio
     </a>
     <!-- Dark Toggle -->
     <button id="toggleDark"
@@ -47,16 +49,53 @@
     </button>
 
 
-    <div class="w-11/12 max-w-2xl bg-white  dark:bg-gray-700 dark:text-white  rounded shadow p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h1 class="text-lg font-bold">WYSIWYG Editor</h1>
-            <label class="flex items-center space-x-2">
-                <input type="checkbox" checked id="urduToggle" class="w-4 h-4">
-                <span class="text-sm">Urdu Keyboard</span>
+    <div class="w-11/12 max-w-2xl bg-white dark:bg-gray-800 dark:text-white rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
+            <h1 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">WYSIWYG Editor</h1>
+            <label class="flex items-center space-x-2 cursor-pointer bg-pink-50 dark:bg-pink-950/40 px-3 py-1.5 rounded-full transition hover:opacity-90">
+                <input type="checkbox" checked id="urduToggle" class="w-4 h-4 text-pink-600 focus:ring-pink-500 rounded border-gray-300">
+                <span class="text-sm font-medium text-pink-800 dark:text-pink-300">Urdu Keyboard</span>
             </label>
         </div>
+
+        <!-- Formatting Toolbar -->
+        <div class="flex flex-wrap items-center gap-1.5 bg-gray-50 dark:bg-gray-900 p-2 rounded-xl mb-3 border border-gray-200/60 dark:border-gray-700/60">
+            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('bold')" title="Bold">
+                <span class="material-symbols-outlined text-xl">format_bold</span>
+            </button>
+            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('italic')" title="Italic">
+                <span class="material-symbols-outlined text-xl">format_italic</span>
+            </button>
+            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('underline')" title="Underline">
+                <span class="material-symbols-outlined text-xl">format_underlined</span>
+            </button>
+            <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('justifyLeft')" title="Align Left">
+                <span class="material-symbols-outlined text-xl">format_align_left</span>
+            </button>
+            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('justifyCenter')" title="Align Center">
+                <span class="material-symbols-outlined text-xl">format_align_center</span>
+            </button>
+            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('justifyRight')" title="Align Right">
+                <span class="material-symbols-outlined text-xl">format_align_right</span>
+            </button>
+            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('justifyFull')" title="Justify">
+                <span class="material-symbols-outlined text-xl">format_align_justify</span>
+            </button>
+            <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+            <select id="fontSizeSelect" class="bg-transparent text-sm border-none outline-none cursor-pointer py-1 px-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700" title="Font Size">
+                <option value="3">Size: Normal</option>
+                <option value="1">Size: Small</option>
+                <option value="5">Size: Large</option>
+                <option value="7">Size: Huge</option>
+            </select>
+            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition ml-auto" onclick="copyEditorText()" title="Copy Text">
+                <span class="material-symbols-outlined text-xl">content_copy</span>
+            </button>
+        </div>
+
         <div contenteditable="true" id="urduTextarea"
-            class="editor bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white"></div>
+            class="editor bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white p-4 rounded-xl border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-pink-300 dark:focus:ring-pink-800 outline-none text-xl leading-loose min-h-[250px]"></div>
     </div>
 
     <!-- Help Modal -->
@@ -111,16 +150,19 @@
 
             // Function to insert character at cursor position
             function insertAtCursor(field, char) {
-                const selection = window.getSelection();
-                const range = selection.getRangeAt(0);
-
-                range.deleteContents();
-                range.insertNode(document.createTextNode(char));
-
-                // Move the cursor after the inserted character
-                range.setStart(range.endContainer, range.endOffset);
-                selection.removeAllRanges();
-                selection.addRange(range);
+                if (document.queryCommandSupported('insertText')) {
+                    document.execCommand('insertText', false, char);
+                } else {
+                    const selection = window.getSelection();
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    const textNode = document.createTextNode(char);
+                    range.insertNode(textNode);
+                    range.setStartAfter(textNode);
+                    range.setEndAfter(textNode);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
             }
 
             // Toggle direction and font on checkbox change
@@ -165,6 +207,24 @@
                     }
                 }
             });
+
+            // Font size change handler
+            const fontSizeSelect = document.getElementById('fontSizeSelect');
+            if (fontSizeSelect) {
+                fontSizeSelect.addEventListener('change', (e) => {
+                    document.execCommand('fontSize', false, e.target.value);
+                });
+            }
+
+            // Copy editor text helper
+            window.copyEditorText = function() {
+                const text = textarea.innerText || textarea.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('متن کامیابی سے کاپی ہو گیا!');
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                });
+            };
         });
 
         /*

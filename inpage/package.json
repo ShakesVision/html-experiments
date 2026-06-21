@@ -1,0 +1,9 @@
+{
+  "name": "inpage-suite",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run-inp-tests.mjs",
+    "golden": "node tests/generate-golden-ast.mjs"
+  }
+}

@@ -110,14 +110,16 @@ def main() -> None:
     for f in text_runs_doc["files"]:
         file_path = f["file"]
         cfb = CfbFile(file_path)
-        inpage_entry = find_entry_by_path(cfb, "/InPage300")
+        from inp_samples import find_content_stream_path
+
+        content_path = find_content_stream_path(cfb)
         inpage_data = b""
-        if inpage_entry:
-            inpage_data, _, _ = cfb.read_dir_stream(inpage_entry)
+        if content_path:
+            inpage_data, _, _ = cfb.read_dir_stream(find_entry_by_path(cfb, content_path))
 
         all_runs = []
         for s in f["streams"]:
-            if s["path"] == "/InPage300":
+            if content_path and s["path"] == content_path:
                 all_runs.extend(s["runs"])
         all_runs.sort(key=lambda x: x["offset"])
 
@@ -146,7 +148,7 @@ def main() -> None:
             nums = [norm_number_token(m.group(0)) for m in ARABIC_INDIC_RE.finditer(run["decoded_text"])]
             if not nums:
                 continue
-            bucket = marker_refs if run["length_chars"] > 120 else marker_bodies
+            bucket = marker_refs if run["length_chars"] > 100 else marker_bodies
             for n in nums:
                 bucket.append({"offset": run["offset"], "number": n, "text": run["decoded_text"][:140]})
 
@@ -177,7 +179,7 @@ def main() -> None:
                 dedup_footnotes.append(x)
 
         # page segmentation on high-confidence Arabic runs
-        arabic_runs = [r for r in all_runs if r["confidence"] >= 0.6]
+        arabic_runs = [r for r in all_runs if r["confidence"] >= 0.5]
         pages_raw = derive_pages(arabic_runs)
         pages = []
         for idx, runs in enumerate(pages_raw, start=1):

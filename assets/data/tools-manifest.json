@@ -34,7 +34,7 @@
       "path": "bayaz-proto/index.html",
       "folder": "bayaz-proto",
       "isIndex": true,
-      "title": "Bayaaz - Notion Style Editor",
+      "title": "بیاض — Book Maker",
       "isRoot": false
     },
     {
@@ -66,17 +66,17 @@
       "isRoot": false
     },
     {
-      "path": "editor/poetry.html",
+      "path": "editor/poetry-classic.html",
       "folder": "editor",
       "isIndex": false,
-      "title": "editor/poetry",
+      "title": "Poetry (classic)",
       "isRoot": false
     },
     {
-      "path": "editor/poetry2.html",
+      "path": "editor/poetry-studio.html",
       "folder": "editor",
       "isIndex": false,
-      "title": "فارمیٹرِ شاعری",
+      "title": "شاعری اسٹوڈیو — Poetry Studio",
       "isRoot": false
     },
     {
@@ -343,13 +343,6 @@
       "folder": "urdu-dashboard",
       "isIndex": true,
       "title": "اردو ڈیش بورڈ",
-      "isRoot": false
-    },
-    {
-      "path": "wp-dp-dw/index.html",
-      "folder": "wp-dp-dw",
-      "isIndex": true,
-      "title": "WhatsApp DP Viewer",
       "isRoot": false
     },
     {

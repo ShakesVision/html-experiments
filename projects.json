@@ -269,7 +269,7 @@
     "featured": true,
     "lastReviewed": "2026-05-04",
     "img": "editor/poetry2.png",
-    "link": "editor/poetry2.html"
+    "link": "editor/poetry-studio.html"
   },
   {
     "id": 18,
@@ -352,22 +352,6 @@
     "link": "quoter/index.html"
   },
   {
-    "id": 23,
-    "slug": "wp-dp-dw",
-    "title": "WhatsApp DP Viewer",
-    "description": "Preview and download WhatsApp display pictures from a simple browser tool.",
-    "desc": "Preview and download WhatsApp display pictures from a simple browser tool.",
-    "category": "Utilities",
-    "status": "alpha",
-    "tags": [],
-    "offlineSupport": "shell-cache",
-    "external": false,
-    "featured": false,
-    "lastReviewed": "2026-05-04",
-    "img": "assets/images/project.png",
-    "link": "wp-dp-dw/index.html"
-  },
-  {
     "id": 24,
     "slug": "rekhta-reader",
     "title": "Rekhta Reader",
@@ -434,11 +418,11 @@
   {
     "id": 28,
     "slug": "bayaz-proto",
-    "title": "Bayaaz",
-    "description": "Standalone browser tool hosted at bayaz-proto/index.html.",
-    "desc": "Standalone browser tool hosted at bayaz-proto/index.html.",
+    "title": "بیاض — Book Maker",
+    "description": "Compose Urdu books page-by-page (markdown + ShakeebJustify poetry), preview as real pages, and export to PDF via print.",
+    "desc": "Compose Urdu books page-by-page (markdown + ShakeebJustify poetry), preview as real pages, and export to PDF via print.",
     "category": "Urdu & language",
-    "status": "alpha",
+    "status": "beta",
     "tags": ["urdu"],
     "offlineSupport": "full",
     "external": false,

@@ -6,9 +6,11 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Urdu WYSIWYG — Quill + ShakeebJustify</title>
 
-    <!-- Tailwind CDN (Play) -->    <link rel="stylesheet" href="../assets/css/tailwind.css" />
+    <!-- Tailwind CDN (Play) -->
+    <link rel="stylesheet" href="../assets/css/tailwind.css" />
     <!-- Quill CSS -->
     <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script src="ur-phonetic.js"></script>
 
     <!-- Google Fonts choices -->
     <link
@@ -97,6 +99,12 @@
                 <button class="ql-align" value="right"></button>
                 <button class="ql-align" value="justify"></button>
             </span>
+            <span class="ql-formats ml-auto">
+                <label class="flex items-center space-x-2 cursor-pointer bg-blue-50 dark:bg-blue-950/40 px-3 py-1 rounded-full transition hover:opacity-90 select-none">
+                    <input type="checkbox" checked id="urduToggle" class="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded border-gray-300">
+                    <span class="text-xs font-medium text-blue-800 dark:text-blue-300">Urdu Keyboard</span>
+                </label>
+            </span>
         </div>
 
         <!-- Editor -->
@@ -132,6 +140,28 @@
                 history: { delay: 1000, maxStack: 100 }
             },
             theme: 'snow'
+        });
+
+        // Urdu Keyboard Mapping for Quill
+        quill.root.addEventListener('keypress', function (event) {
+            const urduToggle = document.getElementById('urduToggle');
+            if (!urduToggle || !urduToggle.checked) return;
+
+            const key = event.key;
+            if (typeof keyboardMap === 'undefined') return;
+
+            for (let i = 0; i < keyboardMap.length; i++) {
+                if (keyboardMap[i][0] === key) {
+                    event.preventDefault();
+                    const range = quill.getSelection();
+                    if (range) {
+                        const char = keyboardMap[i][1];
+                        quill.insertText(range.index, char);
+                        quill.setSelection(range.index + char.length);
+                    }
+                    break;
+                }
+            }
         });
 
         // Helper: wrap selection in a div with class 'sher' or 'sher2' depending on user needs.

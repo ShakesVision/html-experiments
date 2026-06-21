@@ -1,6 +1,14 @@
-// import mupdf from "../node_modules/mupdf/dist/mupdf.js";
-// import * as mupdf from "https://esm.sh/mupdf";
-import * as mupdf from "https://cdn.jsdelivr.net/npm/mupdf/dist/mupdf.js";
+// MuPDF (WASM) is the heaviest dependency here. Load it lazily — only when a
+// PDF is actually processed — so the page itself opens instantly. The module
+// is cached after the first import, and the service worker keeps it offline.
+let mupdf = null;
+async function ensureMupdf() {
+  if (!mupdf) {
+    mupdf = await import("https://cdn.jsdelivr.net/npm/mupdf/dist/mupdf.js");
+  }
+  return mupdf;
+}
+
 function toFixedNumber(value) {
   return Number((Number.isFinite(value) ? value : 0).toFixed(3));
 }
@@ -161,6 +169,7 @@ export async function openMuPdfDocument(
   arrayBuffer,
   fileName = "document.pdf",
 ) {
+  await ensureMupdf();
   const bytes =
     arrayBuffer instanceof Uint8Array
       ? arrayBuffer
