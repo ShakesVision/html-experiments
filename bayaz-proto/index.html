@@ -20,6 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@latest/dist/shakeeb-justify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+    <script src="../editor/ur-phonetic.js"></script>
     <script defer src="../assets/js/shared-init.js"></script>
     <link rel="canonical" href="https://tools.shakeeb.in/bayaz-proto/index.html">
     <link rel="manifest" href="../manifest.webmanifest">
@@ -108,11 +109,11 @@
         <div class="ml-auto flex items-center gap-2">
           <span class="text-xs text-stone-400" x-text="pages.length + ' صفحے'"></span>
           <button @click="window.print()" class="inline-flex items-center gap-1 rounded-lg bg-stone-800 text-white px-3 py-1.5 text-sm hover:opacity-90">
-            <span class="material-symbols-outlined">picture_as_pdf</span> <span class="hidden sm:inline">Print / PDF</span>
+            <span class="material-symbols-outlined">picture_as_pdf</span> Print / PDF
           </button>
           <div class="relative" @click.outside="outOpen=false">
             <button @click="outOpen=!outOpen" class="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm hover:bg-stone-100">
-              <span class="material-symbols-outlined">ios_share</span> <span class="hidden sm:inline">Export</span>
+              <span class="material-symbols-outlined">ios_share</span> Export
             </button>
             <div x-show="outOpen" x-cloak class="absolute left-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-stone-200 p-1 z-40 text-sm">
               <button @click="copyBook(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">content_copy</span> پوری کتاب کاپی</button>
@@ -124,7 +125,7 @@
               <button @click="exportBookJson(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">save</span> کتاب JSON (بیک اپ)</button>
             </div>
           </div>
-          <button @click="about=true" title="About — powered by shakeeb-justify" class="inline-flex items-center rounded-lg bg-pink-600 text-white px-2 py-1.5"><span class="material-symbols-outlined">auto_awesome</span></button>
+          <button @click="about=true" title="About" class="inline-flex items-center rounded-lg border border-stone-300 bg-white text-stone-600 px-2 py-1.5 hover:bg-stone-100"><span class="material-symbols-outlined">info</span></button>
         </div>
       </div>
     </header>
@@ -195,12 +196,6 @@
                 <button @click="marginPx=96;apply()" class="tool-btn">کشادہ</button>
               </div>
             </div>
-            <label class="block">
-              <span class="text-xs text-stone-500">کتاب کا فونٹ — Book font</span>
-              <select x-model="fontName" @change="apply()" class="w-full mt-1 border border-stone-300 rounded-lg p-1.5">
-                <template x-for="f in fonts" :key="f"><option :value="f" x-text="f"></option></template>
-              </select>
-            </label>
             <div class="grid grid-cols-2 gap-2">
               <label class="block">
                 <span class="text-xs text-stone-500">بنیادی حجم — Base size</span>
@@ -247,10 +242,6 @@
               <option value="20">20</option><option value="24">24</option><option value="28">28</option>
               <option value="32">32</option><option value="40">40</option><option value="56">56</option>
             </select>
-            <select @change="selFontFamily($event.target.value); $event.target.selectedIndex=0" class="tool-btn" title="فونٹ — Font for selection">
-              <option value="">فونٹ</option>
-              <template x-for="f in fonts" :key="f"><option :value="f" x-text="f"></option></template>
-            </select>
             <input type="color" @input="selColor($event.target.value)" title="رنگ — Colour for selection" class="w-7 h-7 rounded border border-stone-200 p-0 cursor-pointer" />
             <span class="w-px h-5 bg-stone-200 mx-0.5"></span>
             <button class="tool-btn" title="دائیں" @click="selAlign('right')"><span class="material-symbols-outlined text-base">format_align_right</span></button>
@@ -260,6 +251,9 @@
             <span class="w-px h-5 bg-stone-200 mx-0.5"></span>
             <button class="tool-btn text-pink-700" title="شعر — Insert poetry" @click="openSj()"><span class="material-symbols-outlined text-base">splitscreen</span> شعر</button>
             <button class="tool-btn" title="نیا صفحہ — Page break" @click="insertPageBreak()"><span class="material-symbols-outlined text-base">insert_page_break</span></button>
+            <label class="ms-auto flex items-center gap-1.5 text-xs text-stone-600 cursor-pointer select-none bg-pink-50 px-2 py-1 rounded-lg">
+              <input type="checkbox" x-model="urduKb" class="w-3.5 h-3.5" /> اردو کی بورڈ
+            </label>
           </div>
           <!-- Toast UI editor mounts here -->
           <div id="editor"></div>
@@ -380,15 +374,13 @@
           cover: false, pageStart: 1,
           fontSize: 20, lineHeight: 2.05, fontWeight: "400",
           about: false, sjOpen: false, sjFormat: "sher", setupOpen: true,
-          outOpen: false, toast: "",
-          fonts: ["Payami", "Mehr", "Emaad"],
+          outOpen: false, toast: "", urduKb: true,
           books: [], activeId: null, dragId: null, dragOverId: null,
           renderedPages: [], _cache: null,
           editor: null, _loading: false,
           db: null, _t: null, _save: null, _toastT: null,
 
           async init() {
-            this.registerFonts();
             if (window.marked) marked.setOptions({ breaks: true, gfm: true });
             try {
               this.db = await openDb();
@@ -415,10 +407,10 @@
             const plugins = (toastui.Editor.plugin && toastui.Editor.plugin.colorSyntax) ? [toastui.Editor.plugin.colorSyntax] : [];
             this.editor = new toastui.Editor({
               el: document.getElementById("editor"),
-              height: "62vh",
+              height: "64vh",
               initialEditType: "markdown",
               previewStyle: "vertical",
-              hideModeSwitch: false,
+              hideModeSwitch: true,
               usageStatistics: false,
               autofocus: false,
               initialValue: this.source || "",
@@ -429,9 +421,22 @@
                 ["ul", "ol"],
                 ["link"],
               ],
-              events: { change: function () { self.onEditorChange(); } },
             });
+            this.editor.on("change", function () { self.onEditorChange(); });
             this.applyEditorFont();
+            // Urdu phonetic keyboard: map single keystrokes → Urdu via keyboardMap
+            // (ur-phonetic.js). Unmapped keys (space/enter/backspace) pass through.
+            const host = document.getElementById("editor");
+            if (host) host.addEventListener("keydown", function (event) {
+              if (!self.urduKb) return;
+              if (event.ctrlKey || event.metaKey || event.altKey) return;
+              if (typeof keyboardMap === "undefined") return;
+              const key = event.key;
+              if (!key || key.length !== 1) return;
+              for (let i = 0; i < keyboardMap.length; i++) {
+                if (keyboardMap[i][0] === key) { event.preventDefault(); event.stopPropagation(); self.editor.insertText(keyboardMap[i][1]); return; }
+              }
+            }, true);
           },
           onEditorChange() {
             if (this._loading || !this.editor) return;
@@ -461,7 +466,6 @@
           },
           selFontSize(px) { if (px) this.styleSel("font-size:" + px + "px"); },
           selColor(c) { if (c) this.styleSel("color:" + c); },
-          selFontFamily(f) { if (f) this.styleSel("font-family:'" + f + "'"); },
           selAlign(a) {
             if (!this.editor) return;
             const sel = (this.editor.getSelectedText && this.editor.getSelectedText()) || "";
@@ -763,21 +767,6 @@
             if (!wrap) return;
             const avail = wrap.clientWidth - 16;
             this.zoom = Math.max(0.3, Math.min(1, +(avail / d.w).toFixed(2)));
-          },
-
-          registerFonts() {
-            let saved = [];
-            try { saved = JSON.parse(localStorage.getItem("poetryCustomFontsV1") || "[]"); } catch (e) {}
-            saved.forEach((f) => {
-              if (!f || !f.name) return;
-              const id = "bf-" + f.name.replace(/[^a-z0-9_-]/gi, "_");
-              if (!document.getElementById(id)) {
-                const s = document.createElement("style"); s.id = id;
-                s.textContent = "@font-face{font-family:'" + f.name + "';src:local('" + f.name + "'),url('" + f.url + "');font-display:swap;}";
-                document.head.appendChild(s);
-              }
-              if (!this.fonts.includes(f.name)) this.fonts.push(f.name);
-            });
           },
 
           save() {
