@@ -7,7 +7,16 @@
     <link rel="stylesheet" href="../assets/css/tailwind.css" />
     <link rel="stylesheet" href="../assets/css/nastaliq-fonts.css" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-    <!-- Alpine keeps the app logic tiny; ShakeebJustify + marked are shared with Poetry Studio. -->
+
+    <!-- Toast UI Editor (Markdown ⇄ WYSIWYG) — same engine as Poetry Studio. Cached offline by the SW after first load. -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/3.2.2/toastui-editor.min.css" />
+    <link rel="stylesheet" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.css" />
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.css" />
+    <script src="https://uicdn.toast.com/editor/3.2.2/toastui-editor-all.min.js"></script>
+    <script src="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.js"></script>
+    <script src="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.js"></script>
+
+    <!-- ShakeebJustify + marked render the paged preview; Alpine drives state. -->
     <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@latest/dist/shakeeb-justify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
@@ -21,8 +30,16 @@
       .material-symbols-outlined { font-size: 20px; vertical-align: middle; }
       [x-cloak] { display: none !important; }
 
-      /* A single book page. Exact px dimensions (set per page-size via #pageStyle)
-         so on-screen preview matches the printed/PDF page. */
+      /* ---- Toast UI editor: Urdu fonts, RTL, hide its built-in MD preview (our paged view is the preview) ---- */
+      .toastui-editor-defaultUI { border-radius: 12px; border-color: #e7e2d8; }
+      .toastui-editor-contents, .toastui-editor .ProseMirror {
+        font-family: var(--book-font, "Payami"), "Mehr", serif;
+        font-size: 1.1rem; line-height: 2.0; direction: rtl; text-align: right;
+      }
+      .toastui-editor-md-preview, .toastui-editor-md-splitter { display: none; }
+      .toastui-editor-md-container .toastui-editor { width: 100% !important; }
+
+      /* A single book page. Padding (margins) + dimensions are set per-book via #pageStyle / CSS vars. */
       .book-page {
         background: #fff;
         margin: 0 auto 1.5rem;
@@ -31,26 +48,19 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        padding: var(--book-pad, 64px);
         font-family: var(--book-font, "Payami"), "Mehr", serif;
+        content-visibility: auto; contain-intrinsic-size: auto 1123px;
       }
-      .book-pad-narrow { padding: 38px; }
-      .book-pad-normal { padding: 64px; }
-      .book-pad-wide   { padding: 96px; }
       .book-head, .book-foot { flex: 0 0 auto; color: #8a8275; font-size: 13px; display: flex; justify-content: space-between; gap: 1em; }
       .book-head { border-bottom: 1px solid #efe9dd; padding-bottom: 8px; margin-bottom: 14px; }
       .book-foot { border-top: 1px solid #efe9dd; padding-top: 8px; margin-top: 14px; }
 
-      /* Table of contents page */
       .toc-title { text-align: center; font-weight: 700; font-size: 1.6rem; margin-bottom: 1em; }
       .toc-row { display: flex; align-items: baseline; gap: .5em; margin: .35em 0; font-size: 1.1rem; }
       .toc-row.lvl2 { padding-inline-start: 1.5em; font-size: 1rem; color: #4b4438; }
       .toc-row .toc-dots { flex: 1 1 auto; border-bottom: 2px dotted #c8bfa9; transform: translateY(-.3em); }
 
-      /* Editor formatting toolbar */
-      .ed-btn { display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border-radius: 8px; color: #44403c; background: #f5f5f4; border: 0; cursor: pointer; font-size: 14px; }
-      .ed-btn:hover { background: #e7e5e4; }
-
-      /* Book body — typography driven by per-book CSS vars */
       .book-body {
         flex: 1 1 auto; text-align: justify; color: #15110c;
         font-size: var(--book-fs, 20px);
@@ -64,17 +74,13 @@
       .book-body .poetry-empty-line { height: 1.4em; }
       .book-body .ov { text-decoration: overline; }
 
-      /* Cover page (unnumbered, centered) */
       .book-cover { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1rem; }
       .book-cover .bc-title { font-size: 2.4rem; font-weight: 700; line-height: 1.4; }
       .book-cover .bc-author { font-size: 1.3rem; color: #5b5346; }
 
-      /* mirror typography into the editor textarea */
-      #bookSource { font-weight: var(--book-fw, 400); }
+      .tool-btn { display: inline-flex; align-items: center; justify-content: center; gap: .25rem; padding: 5px 8px; border-radius: 8px; color: #44403c; background: #f5f5f4; border: 0; cursor: pointer; font-size: 13px; }
+      .tool-btn:hover { background: #e7e5e4; }
 
-      .book-page { content-visibility: auto; contain-intrinsic-size: auto 1123px; }
-
-      /* Library drawer */
       .lib-card { border: 1px solid #e7e2d8; transition: border-color .15s, box-shadow .15s; }
       .lib-card.active { border-color: #db2777; box-shadow: 0 0 0 1px #db2777 inset; }
       .lib-card.drag-over { border-color: #db2777; border-style: dashed; }
@@ -88,153 +94,191 @@
         @page { margin: 0; }
       }
     </style>
-    <!-- page dimensions injected here by Alpine -->
     <style id="pageStyle"></style>
   </head>
 
   <body class="bg-stone-200 min-h-screen" x-data="book()" x-init="init()" x-cloak>
-    <!-- Toolbar: document & output setup -->
-    <header class="no-print sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-stone-300 px-4 py-2">
-      <div class="max-w-7xl mx-auto flex flex-wrap items-center gap-2">
-        <h1 class="text-lg font-bold text-stone-800 ml-1">بیاض <span class="text-xs font-normal text-stone-400">Book Maker</span></h1>
-        <button @click="libraryOpen=true" title="کتابیں — Library" class="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm hover:bg-stone-100">
-          <span class="material-symbols-outlined">menu_book</span>
-          <span class="hidden sm:inline">کتابیں</span>
-          <span class="text-xs text-stone-400" x-text="'(' + library.length + ')'"></span>
-        </button>
-        <span class="w-px h-6 bg-stone-200"></span>
+    <!-- ===== Minimal top bar ===== -->
+    <header class="no-print sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-stone-300 px-3 sm:px-4 py-2">
+      <div class="max-w-[1700px] mx-auto flex flex-wrap items-center gap-2">
+        <h1 class="text-lg font-bold text-stone-800">بیاض <span class="text-[11px] font-normal text-stone-400">Book Maker</span></h1>
+        <input x-model="title" @input="save();rebuild()" placeholder="کتاب کا نام — title" class="border border-stone-300 rounded-lg p-1.5 text-sm w-40 text-right" />
+        <input x-model="author" @input="save();rebuild()" placeholder="مصنف — author" class="border border-stone-300 rounded-lg p-1.5 text-sm w-32 text-right" />
 
-        <input x-model="title" @input="save();rebuild()" placeholder="کتاب کا نام — title" class="border border-stone-300 rounded-lg p-1.5 text-sm w-36 text-right" />
-        <input x-model="author" @input="save();rebuild()" placeholder="مصنف — author" class="border border-stone-300 rounded-lg p-1.5 text-sm w-28 text-right" />
-
-        <span class="w-px h-6 bg-stone-200"></span>
-        <select x-model="pageSize" @change="apply()" title="Page size" class="border border-stone-300 rounded-lg p-1.5 text-sm">
-          <template x-for="k in Object.keys(SIZES)" :key="k"><option :value="k" x-text="k"></option></template>
-        </select>
-        <select x-model="fontName" @change="apply()" title="Font" class="border border-stone-300 rounded-lg p-1.5 text-sm">
-          <template x-for="f in fonts" :key="f"><option :value="f" x-text="f"></option></template>
-        </select>
-        <select x-model="margin" @change="apply()" title="Margins" class="border border-stone-300 rounded-lg p-1.5 text-sm">
-          <option value="narrow">Narrow</option><option value="normal">Normal</option><option value="wide">Wide</option>
-        </select>
-        <label class="flex items-center gap-1 text-xs text-stone-600"><input type="checkbox" x-model="header" @change="save()" /> Header</label>
-        <label class="flex items-center gap-1 text-xs text-stone-600"><input type="checkbox" x-model="footer" @change="save()" /> Footer</label>
-        <span class="text-xs text-stone-500 flex items-center gap-1" title="Zoom preview">
-          <span class="material-symbols-outlined">zoom_out</span>
-          <input type="range" min="0.3" max="1" step="0.05" x-model.number="zoom" />
-        </span>
-        <button @click="fitToScreen()" title="فٹ — Fit to screen" class="inline-flex items-center rounded-lg border border-stone-300 bg-white px-2 py-1.5 hover:bg-stone-100"><span class="material-symbols-outlined">fit_screen</span></button>
-
-        <span class="ml-auto text-xs text-stone-500" x-text="pages.length + ' صفحے'"></span>
-        <button @click="undo()" title="واپس — Undo (Ctrl+Z)" class="inline-flex items-center rounded-lg border border-stone-300 bg-white px-2 py-1.5 hover:bg-stone-100"><span class="material-symbols-outlined">undo</span></button>
-        <button @click="redo()" title="دوبارہ — Redo" class="inline-flex items-center rounded-lg border border-stone-300 bg-white px-2 py-1.5 hover:bg-stone-100"><span class="material-symbols-outlined">redo</span></button>
-
-        <!-- Output menu -->
-        <div class="relative" @click.outside="outOpen=false">
-          <button @click="outOpen=!outOpen" class="inline-flex items-center gap-1 rounded-lg bg-stone-800 text-white px-3 py-1.5 text-sm hover:opacity-90">
-            <span class="material-symbols-outlined">ios_share</span> Output
+        <div class="ml-auto flex items-center gap-2">
+          <span class="text-xs text-stone-400" x-text="pages.length + ' صفحے'"></span>
+          <button @click="window.print()" class="inline-flex items-center gap-1 rounded-lg bg-stone-800 text-white px-3 py-1.5 text-sm hover:opacity-90">
+            <span class="material-symbols-outlined">picture_as_pdf</span> <span class="hidden sm:inline">Print / PDF</span>
           </button>
-          <div x-show="outOpen" x-cloak class="absolute left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-stone-200 p-1 z-30 text-sm">
-            <button @click="window.print(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">picture_as_pdf</span> Print / PDF</button>
-            <button @click="copyBook(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">content_copy</span> پوری کتاب کاپی</button>
-            <button @click="copyChapter(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">content_paste</span> موجودہ باب کاپی</button>
-            <button @click="downloadTxt(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">download</span> TXT ڈاؤن لوڈ</button>
-            <div class="my-1 border-t border-stone-100"></div>
-            <button @click="exportMd(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">data_object</span> Markdown (.md)</button>
-            <button @click="exportHtml(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">html</span> اسٹینڈ اَلون HTML</button>
-            <button @click="exportBookJson(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">save</span> کتاب JSON (بیک اپ)</button>
+          <div class="relative" @click.outside="outOpen=false">
+            <button @click="outOpen=!outOpen" class="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm hover:bg-stone-100">
+              <span class="material-symbols-outlined">ios_share</span> <span class="hidden sm:inline">Export</span>
+            </button>
+            <div x-show="outOpen" x-cloak class="absolute left-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-stone-200 p-1 z-40 text-sm">
+              <button @click="copyBook(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">content_copy</span> پوری کتاب کاپی</button>
+              <button @click="copyChapter(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">content_paste</span> موجودہ باب کاپی</button>
+              <div class="my-1 border-t border-stone-100"></div>
+              <button @click="downloadTxt(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">download</span> TXT</button>
+              <button @click="exportMd(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">data_object</span> Markdown (.md)</button>
+              <button @click="exportHtml(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">html</span> اسٹینڈ اَلون HTML</button>
+              <button @click="exportBookJson(); outOpen=false" class="w-full text-right flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100"><span class="material-symbols-outlined">save</span> کتاب JSON (بیک اپ)</button>
+            </div>
           </div>
-        </div>
-
-        <button @click="about=true" title="About — powered by shakeeb-justify" class="inline-flex items-center rounded-lg bg-pink-600 text-white px-2 py-1.5"><span class="material-symbols-outlined">auto_awesome</span></button>
-
-        <!-- mobile view switch -->
-        <div class="flex lg:hidden rounded-lg bg-stone-100 p-0.5">
-          <button @click="view='edit'" :class="view==='edit'?'bg-white shadow':''" class="px-2 py-1 rounded text-xs">Edit</button>
-          <button @click="view='preview'" :class="view==='preview'?'bg-white shadow':''" class="px-2 py-1 rounded text-xs">Preview</button>
+          <button @click="about=true" title="About — powered by shakeeb-justify" class="inline-flex items-center rounded-lg bg-pink-600 text-white px-2 py-1.5"><span class="material-symbols-outlined">auto_awesome</span></button>
         </div>
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto p-3 grid gap-4 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
-      <!-- Editor -->
-      <section :class="{ 'hidden lg:block': view!=='edit' }" class="no-print">
-        <div class="bg-white rounded-xl shadow p-3 sticky top-16 space-y-2">
-          <!-- formatting toolbar -->
-          <div class="flex flex-wrap items-center gap-1">
-            <button class="ed-btn font-bold" title="موٹا — Bold" @click="wrap('**','**')">B</button>
-            <button class="ed-btn italic" title="ترچھا — Italic" @click="wrap('*','*')">I</button>
-            <button class="ed-btn underline" title="خط کشیدہ — Underline" @click="wrap('<u>','</u>')">U</button>
-            <button class="ed-btn line-through" title="خط زدہ — Strikethrough" @click="wrap('<s>','</s>')">S</button>
-            <button class="ed-btn" style="text-decoration:overline" title="خط بالا — Overline" @click="wrap('<span class=&quot;ov&quot;>','</span>')">O</button>
-            <span class="w-px h-5 bg-stone-200 mx-1"></span>
-            <button class="ed-btn" title="سرخی — Heading" @click="linePrefix('# ')"><span class="material-symbols-outlined">title</span></button>
-            <button class="ed-btn" title="اقتباس — Quote" @click="linePrefix('> ')"><span class="material-symbols-outlined">format_quote</span></button>
-            <button class="ed-btn" title="فہرست — List" @click="linePrefix('- ')"><span class="material-symbols-outlined">format_list_bulleted</span></button>
-            <span class="w-px h-5 bg-stone-200 mx-1"></span>
-            <button class="ed-btn text-pink-700" title="شعر داخل کریں — Insert poetry" @click="openSj()"><span class="material-symbols-outlined">splitscreen</span> شعر</button>
-            <button class="ed-btn" title="نیا صفحہ — Page break" @click="insertText('\n\n---\n\n')"><span class="material-symbols-outlined">insert_page_break</span></button>
+    <main class="max-w-[1700px] mx-auto p-3 grid gap-3 lg:grid-cols-[17rem_minmax(0,1fr)_minmax(0,1fr)]">
+      <!-- ===== Left rail: Books + Page setup ===== -->
+      <aside class="no-print space-y-3 lg:sticky lg:top-[56px] lg:self-start">
+        <!-- Books -->
+        <section class="bg-white rounded-xl shadow border border-stone-200">
+          <div class="flex items-center justify-between px-3 py-2 border-b border-stone-100">
+            <h2 class="text-sm font-bold text-stone-700 flex items-center gap-1"><span class="material-symbols-outlined">menu_book</span> کتابیں <span class="text-xs font-normal text-stone-400" x-text="'('+library.length+')'"></span></h2>
+            <button @click="exportLibraryJson()" title="سب ایکسپورٹ — Export all" class="text-stone-400 hover:text-stone-700"><span class="material-symbols-outlined text-base">download</span></button>
           </div>
+          <div class="p-2 space-y-2">
+            <div class="flex gap-2">
+              <button @click="newBook()" class="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-pink-600 text-white px-3 py-2 text-sm hover:opacity-90">
+                <span class="material-symbols-outlined">add</span> نئی کتاب
+              </button>
+              <button @click="$refs.importInput.click()" title="اِمپورٹ — Import" class="inline-flex items-center justify-center rounded-lg border border-stone-300 bg-white px-2.5 py-2 hover:bg-stone-100"><span class="material-symbols-outlined">upload</span></button>
+              <input x-ref="importInput" type="file" accept=".json,application/json" class="hidden" @change="if($event.target.files[0]) importJson($event.target.files[0]); $event.target.value=''" />
+            </div>
+            <div class="max-h-[34vh] overflow-y-auto space-y-1.5 pe-0.5">
+              <template x-for="b in library" :key="b.id">
+                <div class="lib-card rounded-lg bg-white p-2 cursor-pointer"
+                  :class="{ 'active': b.id===activeId, 'drag-over': b.id===dragOverId }"
+                  draggable="true"
+                  @click="switchTo(b.id)"
+                  @dragstart="dragId=b.id"
+                  @dragover.prevent="dragOverId=b.id"
+                  @dragleave="dragOverId===b.id && (dragOverId=null)"
+                  @drop.prevent="onDrop(b.id)"
+                  @dragend="dragId=null; dragOverId=null">
+                  <div class="flex items-start gap-1.5">
+                    <span class="material-symbols-outlined text-stone-300 mt-0.5 cursor-grab text-base">drag_indicator</span>
+                    <div class="min-w-0 flex-1">
+                      <div class="text-sm font-semibold text-stone-800 truncate" x-text="b.title || 'بے نام کتاب'"></div>
+                      <div class="text-[11px] text-stone-500 truncate" x-text="(b.author || '—') + ' · ' + b.pages + ' ص'"></div>
+                    </div>
+                    <button @click.stop="duplicateBook(b.id)" title="نقل" class="text-stone-400 hover:text-stone-700"><span class="material-symbols-outlined text-base">content_copy</span></button>
+                    <button @click.stop="deleteBook(b.id)" title="حذف" class="text-stone-400 hover:text-red-600"><span class="material-symbols-outlined text-base">delete</span></button>
+                  </div>
+                </div>
+              </template>
+            </div>
+            <p class="text-[11px] text-stone-400 text-center">(ترتیب بدلنے کے لیے ڈریگ کریں)</p>
+          </div>
+        </section>
 
-          <!-- typography controls -->
-          <div class="flex flex-wrap items-center gap-3 rounded-lg bg-stone-50 border border-stone-200 px-2 py-1.5 text-stone-600">
-            <span class="inline-flex items-center gap-1" title="حجم — Font size">
-              <button class="ed-btn" @click="bumpSize(-1)">A−</button>
-              <span class="text-xs w-7 text-center" x-text="fontSize"></span>
-              <button class="ed-btn" @click="bumpSize(1)">A+</button>
-            </span>
-            <span class="inline-flex items-center gap-1" title="سطری فاصلہ — Line spacing">
-              <span class="material-symbols-outlined">format_line_spacing</span>
-              <input type="range" min="1.4" max="3" step="0.05" x-model.number="lineHeight" @input="apply()" />
-            </span>
-            <label class="inline-flex items-center gap-1 text-xs" title="وزن — Weight">
-              وزن
-              <select x-model="fontWeight" @change="apply()" class="border border-stone-300 rounded-lg p-1 text-xs">
-                <option value="300">باریک</option>
-                <option value="400">عام</option>
-                <option value="600">نیم موٹا</option>
-                <option value="700">موٹا</option>
+        <!-- Page setup -->
+        <section class="bg-white rounded-xl shadow border border-stone-200">
+          <button @click="setupOpen=!setupOpen" class="w-full flex items-center justify-between px-3 py-2 text-sm font-bold text-stone-700">
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined">tune</span> صفحہ ترتیب — Page setup</span>
+            <span class="material-symbols-outlined text-base" x-text="setupOpen?'expand_less':'expand_more'"></span>
+          </button>
+          <div x-show="setupOpen" x-cloak class="px-3 pb-3 space-y-3 text-sm border-t border-stone-100 pt-3">
+            <label class="block">
+              <span class="text-xs text-stone-500">صفحہ سائز — Page size</span>
+              <select x-model="pageSize" @change="apply()" class="w-full mt-1 border border-stone-300 rounded-lg p-1.5">
+                <template x-for="k in Object.keys(SIZES)" :key="k"><option :value="k" x-text="k"></option></template>
               </select>
             </label>
-          </div>
-
-          <textarea id="bookSource" x-model="source" @input="onInput()" dir="rtl"
-            class="w-full h-[54vh] border border-stone-200 rounded-lg p-3 text-lg leading-loose outline-none focus:ring-2 focus:ring-stone-300"
-            style="font-family: var(--book-font, 'Payami'), 'Mehr', serif;"
-            placeholder="یہاں اپنی کتاب لکھیں…"></textarea>
-          <p class="text-[11px] text-stone-400">
-            <code>---</code> = نیا صفحہ · <code>#</code> = باب (chapter) · <code>[sj]…[/sj]</code> = شعر · Markdown سپورٹڈ
-          </p>
-
-          <!-- Running header / footer templates -->
-          <details class="rounded-lg border border-stone-200 p-2">
-            <summary class="cursor-pointer text-sm text-stone-600">ہیڈر / فٹر اور فہرست — Header / footer & TOC</summary>
-            <div class="mt-2 space-y-2 text-sm">
+            <div>
+              <span class="text-xs text-stone-500">حاشیہ — Margin (px)</span>
+              <div class="flex items-center gap-2 mt-1">
+                <input type="number" min="0" max="200" x-model.number="marginPx" @input="apply()" class="w-20 border border-stone-300 rounded-lg p-1.5 text-center" />
+                <button @click="marginPx=38;apply()" class="tool-btn">تنگ</button>
+                <button @click="marginPx=64;apply()" class="tool-btn">عام</button>
+                <button @click="marginPx=96;apply()" class="tool-btn">کشادہ</button>
+              </div>
+            </div>
+            <label class="block">
+              <span class="text-xs text-stone-500">کتاب کا فونٹ — Book font</span>
+              <select x-model="fontName" @change="apply()" class="w-full mt-1 border border-stone-300 rounded-lg p-1.5">
+                <template x-for="f in fonts" :key="f"><option :value="f" x-text="f"></option></template>
+              </select>
+            </label>
+            <div class="grid grid-cols-2 gap-2">
               <label class="block">
-                <span class="text-xs text-stone-500">Header template</span>
-                <input x-model="headerTpl" @input="save();rebuild()" dir="auto" class="w-full border border-stone-200 rounded-lg p-1.5" placeholder="{title} | {chapter}" />
+                <span class="text-xs text-stone-500">بنیادی حجم — Base size</span>
+                <input type="number" min="12" max="48" x-model.number="fontSize" @input="apply()" class="w-full mt-1 border border-stone-300 rounded-lg p-1.5 text-center" />
               </label>
               <label class="block">
-                <span class="text-xs text-stone-500">Footer template</span>
-                <input x-model="footerTpl" @input="save();rebuild()" dir="auto" class="w-full border border-stone-200 rounded-lg p-1.5" placeholder="{page}" />
-              </label>
-              <p class="text-[11px] text-stone-400">ٹوکنز: <code>{title}</code> <code>{author}</code> <code>{chapter}</code> <code>{page}</code> <code>{total}</code> · کالم کے لیے <code>|</code> استعمال کریں۔</p>
-              <label class="flex items-center gap-2"><input type="checkbox" x-model="toc" @change="save();rebuild();justify()" /> <span class="text-stone-600">فہرست کا صفحہ شامل کریں — Table of contents</span></label>
-              <label class="flex items-center gap-2"><input type="checkbox" x-model="cover" @change="save();rebuild()" /> <span class="text-stone-600">سرورق کا صفحہ — Cover page (title &amp; author)</span></label>
-              <label class="flex items-center justify-between gap-2">
-                <span class="text-stone-600">صفحہ نمبر کہاں سے — Page numbers start at</span>
-                <input type="number" x-model.number="pageStart" @input="save();rebuild()" min="0" class="w-16 border border-stone-200 rounded-lg p-1 text-center" />
+                <span class="text-xs text-stone-500">وزن — Weight</span>
+                <select x-model="fontWeight" @change="apply()" class="w-full mt-1 border border-stone-300 rounded-lg p-1.5">
+                  <option value="300">باریک</option><option value="400">عام</option><option value="600">نیم موٹا</option><option value="700">موٹا</option>
+                </select>
               </label>
             </div>
-          </details>
+            <label class="block">
+              <span class="text-xs text-stone-500">سطری فاصلہ — Line spacing (<span x-text="lineHeight"></span>)</span>
+              <input type="range" min="1.4" max="3" step="0.05" x-model.number="lineHeight" @input="apply()" class="w-full" />
+            </label>
+
+            <div class="border-t border-stone-100 pt-2 space-y-2">
+              <label class="flex items-center gap-2"><input type="checkbox" x-model="cover" @change="save();rebuild()" /> <span class="text-stone-600">سرورق — Cover page</span></label>
+              <label class="flex items-center gap-2"><input type="checkbox" x-model="toc" @change="save();rebuild();justify()" /> <span class="text-stone-600">فہرست — Table of contents</span></label>
+              <label class="flex items-center gap-2"><input type="checkbox" x-model="header" @change="save();rebuild()" /> <span class="text-stone-600">ہیڈر — Header</span></label>
+              <input x-show="header" x-model="headerTpl" @input="save();rebuild()" dir="auto" class="w-full border border-stone-200 rounded-lg p-1.5 text-xs" placeholder="{title} | {chapter}" />
+              <label class="flex items-center gap-2"><input type="checkbox" x-model="footer" @change="save();rebuild()" /> <span class="text-stone-600">فٹر — Footer</span></label>
+              <input x-show="footer" x-model="footerTpl" @input="save();rebuild()" dir="auto" class="w-full border border-stone-200 rounded-lg p-1.5 text-xs" placeholder="{page}" />
+              <label class="flex items-center justify-between gap-2">
+                <span class="text-stone-600 text-xs">صفحہ نمبر شروع — Page № starts at</span>
+                <input type="number" x-model.number="pageStart" @input="save();rebuild()" min="0" class="w-16 border border-stone-200 rounded-lg p-1 text-center" />
+              </label>
+              <p class="text-[11px] text-stone-400">ٹوکنز: <code>{title}</code> <code>{author}</code> <code>{chapter}</code> <code>{page}</code> <code>{total}</code></p>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- ===== Editor ===== -->
+      <section class="no-print">
+        <div class="bg-white rounded-xl shadow border border-stone-200 p-2 sticky top-[56px] space-y-2">
+          <!-- selection styling row -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-[11px] text-stone-400 me-1">منتخب متن:</span>
+            <select @change="selFontSize($event.target.value); $event.target.selectedIndex=0" class="tool-btn" title="حجم — Font size for selection">
+              <option value="">A↕ حجم</option>
+              <option value="14">14</option><option value="16">16</option><option value="18">18</option>
+              <option value="20">20</option><option value="24">24</option><option value="28">28</option>
+              <option value="32">32</option><option value="40">40</option><option value="56">56</option>
+            </select>
+            <select @change="selFontFamily($event.target.value); $event.target.selectedIndex=0" class="tool-btn" title="فونٹ — Font for selection">
+              <option value="">فونٹ</option>
+              <template x-for="f in fonts" :key="f"><option :value="f" x-text="f"></option></template>
+            </select>
+            <input type="color" @input="selColor($event.target.value)" title="رنگ — Colour for selection" class="w-7 h-7 rounded border border-stone-200 p-0 cursor-pointer" />
+            <span class="w-px h-5 bg-stone-200 mx-0.5"></span>
+            <button class="tool-btn" title="دائیں" @click="selAlign('right')"><span class="material-symbols-outlined text-base">format_align_right</span></button>
+            <button class="tool-btn" title="درمیان" @click="selAlign('center')"><span class="material-symbols-outlined text-base">format_align_center</span></button>
+            <button class="tool-btn" title="بائیں" @click="selAlign('left')"><span class="material-symbols-outlined text-base">format_align_left</span></button>
+            <button class="tool-btn" title="جسٹیفائی" @click="selAlign('justify')"><span class="material-symbols-outlined text-base">format_align_justify</span></button>
+            <span class="w-px h-5 bg-stone-200 mx-0.5"></span>
+            <button class="tool-btn text-pink-700" title="شعر — Insert poetry" @click="openSj()"><span class="material-symbols-outlined text-base">splitscreen</span> شعر</button>
+            <button class="tool-btn" title="نیا صفحہ — Page break" @click="insertPageBreak()"><span class="material-symbols-outlined text-base">insert_page_break</span></button>
+          </div>
+          <!-- Toast UI editor mounts here -->
+          <div id="editor"></div>
+          <p class="text-[11px] text-stone-400">
+            <code>---</code> = نیا صفحہ · <code>#</code> = باب · شعر بٹن سے شاعری · WYSIWYG / Markdown موڈ اوپر دائیں سے بدلیں
+          </p>
         </div>
       </section>
 
-      <!-- Book preview -->
-      <section :class="{ 'hidden lg:block': view!=='preview' }" id="bookScroll" class="overflow-auto">
+      <!-- ===== Paged preview ===== -->
+      <section id="bookScroll" class="overflow-auto">
+        <div class="no-print flex items-center justify-end gap-2 mb-2 text-xs text-stone-500">
+          <span class="material-symbols-outlined">zoom_out</span>
+          <input type="range" min="0.3" max="1" step="0.05" x-model.number="zoom" />
+          <button @click="fitToScreen()" title="فٹ — Fit" class="tool-btn"><span class="material-symbols-outlined text-base">fit_screen</span></button>
+        </div>
         <div id="book" :style="`zoom:${zoom}`" x-effect="renderedPages.length; justify()">
           <template x-for="(pg, i) in renderedPages" :key="i">
-            <div class="book-page" :class="'book-pad-'+margin" :style="`--book-font:'${fontName}'`">
+            <div class="book-page" :style="`--book-font:'${fontName}'`">
               <div class="book-head" x-show="header && !pg.bare" x-html="pg.headerHtml"></div>
               <div class="book-body" x-html="pg.bodyHtml"></div>
               <div class="book-foot" x-show="footer && !pg.bare" x-html="pg.footerHtml"></div>
@@ -244,69 +288,21 @@
       </section>
     </main>
 
-    <!-- LIBRARY DRAWER -->
-    <div x-show="libraryOpen" x-cloak class="no-print fixed inset-0 z-40 flex">
-      <div class="flex-1 bg-stone-900/40" @click="libraryOpen=false"></div>
-      <aside class="w-80 max-w-[85vw] bg-stone-50 h-full shadow-2xl flex flex-col" dir="rtl">
-        <div class="flex items-center justify-between p-3 border-b border-stone-200 bg-white">
-          <h2 class="font-bold text-stone-800 flex items-center gap-1"><span class="material-symbols-outlined">menu_book</span> کتابیں</h2>
-          <button @click="libraryOpen=false" class="text-stone-500"><span class="material-symbols-outlined">close</span></button>
-        </div>
-        <div class="p-2">
-          <button @click="newBook()" class="w-full inline-flex items-center justify-center gap-1 rounded-lg bg-pink-600 text-white px-3 py-2 text-sm hover:opacity-90">
-            <span class="material-symbols-outlined">add</span> نئی کاوش — New book
-          </button>
-          <div class="flex gap-2 mt-2">
-            <button @click="$refs.importInput.click()" class="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-xs hover:bg-stone-100"><span class="material-symbols-outlined text-base">upload</span> اِمپورٹ</button>
-            <button @click="exportLibraryJson()" class="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-xs hover:bg-stone-100"><span class="material-symbols-outlined text-base">download</span> سب ایکسپورٹ</button>
-          </div>
-          <input x-ref="importInput" type="file" accept=".json,application/json" class="hidden" @change="if($event.target.files[0]) importJson($event.target.files[0]); $event.target.value=''" />
-          <p class="text-[11px] text-stone-400 mt-1 text-center">(ترتیب بدلنے کے لیے ڈریگ کریں)</p>
-        </div>
-        <div class="flex-1 overflow-y-auto p-2 space-y-2">
-          <template x-for="b in library" :key="b.id">
-            <div class="lib-card rounded-xl bg-white p-2.5 cursor-pointer"
-              :class="{ 'active': b.id===activeId, 'drag-over': b.id===dragOverId }"
-              draggable="true"
-              @click="switchTo(b.id)"
-              @dragstart="dragId=b.id"
-              @dragover.prevent="dragOverId=b.id"
-              @dragleave="dragOverId===b.id && (dragOverId=null)"
-              @drop.prevent="onDrop(b.id)"
-              @dragend="dragId=null; dragOverId=null">
-              <div class="flex items-start gap-2">
-                <span class="material-symbols-outlined text-stone-300 mt-0.5 cursor-grab">drag_indicator</span>
-                <div class="min-w-0 flex-1">
-                  <div class="text-sm font-semibold text-stone-800 truncate" x-text="b.title || 'بے نام کتاب'"></div>
-                  <div class="text-[11px] text-stone-500 truncate" x-text="(b.author || '—') + ' · ' + b.pages + ' ص'"></div>
-                </div>
-                <div class="flex flex-col gap-1">
-                  <button @click.stop="duplicateBook(b.id)" title="نقل — Duplicate" class="text-stone-400 hover:text-stone-700"><span class="material-symbols-outlined text-base">content_copy</span></button>
-                  <button @click.stop="deleteBook(b.id)" title="حذف — Delete" class="text-stone-400 hover:text-red-600"><span class="material-symbols-outlined text-base">delete</span></button>
-                </div>
-              </div>
-            </div>
-          </template>
-        </div>
-      </aside>
-    </div>
-
-    <!-- About / credits -->
+    <!-- About -->
     <div x-show="about" x-cloak @click.self="about=false" class="no-print fixed inset-0 bg-stone-900/50 flex items-center justify-center p-4 z-50">
       <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 space-y-4 text-center">
         <div class="flex justify-end"><button @click="about=false" class="text-stone-500"><span class="material-symbols-outlined">close</span></button></div>
         <div class="text-5xl">✨</div>
         <h2 class="text-xl font-bold text-stone-800">Powered by shakeeb-justify</h2>
-        <p class="text-sm text-stone-600">بیاض میں شاعری کی خوبصورت ترتیب <strong>shakeeb-justify</strong> سے ہے — <strong>Shakeeb</strong> کا بنایا ہوا اوپن سورس npm پیکج، اور اسی کی پروڈ تخلیق۔</p>
+        <p class="text-sm text-stone-600">بیاض میں شاعری کی ترتیب <strong>shakeeb-justify</strong> سے، اور ایڈیٹر <strong>Toast UI</strong> پر۔ <strong>Shakeeb</strong> کی تخلیق۔</p>
         <div class="flex flex-col gap-2">
           <a href="https://www.npmjs.com/package/shakeeb-justify" target="_blank" rel="noopener" class="rounded-xl bg-[#cb3837] text-white px-4 py-2 text-sm font-semibold">npm: shakeeb-justify</a>
           <a href="https://shakeeb.in" target="_blank" rel="noopener" class="rounded-xl bg-pink-600 text-white px-4 py-2 text-sm">shakeeb.in</a>
         </div>
-        <p class="text-xs text-stone-400">اگر پسند آئے تو npm پر ⭐ ضرور دیں — شکریہ!</p>
       </div>
     </div>
 
-    <!-- Shairi block selector -->
+    <!-- Poetry block selector -->
     <div x-show="sjOpen" x-cloak @click.self="sjOpen=false" class="no-print fixed inset-0 bg-stone-900/50 flex items-center justify-center p-4 z-50">
       <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-5 space-y-4">
         <div class="flex items-center justify-between">
@@ -331,14 +327,9 @@
           <button @click="sjOpen=false" class="px-4 py-2 rounded-xl bg-stone-100 text-stone-700">Close</button>
           <button @click="insertSj()" class="px-4 py-2 rounded-xl bg-pink-600 text-white">Insert</button>
         </div>
-        <p class="text-[11px] text-center text-stone-400 border-t border-stone-100 pt-2">
-          Justification powered by
-          <a href="https://www.npmjs.com/package/shakeeb-justify" target="_blank" rel="noopener" class="text-pink-600 font-semibold underline">✨ shakeeb-justify</a>
-        </p>
       </div>
     </div>
 
-    <!-- toast -->
     <div x-show="toast" x-cloak x-transition class="no-print fixed bottom-5 left-1/2 -translate-x-1/2 bg-stone-900 text-white px-4 py-2 rounded-xl shadow-xl z-50 text-sm" x-text="toast"></div>
 
     <footer class="no-print text-center text-xs text-stone-400 py-4">
@@ -362,12 +353,12 @@
       const DB_NAME = "bayazDB";
       const DB_VERSION = 1;
       const STORE = "books";
+      const PAD_PRESET = { narrow: 38, normal: 64, wide: 96 };
       const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "bk-" + Date.now() + "-" + Math.random().toString(16).slice(2));
       const nowIso = () => new Date().toISOString();
-      const SAMPLE = "# پہلا باب\n\nیہ بیاض ایک سادہ کتاب ساز ہے۔ ہر صفحہ الگ دکھتا ہے اور پرنٹ/PDF میں الگ صفحے پر آتا ہے۔\n\n[sj]\nدل ہی تو ہے نہ سنگ و خشت درد سے بھر نہ آئے کیوں\nروئیں گے ہم ہزار بار کوئی ہمیں ستائے کیوں\n[/sj]\n\n---\n\n## دوسرا صفحہ\n\nنئے صفحے پر متن یہاں سے شروع ہوتا ہے۔";
+      const SAMPLE = "# پہلا باب\n\nیہ بیاض ایک کتاب ساز ہے۔ متن WYSIWYG ایڈیٹر میں لکھیں؛ دائیں طرف اصل صفحے بنتے دیکھیں۔\n\n[sj]\nدل ہی تو ہے نہ سنگ و خشت درد سے بھر نہ آئے کیوں\nروئیں گے ہم ہزار بار کوئی ہمیں ستائے کیوں\n[/sj]\n\n---\n\n## دوسرا صفحہ\n\nنئے صفحے پر متن یہاں سے شروع ہوتا ہے۔";
 
-      /* ---- IndexedDB (robust multi-book store; pattern shared with quoter/interlocutor) ---- */
       function openDb() {
         return new Promise((resolve, reject) => {
           if (!window.indexedDB) return reject(new Error("no idb"));
@@ -381,20 +372,19 @@
       function book() {
         return {
           SIZES,
-          // ---- active book fields (bound by the editor) ----
           id: null,
           title: "", author: "", source: SAMPLE,
-          pageSize: "A4", fontName: "Payami", margin: "normal",
-          header: true, footer: true, zoom: 0.6, view: "preview",
+          pageSize: "A4", fontName: "Payami", marginPx: 64,
+          header: true, footer: true, zoom: 0.6,
           headerTpl: "{title} | {chapter}", footerTpl: "{page}", toc: false,
           cover: false, pageStart: 1,
           fontSize: 20, lineHeight: 2.05, fontWeight: "400",
-          // ---- ui ----
-          about: false, sjOpen: false, sjFormat: "sher",
-          libraryOpen: false, outOpen: false, toast: "",
+          about: false, sjOpen: false, sjFormat: "sher", setupOpen: true,
+          outOpen: false, toast: "",
           fonts: ["Payami", "Mehr", "Emaad"],
           books: [], activeId: null, dragId: null, dragOverId: null,
           renderedPages: [], _cache: null,
+          editor: null, _loading: false,
           db: null, _t: null, _save: null, _toastT: null,
 
           async init() {
@@ -409,13 +399,82 @@
               const start = this.books.find((b) => b.id === wantId) || this.sortedBooks()[0];
               this.loadInto(start);
             } catch (e) {
-              // no IndexedDB → single in-memory book (still usable)
               const b = this.migrateLegacySync() || this.defaultBook();
               this.books = [b];
               this.loadInto(b);
               this.flash("بغیر اسٹوریج کے چل رہا ہے");
             }
+            this.mountEditor();
             this.apply();
+          },
+
+          /* ---------- Toast UI editor ---------- */
+          mountEditor() {
+            if (typeof toastui === "undefined" || !toastui.Editor) { this.flash("ایڈیٹر لوڈ نہیں ہوا"); return; }
+            const self = this;
+            const plugins = (toastui.Editor.plugin && toastui.Editor.plugin.colorSyntax) ? [toastui.Editor.plugin.colorSyntax] : [];
+            this.editor = new toastui.Editor({
+              el: document.getElementById("editor"),
+              height: "62vh",
+              initialEditType: "markdown",
+              previewStyle: "vertical",
+              hideModeSwitch: false,
+              usageStatistics: false,
+              autofocus: false,
+              initialValue: this.source || "",
+              plugins: plugins,
+              toolbarItems: [
+                ["heading", "bold", "italic", "strike"],
+                ["hr", "quote"],
+                ["ul", "ol"],
+                ["link"],
+              ],
+              events: { change: function () { self.onEditorChange(); } },
+            });
+            this.applyEditorFont();
+          },
+          onEditorChange() {
+            if (this._loading || !this.editor) return;
+            clearTimeout(this._t);
+            this._t = setTimeout(() => {
+              this.source = this.editor.getMarkdown();
+              this.save(); this.rebuild(); this.justify();
+            }, 300);
+          },
+          setEditorContent(md) {
+            if (!this.editor) return;
+            this._loading = true;
+            try { this.editor.setMarkdown(md || "", false); } catch (e) {}
+            this._loading = false;
+          },
+          applyEditorFont() {
+            const stack = "'" + this.fontName + "', 'Mehr', serif";
+            document.querySelectorAll(".toastui-editor-contents, .toastui-editor .ProseMirror")
+              .forEach((el) => { el.style.fontFamily = stack; });
+          },
+          // wrap the current selection in an inline span (per-selection styling)
+          styleSel(css) {
+            if (!this.editor) return;
+            const sel = this.editor.getSelectedText && this.editor.getSelectedText();
+            if (!sel) { this.flash("پہلے کچھ متن منتخب کریں"); return; }
+            this.editor.replaceSelection('<span style="' + css + '">' + sel + "</span>");
+          },
+          selFontSize(px) { if (px) this.styleSel("font-size:" + px + "px"); },
+          selColor(c) { if (c) this.styleSel("color:" + c); },
+          selFontFamily(f) { if (f) this.styleSel("font-family:'" + f + "'"); },
+          selAlign(a) {
+            if (!this.editor) return;
+            const sel = (this.editor.getSelectedText && this.editor.getSelectedText()) || "";
+            this.editor.replaceSelection('\n<div style="text-align:' + a + '">\n\n' + sel + "\n\n</div>\n");
+          },
+          insertPageBreak() { if (this.editor) { this.editor.insertText("\n\n---\n\n"); this.editor.focus(); } },
+          openSj() { this.sjOpen = true; },
+          insertSj() {
+            const sel = this.editor ? ((this.editor.getSelectedText && this.editor.getSelectedText()) || "") : "";
+            const body = sel.trim() || "پہلا مصرع\nدوسرا مصرع";
+            const snippet = "\n[sj format=\"" + this.sjFormat + "\"]\n" + body + "\n[/sj]\n";
+            this.sjOpen = false;
+            if (this.editor) { this.editor.replaceSelection(snippet); this.editor.focus(); }
           },
 
           /* ---------- data helpers ---------- */
@@ -427,7 +486,7 @@
           defaultBook(extra) {
             return Object.assign({
               id: uid(), title: "", author: "", source: SAMPLE,
-              pageSize: "A4", fontName: "Payami", margin: "normal",
+              pageSize: "A4", fontName: "Payami", marginPx: 64,
               header: true, footer: true, headerTpl: "{title} | {chapter}", footerTpl: "{page}", toc: false,
               cover: false, pageStart: 1,
               fontSize: 20, lineHeight: 2.05, fontWeight: "400",
@@ -444,9 +503,6 @@
           },
           async migrateOrSeed() {
             const b = this.migrateLegacySync() || this.defaultBook();
-            // Deterministic id for the very first book → a repeated seed (Alpine
-            // double-init / rapid double-load) overwrites the same key instead of
-            // creating a duplicate.
             b.id = "bayaz-first";
             await this.dbPut(b);
             return b;
@@ -454,7 +510,6 @@
 
           sortedBooks() { return this.books.slice().sort((a, b) => (a.order || 0) - (b.order || 0) || String(a.createdAt).localeCompare(b.createdAt)); },
 
-          // library list for the drawer (live page count)
           get library() {
             return this.sortedBooks().map((b) => ({
               id: b.id, title: b.id === this.activeId ? this.title : b.title,
@@ -463,11 +518,10 @@
             }));
           },
 
-          // copy active editor fields into the active record
           collect() {
             return {
               id: this.id, title: this.title, author: this.author, source: this.source,
-              pageSize: this.pageSize, fontName: this.fontName, margin: this.margin,
+              pageSize: this.pageSize, fontName: this.fontName, marginPx: this.marginPx,
               header: this.header, footer: this.footer, headerTpl: this.headerTpl, footerTpl: this.footerTpl, toc: this.toc,
               cover: this.cover, pageStart: this.pageStart,
               fontSize: this.fontSize, lineHeight: this.lineHeight, fontWeight: this.fontWeight,
@@ -476,24 +530,26 @@
           },
           loadInto(b) {
             if (!b) return;
-            this._cache = new Map(); // switching books → render the new one fresh
+            this._cache = new Map();
             this.id = b.id; this.activeId = b.id;
             this.title = b.title || ""; this.author = b.author || ""; this.source = b.source || "";
-            this.pageSize = b.pageSize || "A4"; this.fontName = b.fontName || "Payami"; this.margin = b.margin || "normal";
+            this.pageSize = b.pageSize || "A4"; this.fontName = b.fontName || "Payami";
+            this.marginPx = b.marginPx != null ? b.marginPx : (PAD_PRESET[b.margin] || 64);
             this.header = b.header !== false; this.footer = b.footer !== false;
             this.headerTpl = b.headerTpl || "{title} | {chapter}"; this.footerTpl = b.footerTpl || "{page}"; this.toc = !!b.toc;
             this.cover = !!b.cover; this.pageStart = b.pageStart || 1;
             this.fontSize = b.fontSize || 20; this.lineHeight = b.lineHeight || 2.05; this.fontWeight = b.fontWeight || "400";
             this._order = b.order || 0; this._createdAt = b.createdAt || nowIso();
             localStorage.setItem(LAST_KEY, b.id);
+            this.setEditorContent(this.source);
           },
 
           /* ---------- library actions ---------- */
           async switchTo(id) {
-            if (id === this.activeId) { this.libraryOpen = false; return; }
+            if (id === this.activeId) return;
             await this.flushSave();
             const b = this.books.find((x) => x.id === id);
-            if (b) { this.loadInto(b); this.apply(); this.libraryOpen = false; }
+            if (b) { this.loadInto(b); this.apply(); }
           },
           async newBook() {
             await this.flushSave();
@@ -534,7 +590,6 @@
 
           /* ---------- derived ---------- */
           get pages() { return this.source.split(/\r?\n-{3,}\r?\n/).map((s) => s.trim()); },
-          get wordCount() { return (this.source.replace(/[#>*_\-\[\]`]/g, " ").match(/\S+/g) || []).length; },
 
           hf(tpl, ctx) {
             if (!tpl) return "";
@@ -546,17 +601,13 @@
             return cols.map(function (c) { return "<span>" + c + "</span>"; }).join("");
           },
 
-          // Rebuild the page list. Markdown parsing (the expensive part) is cached
-          // per source-chunk, so editing one page never re-parses the rest, and
-          // unrelated state changes (drawer, toast, zoom) don't trigger any parse.
-          // Called explicitly only when content/structure/templates change.
           rebuild() {
             var content = this.pages;
             var tocOffset = this.toc ? 1 : 0;
-            var numbered = content.length + tocOffset;   // numbered pages (toc + content)
+            var numbered = content.length + tocOffset;
             var start = parseInt(this.pageStart, 10) || 1;
-            var totalDisp = start + numbered - 1;          // last displayed page number
-            var disp = function (idx) { return start + idx - 1; }; // idx = 1-based numbered position
+            var totalDisp = start + numbered - 1;
+            var disp = function (idx) { return start + idx - 1; };
             var headings = [];
             content.forEach(function (chunk, ci) {
               var pageNum = ci + 1 + tocOffset;
@@ -573,7 +624,6 @@
               fresh.set(chunk, html);
               return html;
             }
-            // Cover page: unnumbered, no header/footer (bare).
             if (this.cover) {
               out.push({ bare: true, headerHtml: "", footerHtml: "",
                 bodyHtml: '<div class="book-cover"><div class="bc-title">' + esc(this.title || "بے نام کتاب") + "</div>" +
@@ -592,41 +642,9 @@
               var ctx = { chapter: ch || self.title || "", page: disp(num), total: totalDisp };
               out.push({ headerHtml: self.hf(self.headerTpl, ctx), bodyHtml: body(chunk), footerHtml: self.hf(self.footerTpl, ctx) });
             });
-            this._cache = fresh; // prune chunks no longer present
+            this._cache = fresh;
             this.renderedPages = out;
           },
-
-          /* ---------- editor toolbar ---------- */
-          ta() { var t = document.getElementById("bookSource"); if (t) t.focus(); return t; },
-          fire(t) { t.dispatchEvent(new Event("input", { bubbles: true })); },
-          insertText(str) { var t = this.ta(); if (!t) return; var s = t.selectionStart, e = t.selectionEnd; t.setRangeText(str, s, e, "end"); this.fire(t); },
-          wrap(before, after) {
-            var t = this.ta(); if (!t) return;
-            var s = t.selectionStart, e = t.selectionEnd, sel = t.value.slice(s, e) || "متن";
-            t.setRangeText(before + sel + after, s, e, "end");
-            t.setSelectionRange(s + before.length, s + before.length + sel.length);
-            this.fire(t);
-          },
-          linePrefix(prefix) {
-            var t = this.ta(); if (!t) return;
-            var s = t.selectionStart, ls = t.value.lastIndexOf("\n", s - 1) + 1;
-            t.setRangeText(prefix, ls, ls, "end");
-            t.setSelectionRange(s + prefix.length, s + prefix.length);
-            this.fire(t);
-          },
-          openSj() { this.sjOpen = true; },
-          insertSj() {
-            var t = this.ta();
-            var s = t ? t.selectionStart : 0, e = t ? t.selectionEnd : 0;
-            var sel = t ? t.value.slice(s, e).trim() : "";
-            var body = sel || "پہلا مصرع\nدوسرا مصرع";
-            var snippet = "\n[sj format=\"" + this.sjFormat + "\"]\n" + body + "\n[/sj]\n";
-            this.sjOpen = false;
-            if (t) { t.setRangeText(snippet, s, e, "end"); this.fire(t); }
-          },
-
-          /* ---------- typography ---------- */
-          bumpSize(d) { this.fontSize = Math.max(12, Math.min(48, (this.fontSize || 20) + d)); this.apply(); },
 
           /* ---------- copy / export ---------- */
           plainText(src) {
@@ -644,17 +662,11 @@
           },
           copyBook() { this.copy(this.plainText(this.source), "پوری کتاب کاپی ہوگئی"); },
           copyChapter() {
-            var t = document.getElementById("bookSource");
-            var caret = t ? t.selectionStart : 0;
-            var lines = this.source.split("\n"), pos = 0, startLine = 0;
-            for (var i = 0; i < lines.length; i++) {
-              if (/^#\s+/.test(lines[i]) && pos <= caret) startLine = i;
-              pos += lines[i].length + 1;
-            }
-            var endLine = lines.length;
-            for (var j = startLine + 1; j < lines.length; j++) { if (/^#\s+/.test(lines[j])) { endLine = j; break; } }
-            var chapter = lines.slice(startLine, endLine).join("\n");
-            this.copy(this.plainText(chapter), "موجودہ باب کاپی ہوگیا");
+            var lines = this.source.split("\n"), idx = lines.findIndex((l) => /^#\s+/.test(l));
+            if (idx < 0) { this.copyBook(); return; }
+            var end = lines.length;
+            for (var j = idx + 1; j < lines.length; j++) { if (/^#\s+/.test(lines[j])) { end = j; break; } }
+            this.copy(this.plainText(lines.slice(idx, end).join("\n")), "پہلا باب کاپی ہوگیا");
           },
           safeName(ext) { return (this.title || "bayaz").replace(/[^a-z0-9؀-ۿ]+/gi, "_") + ext; },
           download(name, text, type) {
@@ -665,12 +677,10 @@
           downloadTxt() { this.download(this.safeName(".txt"), this.plainText(this.source)); this.flash("TXT ڈاؤن لوڈ ہوگئی"); },
           exportMd() { this.download(this.safeName(".md"), this.source, "text/markdown;charset=utf-8"); this.flash("Markdown ایکسپورٹ ہوگئی"); },
 
-          // Self-contained HTML: rendered pages + inlined CSS + the ShakeebJustify
-          // CDN so poetry justifies on open. Opens/prints anywhere, offline of our app.
           exportHtml() {
             this.rebuild();
             var d = SIZES[this.pageSize] || SIZES.A4;
-            var pad = { narrow: 38, normal: 64, wide: 96 }[this.margin] || 64;
+            var pad = this.marginPx || 64;
             var pagesHtml = this.renderedPages.map((p) =>
               '<div class="book-page">' +
               (this.header && !p.bare ? '<div class="book-head">' + p.headerHtml + "</div>" : "") +
@@ -698,7 +708,6 @@
             this.download(this.safeName(".html"), doc, "text/html;charset=utf-8");
             this.flash("HTML ایکسپورٹ ہوگئی");
           },
-
           exportBookJson() { this.download(this.safeName(".json"), JSON.stringify(this.collect(), null, 2), "application/json"); this.flash("کتاب JSON ایکسپورٹ"); },
           async exportLibraryJson() {
             var all = this.db ? await this.dbGetAll() : this.books;
@@ -718,7 +727,6 @@
                 if (this.db) { try { await this.dbPut(b); } catch (e) {} }
               }
               if (last) { await this.flushSave(); this.loadInto(last); this.apply(); }
-              this.libraryOpen = true;
               this.flash(incoming.length + " کتاب اِمپورٹ ہوئیں");
             } catch (e) { this.flash("اِمپورٹ ناکام — فائل درست نہیں"); }
           },
@@ -732,10 +740,6 @@
               return '<div class="' + cls + '">' + lines + "</div>";
             });
           },
-
-          onInput() { clearTimeout(this._t); this._t = setTimeout(() => { this.save(); this.rebuild(); this.justify(); }, 300); },
-          undo() { const t = document.getElementById("bookSource"); if (!t) return; t.focus(); document.execCommand("undo"); this.source = t.value; this.onInput(); },
-          redo() { const t = document.getElementById("bookSource"); if (!t) return; t.focus(); document.execCommand("redo"); this.source = t.value; this.onInput(); },
           justify() { this.$nextTick(() => { if (window.ShakeebJustify) { try { ShakeebJustify.apply(); } catch (e) {} } }); },
 
           apply() {
@@ -743,9 +747,11 @@
             document.getElementById("pageStyle").textContent = "@page{size:" + d.css + ";margin:0}.book-page{width:" + d.w + "px;min-height:" + d.h + "px}";
             const root = document.documentElement.style;
             root.setProperty("--book-font", "'" + this.fontName + "'");
+            root.setProperty("--book-pad", (this.marginPx || 64) + "px");
             root.setProperty("--book-fs", (this.fontSize || 20) + "px");
             root.setProperty("--book-lh", this.lineHeight || 2.05);
             root.setProperty("--book-fw", this.fontWeight || "400");
+            this.applyEditorFont();
             this.save();
             this.rebuild();
             this.justify();
@@ -755,7 +761,7 @@
             const wrap = document.getElementById("bookScroll");
             const d = SIZES[this.pageSize] || SIZES.A4;
             if (!wrap) return;
-            const avail = wrap.clientWidth - 24;
+            const avail = wrap.clientWidth - 16;
             this.zoom = Math.max(0.3, Math.min(1, +(avail / d.w).toFixed(2)));
           },
 
@@ -774,7 +780,6 @@
             });
           },
 
-          // keep the active record in memory current + debounce the DB write
           save() {
             if (!this.id) return;
             const rec = this.collect();
@@ -784,7 +789,6 @@
             clearTimeout(this._save);
             this._save = setTimeout(() => { if (this.db) this.dbPut(rec).catch(() => {}); }, 350);
           },
-          // force-write before switching books so nothing is lost
           async flushSave() {
             clearTimeout(this._save);
             if (this.db && this.id) { try { await this.dbPut(this.collect()); } catch (e) {} }
