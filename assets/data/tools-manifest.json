@@ -1,6 +1,6 @@
 {
   "generatedAt": "deterministic",
-  "count": 53,
+  "count": 54,
   "entries": [
     {
       "path": "alphabet/index.html",
@@ -141,6 +141,13 @@
       "isIndex": true,
       "title": "tools.shakeeb.in",
       "isRoot": true
+    },
+    {
+      "path": "interlocutor/index.html",
+      "folder": "interlocutor",
+      "isIndex": true,
+      "title": "Interlocutor — جدال",
+      "isRoot": false
     },
     {
       "path": "inpage/pdf-texter/index.html",

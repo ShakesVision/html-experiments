@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interlocutor — جدال</title>
+    <meta
+      name="description"
+      content="Map a live debate into a logical structure: break each argument into parts, mark Support / Counter / Split / Both, tag the reasoning type, and document it all for the audience — until a branch reaches agree-to-disagree."
+    />
+
+    <link rel="stylesheet" href="../assets/css/tailwind.css" />
+    <link rel="stylesheet" href="../assets/css/nastaliq-fonts.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Mehr is self-hosted + precached → instant & offline. Payami (big, CDN)
+         is swapped in only once fully downloaded, via .payami-ready on <html>. */
+      .urdu {
+        font-family: "Mehr", "Noto Nastaliq Urdu", serif;
+        direction: rtl;
+      }
+      .payami-ready .urdu {
+        font-family: "Payami", "Mehr", "Noto Nastaliq Urdu", serif;
+      }
+      input[type="range"] {
+        accent-color: #4f46e5;
+      }
+
+      /* node tree */
+      .node-children {
+        border-inline-start: 1px dashed rgb(148 163 184 / 0.5);
+      }
+      .node-card {
+        border-inline-start-width: 4px;
+      }
+
+      /* present mode: hide the console, expand the audience pane full-screen */
+      .present #consolePanel,
+      .present header.app-header,
+      .present #presentHint {
+        display: none !important;
+      }
+      .present #stagePanel {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        margin: 0;
+        border-radius: 0;
+        max-width: none;
+        overflow-y: auto;
+      }
+      #presentExitBtn {
+        display: none;
+      }
+      .present #presentExitBtn {
+        display: inline-flex;
+      }
+
+      @media print {
+        header.app-header,
+        #consolePanel,
+        #presentExitBtn,
+        .no-print {
+          display: none !important;
+        }
+        #stagePanel {
+          box-shadow: none !important;
+          border: 0 !important;
+        }
+        body {
+          background: #fff !important;
+        }
+      }
+    </style>
+
+    <script defer src="../assets/js/shared-init.js"></script>
+    <link rel="canonical" href="https://tools.shakeeb.in/interlocutor/index.html" />
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <meta name="theme-color" content="#1b4965" />
+  </head>
+
+  <body
+    class="bg-gray-100 text-gray-900 dark:bg-gray-950 dark:text-gray-100 min-h-screen transition-colors duration-300"
+  >
+    <button
+      id="presentExitBtn"
+      type="button"
+      class="fixed right-4 top-4 z-50 items-center gap-1 rounded-lg border border-gray-300 bg-white/95 px-3 py-2 text-xs font-semibold text-gray-700 shadow backdrop-blur hover:bg-white"
+    >
+      <span class="material-symbols-outlined text-sm">close_fullscreen</span> Exit present (Esc)
+    </button>
+
+    <header class="app-header border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/70 backdrop-blur">
+      <div class="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div class="flex items-baseline gap-2">
+          <h1 class="text-xl font-bold tracking-tight">Interlocutor</h1>
+          <span class="urdu text-2xl text-indigo-600 dark:text-indigo-400">جدال</span>
+          <span class="hidden sm:inline text-xs text-gray-500 dark:text-gray-400">· live debate mapper</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="toggleDark" class="px-2.5 py-2 text-sm rounded-lg bg-gray-800 text-white dark:bg-gray-200 dark:text-black shadow" title="Toggle dark mode">🌓</button>
+          <button id="toggleHelp" class="px-3 py-2 text-sm rounded-lg bg-indigo-600 text-white shadow flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">help</span> Help
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-[1600px] mx-auto p-3 grid gap-3 lg:grid-cols-[minmax(360px,420px)_1fr]">
+      <!-- CONSOLE -->
+      <section id="consolePanel" class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-3 shadow-sm h-fit lg:sticky lg:top-3">
+        <!-- session bar -->
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <h2 class="text-sm font-semibold">Moderator console</h2>
+          <div class="flex items-center gap-1">
+            <button id="newSessionBtn" class="rounded-md border border-gray-300 dark:border-gray-700 px-2 py-1 text-[11px] hover:bg-gray-50 dark:hover:bg-gray-800">New</button>
+            <button id="sessionsBtn" class="rounded-md border border-gray-300 dark:border-gray-700 px-2 py-1 text-[11px] hover:bg-gray-50 dark:hover:bg-gray-800">Sessions</button>
+            <button id="presentBtn" class="rounded-md border border-gray-300 dark:border-gray-700 px-2 py-1 text-[11px] hover:bg-gray-50 dark:hover:bg-gray-800">Present</button>
+          </div>
+        </div>
+
+        <label class="block mb-2">
+          <span class="text-[11px] font-medium text-gray-600 dark:text-gray-400">Debate topic / motion</span>
+          <input id="topicInput" type="text" placeholder="e.g. Ilm-e-ghaib — does the Prophet ﷺ have knowledge of the unseen?"
+            class="w-full mt-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-950 px-2 py-1.5 text-sm outline-none focus:border-indigo-500" />
+        </label>
+
+        <!-- sides -->
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <div class="rounded-lg border border-gray-200 dark:border-gray-800 p-2">
+            <span class="text-[11px] text-gray-500">Side A</span>
+            <input id="sideAName" type="text" class="w-full mt-1 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-950 px-2 py-1 text-sm" />
+            <input id="sideAColor" type="color" value="#2563eb" class="mt-1 h-6 w-full rounded" />
+          </div>
+          <div class="rounded-lg border border-gray-200 dark:border-gray-800 p-2">
+            <span class="text-[11px] text-gray-500">Side B</span>
+            <input id="sideBName" type="text" class="w-full mt-1 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-950 px-2 py-1 text-sm" />
+            <input id="sideBColor" type="color" value="#dc2626" class="mt-1 h-6 w-full rounded" />
+          </div>
+        </div>
+
+        <!-- composer -->
+        <div class="rounded-xl border border-indigo-200 dark:border-indigo-900 bg-indigo-50/60 dark:bg-indigo-950/30 p-2.5 mb-3">
+          <div id="composerTitle" class="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 mb-1.5">Add a root argument</div>
+          <textarea id="composerText" rows="3" placeholder="Type the argument / claim…"
+            class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 p-2 text-sm outline-none focus:border-indigo-500"></textarea>
+          <div class="grid grid-cols-3 gap-2 mt-2">
+            <label class="text-[11px]">Side
+              <select id="composerSide" class="w-full mt-0.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-1.5 py-1 text-[11px]"></select>
+            </label>
+            <label class="text-[11px]">Lang
+              <select id="composerLang" class="w-full mt-0.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-1.5 py-1 text-[11px]">
+                <option value="en">English</option>
+                <option value="ur">Urdu</option>
+              </select>
+            </label>
+            <label class="text-[11px]">Type
+              <select id="composerType" class="w-full mt-0.5 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-1.5 py-1 text-[11px]"></select>
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mt-2">
+            <input id="composerCiteText" type="text" placeholder="Citation (optional)" class="rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-2 py-1 text-[11px]" />
+            <input id="composerCiteRef" type="text" placeholder="Reference (e.g. Bukhari 1:23)" class="rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-2 py-1 text-[11px]" />
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <button id="composerAdd" class="flex-1 rounded-lg bg-indigo-600 text-white px-3 py-1.5 text-sm font-semibold hover:bg-indigo-700">Add</button>
+            <button id="composerCancel" class="hidden rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm">Cancel</button>
+          </div>
+        </div>
+
+        <!-- transfer -->
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button id="exportBtn" class="rounded-md border border-gray-300 dark:border-gray-700 px-2 py-1 text-[11px] hover:bg-gray-50 dark:hover:bg-gray-800">Export</button>
+          <button id="importBtn" class="rounded-md border border-gray-300 dark:border-gray-700 px-2 py-1 text-[11px] hover:bg-gray-50 dark:hover:bg-gray-800">Import</button>
+          <button id="printBtn" class="rounded-md border border-gray-300 dark:border-gray-700 px-2 py-1 text-[11px] hover:bg-gray-50 dark:hover:bg-gray-800">Print</button>
+          <input id="importFile" type="file" accept=".json,application/json" class="hidden" />
+          <span id="statusText" class="ms-auto text-[10px] text-gray-500"></span>
+        </div>
+      </section>
+
+      <!-- STAGE (audience) -->
+      <section id="stagePanel" class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-3 sm:p-4 shadow-sm">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <h2 id="stageTopic" class="text-lg font-bold leading-tight">Debate topic</h2>
+            <div id="stageSides" class="mt-1 flex flex-wrap gap-2 text-xs"></div>
+          </div>
+          <p id="presentHint" class="text-[11px] text-gray-400 shrink-0">Tip: “Present” for a clean audience screen</p>
+        </div>
+
+        <!-- tallies -->
+        <div id="tallies" class="flex flex-wrap gap-2 mb-3 text-xs"></div>
+
+        <!-- spotlight -->
+        <div id="spotlight" class="hidden mb-4 rounded-xl border-2 border-indigo-300 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/30 p-4"></div>
+
+        <!-- the tree -->
+        <div id="tree" class="space-y-2"></div>
+
+        <!-- open threads + log -->
+        <div class="grid md:grid-cols-2 gap-3 mt-5 no-print">
+          <div class="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
+            <h3 class="text-xs font-semibold mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-sm text-amber-500">pending</span> Open threads</h3>
+            <div id="openThreads" class="space-y-1 text-xs text-gray-600 dark:text-gray-300"></div>
+          </div>
+          <div class="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
+            <h3 class="text-xs font-semibold mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-sm text-gray-400">history</span> Move log</h3>
+            <div id="moveLog" class="space-y-1 text-[11px] text-gray-500 max-h-48 overflow-y-auto"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- SESSIONS MODAL -->
+    <div id="sessionsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-lg w-full p-5 relative max-h-[80vh] overflow-y-auto">
+        <button id="closeSessions" class="absolute top-3 right-4 text-2xl font-bold hover:text-red-500">×</button>
+        <h2 class="text-lg font-bold mb-3">Saved sessions</h2>
+        <div id="sessionsList" class="space-y-2"></div>
+      </div>
+    </div>
+
+    <!-- HELP MODAL -->
+    <div id="helpModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+      <div class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-2xl shadow-xl max-w-2xl w-full p-6 relative max-h-[85vh] overflow-y-auto">
+        <button id="closeHelp" class="absolute top-3 right-4 text-2xl font-bold hover:text-red-500">×</button>
+        <h2 class="text-xl font-bold mb-1">What this does</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          A neutral way to map a live debate so the audience can actually follow the logic and see
+          where each thread lands — instead of noise. Built for moderators and online creators.
+        </p>
+
+        <h3 class="font-semibold mb-1">1 · Set up</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">Name the topic and the two sides (colours identify who said what). Everything autosaves; reopen anytime.</p>
+
+        <h3 class="font-semibold mb-1">2 · Add arguments</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">Type each argument, pick the side, language (English/Urdu), and reasoning <b>type</b>. Add a citation for naqli/authority points.</p>
+
+        <h3 class="font-semibold mb-1">3 · Resolve each point</h3>
+        <ul class="text-sm grid grid-cols-2 gap-x-6 gap-y-1 mb-2">
+          <li><b class="text-green-600">Support</b> — opponent concedes</li>
+          <li><b class="text-red-600">Counter</b> — opponent rebuts (pick a type)</li>
+          <li><b class="text-blue-600">Split</b> — break into sub-parts</li>
+          <li><b class="text-amber-600">Both</b> — partly agreed, partly not</li>
+        </ul>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">When a thread is settled, seal it: <b>Resolved</b>, <b class="text-purple-600">Agree to disagree</b> (the four-imams ikhtilaf), or <b>No further discussion</b>.</p>
+
+        <h3 class="font-semibold mb-1">4 · Reasoning types</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">Deductive, inductive, abductive (best explanation), analogical (qiyas), causal, authority/naqli, empirical — and <b>fallacy</b> (mughalta) to flag bad moves (ad hominem, strawman, circular…).</p>
+
+        <h3 class="font-semibold mb-1">5 · Present &amp; document</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-300">Click a card to <b>spotlight</b> it for the audience. <b>Present</b> hides the console for a clean screen (Esc exits). <b>Open threads</b> keeps nothing forgotten over a long session; <b>Export/Import</b> and <b>Print</b> save the full transcript.</p>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

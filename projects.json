@@ -606,5 +606,21 @@
     "lastReviewed": "2026-06-21",
     "img": "assets/images/project.png",
     "link": "dhun/index.html"
+  },
+  {
+    "id": 41,
+    "slug": "interlocutor",
+    "title": "Interlocutor — جدال",
+    "description": "Map a live debate into a logical structure: break each argument into parts, mark Support / Counter / Split / Both, tag the reasoning type, and document it for the audience until a branch reaches agree-to-disagree.",
+    "desc": "Map a live debate into a logical structure: break each argument into parts, mark Support / Counter / Split / Both, tag the reasoning type, and document it for the audience until a branch reaches agree-to-disagree.",
+    "category": "Urdu & language",
+    "status": "alpha",
+    "tags": ["urdu", "debate", "logic"],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-06-21",
+    "img": "assets/images/project.png",
+    "link": "interlocutor/index.html"
   }
 ]
