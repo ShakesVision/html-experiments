@@ -1,0 +1,285 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Ghazal Melody Generator</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: Inter, sans-serif;
+      }
+
+      .card {
+        @apply bg-white rounded-2xl shadow;
+      }
+
+      .outputBox {
+        min-height: 70px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    </style>
+  </head>
+
+  <body class="bg-slate-100 min-h-screen">
+    <div class="max-w-7xl mx-auto p-6">
+      ```
+      <!-- HEADER -->
+
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold">Ghazal Melody Generator</h1>
+
+          <p class="text-slate-500 mt-1">Bahr → Arrows → Notes → Sargam</p>
+        </div>
+
+        <button
+          onclick="showHelp()"
+          class="bg-indigo-600 text-white rounded-xl px-4 py-2 flex items-center gap-2 hover:bg-indigo-700"
+        >
+          <span class="material-symbols-outlined"> help </span>
+
+          Help
+        </button>
+      </div>
+
+      <!-- QUICK HELP -->
+
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6">
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined text-blue-600">
+            lightbulb
+          </span>
+
+          <div>
+            <div class="font-semibold">Quick Start</div>
+
+            <div class="text-sm text-slate-600 mt-1">
+              Select a Bahr, choose a style, then click Generate Melody. The app
+              creates melodic contours, western notes, sargam, and a
+              higher-register repeat idea.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTROLS -->
+
+      <div class="grid lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white p-4 rounded-2xl shadow">
+          <label class="font-semibold block mb-2"> Bahr </label>
+
+          <select id="meterSelect" class="w-full border rounded-xl p-3">
+            <option>Loading...</option>
+          </select>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow">
+          <label class="font-semibold block mb-2"> Style </label>
+
+          <select id="styleSelect" class="w-full border rounded-xl p-3">
+            <option value="simple">Simple</option>
+
+            <option value="jagjit">Jagjit Inspired</option>
+
+            <option value="mehdi">Mehdi Inspired</option>
+
+            <option value="ghulam">Ghulam Inspired</option>
+          </select>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow">
+          <label class="font-semibold block mb-2"> Scale </label>
+
+          <select id="scaleSelect" class="w-full border rounded-xl p-3">
+            <option value="C_MAJOR">C Major</option>
+
+            <option value="D_MAJOR">D Major</option>
+
+            <option value="G_MAJOR">G Major</option>
+          </select>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow">
+          <label class="font-semibold block mb-2"> Resolution </label>
+
+          <select id="resolutionSelect" class="w-full border rounded-xl p-3">
+            <option value="soft">Soft Resolve</option>
+
+            <option value="medium">Medium</option>
+
+            <option value="floating">Floating</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SELECTED BAHR INFO -->
+
+      <div class="bg-white rounded-2xl shadow p-5 mb-6">
+        <h3 class="font-bold text-lg mb-3">Selected Bahr</h3>
+
+        <div class="grid md:grid-cols-3 gap-4">
+          <div>
+            <div class="text-xs uppercase text-slate-500">Name</div>
+
+            <div id="bahrName">-</div>
+          </div>
+
+          <div>
+            <div class="text-xs uppercase text-slate-500">Arkaan</div>
+
+            <div id="bahrArkan">-</div>
+          </div>
+
+          <div>
+            <div class="text-xs uppercase text-slate-500">Adad</div>
+
+            <div id="meterPattern">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUTTONS -->
+
+      <div class="flex flex-wrap gap-3 mb-6">
+        <button
+          id="generateBtn"
+          class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700"
+        >
+          Generate Melody
+        </button>
+
+        <button
+          onclick="generateMisraSet()"
+          class="bg-slate-700 text-white px-6 py-3 rounded-xl"
+        >
+          Regenerate
+        </button>
+        <button
+          id="playBtn"
+          class="bg-blue-600 text-white px-6 py-3 rounded-xl"
+        >
+          Play
+        </button>
+
+        <button
+          id="copyBtn"
+          class="bg-purple-600 text-white px-6 py-3 rounded-xl"
+        >
+          Copy
+        </button>
+      </div>
+
+      <!-- OUTPUTS -->
+
+      <div class="grid lg:grid-cols-2 gap-5">
+        <!-- ARROWS -->
+
+        <div class="bg-white p-5 rounded-2xl shadow">
+          <h3 class="font-bold mb-3">Arrow Contour</h3>
+
+          <div id="arrowOutput" class="outputBox text-3xl"></div>
+        </div>
+
+        <!-- NOTES -->
+
+        <div class="bg-white p-5 rounded-2xl shadow">
+          <h3 class="font-bold mb-3">Western Notes</h3>
+
+          <div id="notesOutput" class="outputBox text-xl"></div>
+        </div>
+
+        <!-- SARGAM -->
+
+        <div class="bg-white p-5 rounded-2xl shadow">
+          <h3 class="font-bold mb-3">Sargam</h3>
+
+          <div id="sargamOutput" class="outputBox text-xl"></div>
+        </div>
+
+        <!-- HIGH VERSION -->
+
+        <div class="bg-white p-5 rounded-2xl shadow">
+          <h3 class="font-bold mb-3">Misra 1 Repeat (Higher Register)</h3>
+
+          <div id="highOutput" class="outputBox text-xl"></div>
+        </div>
+
+        <!-- MISRA 2 -->
+
+        <div class="bg-white p-5 rounded-2xl shadow lg:col-span-2">
+          <h3 class="font-bold mb-3">Misra 2 (Resolution Phrase)</h3>
+
+          <div id="secondOutput" class="outputBox text-xl"></div>
+        </div>
+      </div>
+      ```
+    </div>
+
+    <script>
+      let BUHOOR = [];
+
+      async function loadBuhoor() {
+        const response = await fetch("buhoor.json");
+
+        BUHOOR = await response.json();
+
+        populateMeters();
+      }
+
+      function populateMeters() {
+        const select = document.getElementById("meterSelect");
+
+        select.innerHTML = "";
+
+        BUHOOR.forEach((bahr, index) => {
+          const option = document.createElement("option");
+
+          option.value = index;
+
+          option.textContent = bahr.name;
+
+          select.appendChild(option);
+        });
+
+        select.addEventListener("change", updateSelectedBahr);
+
+        updateSelectedBahr();
+      }
+
+      function updateSelectedBahr() {
+        const index = document.getElementById("meterSelect").value;
+
+        const bahr = BUHOOR[index];
+
+        if (!bahr) return;
+
+        document.getElementById("bahrName").textContent = bahr.name || "";
+
+        document.getElementById("bahrArkan").textContent = bahr.arkan || "";
+
+        document.getElementById("meterPattern").textContent = bahr.adad || "";
+      }
+
+      window.addEventListener("DOMContentLoaded", loadBuhoor);
+    </script>
+
+    <script src="https://unpkg.com/tone"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
