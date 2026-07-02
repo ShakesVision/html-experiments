@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>سُر — Sur · Voice to Sargam</title>
+    <meta
+      name="description"
+      content="Sing a tune in your voice (aa-aa-aa) and get it back as sargam and Western notes — with a live tuning meter — then play it back on a piano. Trains your ear the way classical singers use swaras."
+    />
+
+    <link rel="stylesheet" href="../assets/css/tailwind.css" />
+    <link rel="stylesheet" href="../assets/css/nastaliq-fonts.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+
+    <style>
+      .urdu {
+        font-family: "Mehr", "Noto Nastaliq Urdu", serif;
+        direction: rtl;
+      }
+      .payami-ready .urdu {
+        font-family: "Payami", "Mehr", "Noto Nastaliq Urdu", serif;
+      }
+      input[type="range"] {
+        accent-color: #4f46e5;
+      }
+      #tuneNeedle {
+        transition: left 90ms linear;
+      }
+      @keyframes micpulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.45);
+        }
+        50% {
+          box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+        }
+      }
+      .listening {
+        animation: micpulse 1.4s infinite;
+      }
+      .note-chip {
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+
+    <script defer src="../assets/js/shared-init.js"></script>
+    <link rel="canonical" href="https://tools.shakeeb.in/dhun/sur.html">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <meta name="theme-color" content="#1b4965">
+  </head>
+
+  <body
+    class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300"
+  >
+    <div class="max-w-5xl mx-auto p-4 sm:p-6">
+      <!-- HEADER -->
+      <header class="flex items-start justify-between gap-3 mb-6">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">
+            سُر <span class="text-indigo-600 dark:text-indigo-400">— Sur · Voice to Sargam</span>
+          </h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Sing “aa aa aa” → get the swaras (sa re ga ma…) &amp; Western notes → play them on piano.
+          </p>
+          <p class="text-xs text-gray-400 mt-1">
+            <a href="index.html" class="text-indigo-600 dark:text-indigo-400 hover:underline">← دھن Melody Studio</a>
+          </p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button
+            id="toggleDark"
+            class="px-3 py-2 text-sm rounded-lg bg-gray-800 text-white dark:bg-gray-200 dark:text-black shadow"
+            title="Toggle dark mode"
+          >
+            🌓
+          </button>
+          <button
+            id="toggleHelp"
+            class="px-3 py-2 text-sm rounded-lg bg-indigo-600 text-white shadow flex items-center gap-1"
+          >
+            <span class="material-symbols-outlined text-base">help</span>
+            Help
+          </button>
+        </div>
+      </header>
+
+      <!-- SETUP -->
+      <section
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 sm:p-5 mb-5 border border-gray-100 dark:border-gray-700"
+      >
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400" for="saSelect">Key (Sa / tonic)</label>
+            <select id="saSelect" class="w-full mt-1 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-2.5"></select>
+          </div>
+          <div>
+            <label class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400" for="scaleSelect">Snap to scale</label>
+            <select id="scaleSelect" class="w-full mt-1 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-2.5"></select>
+          </div>
+          <div>
+            <label class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400" for="sensRange">Sensitivity</label>
+            <input id="sensRange" type="range" min="1" max="10" value="4" class="w-full mt-3" />
+          </div>
+          <div class="flex items-end">
+            <div class="flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 p-1 text-sm w-full">
+              <button id="notSargam" class="flex-1 px-3 py-1.5 rounded-md font-semibold">Sargam</button>
+              <button id="notWestern" class="flex-1 px-3 py-1.5 rounded-md">Western</button>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 mt-3 text-sm">
+          <button id="calibrateBtn" class="px-3 py-1.5 rounded-lg bg-slate-700 text-white flex items-center gap-1" title="Sing your most comfortable note and set it as Sa">
+            <span class="material-symbols-outlined text-base">tune</span>
+            Set Sa from my voice
+          </button>
+          <span id="calibrateHint" class="text-xs text-gray-400"></span>
+        </div>
+      </section>
+
+      <!-- LIVE MIC -->
+      <section
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 sm:p-5 mb-5 border border-gray-100 dark:border-gray-700"
+      >
+        <div class="flex flex-col sm:flex-row items-center gap-5">
+          <button
+            id="micBtn"
+            class="shrink-0 w-24 h-24 rounded-full bg-red-600 hover:bg-red-700 text-white flex flex-col items-center justify-center gap-1 shadow-lg"
+          >
+            <span class="material-symbols-outlined text-3xl" id="micIcon">mic</span>
+            <span class="text-xs font-semibold" id="micLabel">Sing</span>
+          </button>
+
+          <div class="flex-1 w-full text-center sm:text-left">
+            <div class="flex items-baseline justify-center sm:justify-start gap-3">
+              <span id="liveNote" class="text-5xl sm:text-6xl font-bold font-mono tabular-nums text-indigo-600 dark:text-indigo-400">–</span>
+              <span id="liveAlt" class="text-lg text-gray-400 font-mono"></span>
+              <span id="liveHz" class="text-sm text-gray-400 font-mono ml-auto"></span>
+            </div>
+            <div class="relative mt-3 h-8">
+              <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-2 rounded-full bg-gradient-to-r from-amber-400 via-green-500 to-amber-400"></div>
+              <div class="absolute left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2 bg-gray-500/60"></div>
+              <div id="tuneNeedle" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white border-2 border-gray-800 shadow" style="left: 50%"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+              <span>♭ flat</span><span id="liveCents">in tune</span><span>sharp ♯</span>
+            </div>
+          </div>
+        </div>
+
+        <canvas id="ribbon" class="w-full mt-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700" height="140"></canvas>
+      </section>
+
+      <!-- CAPTURED NOTES -->
+      <section
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 sm:p-5 mb-5 border border-gray-100 dark:border-gray-700"
+      >
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h2 class="font-semibold">Your tune, in <span id="notationName">sargam</span></h2>
+          <div class="flex items-center gap-2">
+            <button id="playBtn" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold flex items-center gap-1">
+              <span class="material-symbols-outlined text-base" id="playIcon">piano</span>
+              <span id="playLabel">Play on piano</span>
+            </button>
+            <button id="copyBtn" class="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-sm flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm">content_copy</span> Copy
+            </button>
+            <button id="clearBtn" class="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-sm flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm">delete</span> Clear
+            </button>
+          </div>
+        </div>
+        <div id="notesOutput" class="flex flex-wrap gap-2 text-xl min-h-[3rem]">
+          <p class="text-sm text-gray-400">Tap the mic and sing a tune. Detected swaras appear here — tap any to hear it.</p>
+        </div>
+      </section>
+
+      <!-- MELODY MAP -->
+      <section
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 sm:p-5 border border-gray-100 dark:border-gray-700"
+      >
+        <h2 class="font-semibold mb-3">Melody shape</h2>
+        <div id="melodyMap" class="w-full overflow-x-auto">
+          <p class="text-sm text-gray-400">Your sung line will be drawn here.</p>
+        </div>
+      </section>
+
+      <footer class="text-center text-xs text-gray-400 mt-8">
+        Sing freely — this catches the note your voice already found, and names it for you.
+      </footer>
+    </div>
+
+    <!-- HELP MODAL -->
+    <div id="helpModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-2xl shadow-xl max-w-2xl w-full p-6 relative max-h-[85vh] overflow-y-auto">
+        <button id="closeHelp" class="absolute top-3 right-4 text-2xl font-bold hover:text-red-500">×</button>
+        <h2 class="text-xl font-bold mb-1">How it works</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          You sing a melody in your voice — even just “aa aa aa” — and this listens through your
+          mic, finds the pitch of each note, and names it as a <b>swara</b> (sargam) and a Western
+          note. Then it plays your tune back on a piano so you can learn to sing it in sargam.
+        </p>
+
+        <h3 class="font-semibold mb-1">1 · Set your Sa</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          In Hindustani music every note is <i>relative to Sa</i> (your tonic). Pick a
+          <b>Key (Sa)</b>, or better — hit <b>“Set Sa from my voice”</b> and hold a comfortable
+          note; it becomes your Sa. Now every swara is measured from where <em>your</em> voice sits,
+          exactly how a singer tunes to the tanpura.
+        </p>
+
+        <h3 class="font-semibold mb-1">2 · Sing</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          Tap the <b>mic</b> and sing. The big note shows what you're on right now; the
+          <b>tuning meter</b> shows if you're flat/sharp of the nearest note. Steady notes get
+          captured into your tune below. Sing single vowels (“aa”) for the cleanest detection.
+        </p>
+
+        <h3 class="font-semibold mb-1">3 · Snap to a scale</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          <b>Chromatic (free)</b> reports the exact nearest note (all 12). Pick a
+          <b>raag/scale</b> and every note snaps to the closest allowed swara — handy to keep a
+          tune inside a raag and clean up small slips.
+        </p>
+
+        <h3 class="font-semibold mb-1">4 · Play &amp; learn</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          <b>Play on piano</b> replays your captured tune with your own timing. Tap any single note
+          chip to hear just that one. Toggle <b>Sargam ⇄ Western</b> to read it either way, and
+          <b>Copy</b> to save the swaras as text.
+        </p>
+
+        <h3 class="font-semibold mb-1">Tips for good detection</h3>
+        <ul class="list-disc ms-5 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+          <li>Use a quiet room; hum or “aa” rather than words.</li>
+          <li>Give each note a clear, short hold — staccato slips get filtered out.</li>
+          <li>Raise <b>Sensitivity</b> if soft singing isn't picked up; lower it if noise triggers notes.</li>
+        </ul>
+      </div>
+    </div>
+
+    <script src="../assets/vendor/tone.js"></script>
+    <script>
+      /* ==========================================================
+         سُر — SUR · VOICE TO SARGAM
+         Sing a tune (aa aa aa) → live pitch detection → clean note
+         sequence in sargam + Western → play it back on a piano.
+         Lives beside dhun/index.html; shares its music tables + Tone.js.
+         ========================================================== */
+      "use strict";
+
+      /* ---------------- STATE ---------------- */
+      const App = {
+        sa: 60, // MIDI of Sa (tonic)
+        scale: "chromatic", // "chromatic" or a raag key
+        notation: "sargam", // 'sargam' | 'western'
+        sensitivity: 4, // 1..10 → RMS gate
+        notes: [], // captured: [{midi, startMs, endMs, sarg, west}]
+      };
+
+      /* ---------------- MUSIC DATA (mirrors dhun/script.js) ---------------- */
+      const SCALES = {
+        chromatic: { label: "Chromatic (free — all 12)", steps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+        bilawal: { label: "Bilawal / Major", steps: [0, 2, 4, 5, 7, 9, 11] },
+        yaman: { label: "Yaman", steps: [0, 2, 4, 6, 7, 9, 11] },
+        khamaj: { label: "Khamaj", steps: [0, 2, 4, 5, 7, 9, 10] },
+        kafi: { label: "Kafi", steps: [0, 2, 3, 5, 7, 9, 10] },
+        asawari: { label: "Asawari / Minor", steps: [0, 2, 3, 5, 7, 8, 10] },
+        bhairavi: { label: "Bhairavi", steps: [0, 1, 3, 5, 7, 8, 10] },
+        bhairav: { label: "Bhairav", steps: [0, 1, 4, 5, 7, 8, 11] },
+        bhoopali: { label: "Bhoopali (pentatonic)", steps: [0, 2, 4, 7, 9] },
+        pahadi: { label: "Pahadi (pentatonic)", steps: [0, 2, 4, 7, 9] },
+      };
+
+      const SARGAM_PC = ["S", "r", "R", "g", "G", "m", "M", "P", "d", "D", "n", "N"];
+      const WEST_PC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+      const SA_NOTES = [
+        ["C", 60], ["C#", 61], ["D", 62], ["D#", 63], ["E", 64], ["F", 65],
+        ["F#", 66], ["G", 67], ["G#", 68], ["A", 69], ["A#", 70], ["B", 71],
+      ];
+
+      const FMIN = 70;   // Hz — below this we ignore (rumble)
+      const FMAX = 1100; // Hz — above this we ignore
+      const DEBOUNCE = 3;       // frames a new pitch must persist to switch
+      const MIN_NOTE_MS = 90;   // shorter blips are discarded
+      const SILENCE_MS = 160;   // gap that ends the current note
+      const RIBBON_MS = 6000;   // pitch ribbon window
+
+      /* ---------------- UTIL ---------------- */
+      const $ = (id) => document.getElementById(id);
+      const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+      const now = () => performance.now();
+
+      function toast(msg) {
+        const t = document.createElement("div");
+        t.className =
+          "fixed bottom-5 right-5 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl z-50 text-sm";
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 2200);
+      }
+
+      /* ---------------- PITCH HELPERS ---------------- */
+      function freqToMidiFloat(f) {
+        return 69 + 12 * Math.log2(f / 440);
+      }
+      function midiToFreq(midi) {
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      }
+      function midiToWest(midi) {
+        const pc = ((midi % 12) + 12) % 12;
+        const oct = Math.floor(midi / 12) - 1;
+        return WEST_PC[pc] + oct;
+      }
+      function midiToSargam(midi) {
+        const rel = midi - App.sa;
+        const pc = ((rel % 12) + 12) % 12;
+        const octRel = Math.floor(rel / 12);
+        let mark = "";
+        if (octRel > 0) mark = "'".repeat(octRel);
+        else if (octRel < 0) mark = ".".repeat(-octRel);
+        return SARGAM_PC[pc] + mark;
+      }
+
+      // Snap a floating MIDI value to the nearest note allowed by the current scale.
+      function snapMidi(midiFloat) {
+        const steps = SCALES[App.scale].steps;
+        if (steps.length === 12) return Math.round(midiFloat);
+        const baseOct = Math.floor((midiFloat - App.sa) / 12) - 1;
+        let best = null;
+        let bestDist = Infinity;
+        for (let o = baseOct; o <= baseOct + 3; o++) {
+          for (const st of steps) {
+            const cand = App.sa + o * 12 + st;
+            const d = Math.abs(cand - midiFloat);
+            if (d < bestDist) { bestDist = d; best = cand; }
+          }
+        }
+        return best;
+      }
+
+      /* ---------------- PITCH DETECTION — normalized autocorrelation (ACF2+) ---------------- */
+      function autoCorrelate(buf, sampleRate) {
+        const SIZE = buf.length;
+        let rms = 0;
+        for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+        rms = Math.sqrt(rms / SIZE);
+        const gate = 0.033 - App.sensitivity * 0.003; // 1..10 → 0.030 .. 0.003
+        if (rms < gate) return -1;
+
+        let r1 = 0;
+        let r2 = SIZE - 1;
+        const thres = 0.2;
+        for (let i = 0; i < SIZE / 2; i++) {
+          if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+        }
+        for (let i = 1; i < SIZE / 2; i++) {
+          if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+        }
+        const b = buf.slice(r1, r2);
+        const n = b.length;
+        if (n < 32) return -1;
+
+        const c = new Float32Array(n);
+        for (let i = 0; i < n; i++) {
+          let sum = 0;
+          for (let j = 0; j < n - i; j++) sum += b[j] * b[j + i];
+          c[i] = sum;
+        }
+
+        let d = 0;
+        while (d < n - 1 && c[d] > c[d + 1]) d++;
+        let maxval = -1;
+        let maxpos = -1;
+        for (let i = d; i < n; i++) {
+          if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+        }
+        if (maxpos <= 0) return -1;
+
+        let T0 = maxpos;
+        const x1 = c[T0 - 1] || 0;
+        const x2 = c[T0];
+        const x3 = c[T0 + 1] || 0;
+        const a = (x1 + x3 - 2 * x2) / 2;
+        const bb = (x3 - x1) / 2;
+        if (a) T0 = T0 - bb / (2 * a);
+
+        const freq = sampleRate / T0;
+        if (freq < FMIN || freq > FMAX) return -1;
+        return freq;
+      }
+
+      /* ---------------- MIC + LIVE LOOP ---------------- */
+      let audioCtx = null;
+      let analyser = null;
+      let micStream = null;
+      let sampleBuf = null;
+      let listening = false;
+      let rafId = null;
+
+      let cur = null; // {midi, startMs, lastMs}
+      let pendMidi = null;
+      let pendCount = 0;
+      let calibrating = false;
+      let calibSamples = [];
+
+      let ribbon = []; // [{t, midi|null}]
+
+      async function startMic() {
+        if (listening) return;
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+          });
+        } catch (e) {
+          toast("Microphone permission needed");
+          return;
+        }
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") await audioCtx.resume();
+        const src = audioCtx.createMediaStreamSource(micStream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        src.connect(analyser);
+        sampleBuf = new Float32Array(analyser.fftSize);
+
+        listening = true;
+        cur = null;
+        pendMidi = null;
+        pendCount = 0;
+        ribbon = [];
+        setMicUI(true);
+        loop();
+      }
+
+      function stopMic() {
+        listening = false;
+        calibrating = false;
+        setMicUI(false);
+        if (rafId) cancelAnimationFrame(rafId);
+        if (cur) { commitNote(cur, cur.lastMs); cur = null; }
+        if (micStream) {
+          micStream.getTracks().forEach((t) => t.stop());
+          micStream = null;
+        }
+        setLive(null, null);
+      }
+
+      function loop() {
+        if (!listening) return;
+        analyser.getFloatTimeDomainData(sampleBuf);
+        const freq = autoCorrelate(sampleBuf, audioCtx.sampleRate);
+        const t = now();
+
+        if (freq > 0) {
+          const midiFloat = freqToMidiFloat(freq);
+          if (calibrating) {
+            calibSamples.push(midiFloat);
+          } else {
+            processPitch(midiFloat, t);
+            const snapped = snapMidi(midiFloat);
+            setLive(midiFloat, snapped, freq);
+          }
+          ribbon.push({ t, midi: midiFloat });
+        } else {
+          handleSilence(t);
+          setLive(null, null);
+          ribbon.push({ t, midi: null });
+        }
+
+        const cutoff = t - RIBBON_MS;
+        while (ribbon.length && ribbon[0].t < cutoff) ribbon.shift();
+        drawRibbon(t);
+
+        rafId = requestAnimationFrame(loop);
+      }
+
+      function processPitch(midiFloat, t) {
+        const midi = snapMidi(midiFloat);
+        if (!cur) {
+          cur = { midi, startMs: t, lastMs: t };
+          pendMidi = null;
+          pendCount = 0;
+          return;
+        }
+        if (midi === cur.midi) {
+          cur.lastMs = t;
+          pendMidi = null;
+          pendCount = 0;
+          return;
+        }
+        if (midi === pendMidi) pendCount++;
+        else { pendMidi = midi; pendCount = 1; }
+
+        if (pendCount >= DEBOUNCE) {
+          commitNote(cur, cur.lastMs);
+          cur = { midi, startMs: t, lastMs: t };
+          pendMidi = null;
+          pendCount = 0;
+        }
+      }
+
+      function handleSilence(t) {
+        if (cur && t - cur.lastMs > SILENCE_MS) {
+          commitNote(cur, cur.lastMs);
+          cur = null;
+          pendMidi = null;
+          pendCount = 0;
+        }
+      }
+
+      function commitNote(note, endMs) {
+        if (endMs - note.startMs < MIN_NOTE_MS) return;
+        const prev = App.notes[App.notes.length - 1];
+        if (prev && prev.midi === note.midi && note.startMs - prev.endMs < SILENCE_MS) {
+          prev.endMs = endMs;
+        } else {
+          App.notes.push({
+            midi: note.midi,
+            startMs: note.startMs,
+            endMs,
+            sarg: midiToSargam(note.midi),
+            west: midiToWest(note.midi),
+          });
+        }
+        renderNotes();
+        renderMelodyMap();
+      }
+
+      /* ---------------- SA CALIBRATION ---------------- */
+      async function calibrateSa() {
+        const started = listening;
+        if (!started) await startMic();
+        if (!listening) return;
+        calibrating = true;
+        calibSamples = [];
+        $("calibrateHint").textContent = "Hold a comfortable note…";
+        setTimeout(() => {
+          calibrating = false;
+          if (calibSamples.length < 8) {
+            $("calibrateHint").textContent = "Didn't catch it — try again, a bit louder.";
+            if (!started) stopMic();
+            return;
+          }
+          calibSamples.sort((a, b) => a - b);
+          const med = calibSamples[Math.floor(calibSamples.length / 2)];
+          const saMidi = clamp(Math.round(med), 36, 84);
+          App.sa = saMidi;
+          syncSaSelect();
+          $("calibrateHint").textContent = `Sa set to ${midiToWest(saMidi)}.`;
+          relabelNotes();
+          if (!started) stopMic();
+        }, 1600);
+      }
+
+      function syncSaSelect() {
+        const pc = ((App.sa % 12) + 12) % 12;
+        const opt = SA_NOTES.find(([, m]) => ((m % 12) + 12) % 12 === pc);
+        if (opt) $("saSelect").value = opt[1];
+      }
+
+      /* ---------------- LIVE DISPLAY ---------------- */
+      function setLive(midiFloat, snapped, freq) {
+        const noteEl = $("liveNote");
+        const altEl = $("liveAlt");
+        const hzEl = $("liveHz");
+        const needle = $("tuneNeedle");
+        const centsEl = $("liveCents");
+
+        if (midiFloat == null || snapped == null) {
+          noteEl.textContent = "–";
+          altEl.textContent = "";
+          hzEl.textContent = "";
+          needle.style.left = "50%";
+          centsEl.textContent = "…";
+          return;
+        }
+        noteEl.textContent = App.notation === "western" ? midiToWest(snapped) : midiToSargam(snapped);
+        altEl.textContent = App.notation === "western" ? midiToSargam(snapped) : midiToWest(snapped);
+        hzEl.textContent = freq ? `${freq.toFixed(1)} Hz` : "";
+
+        const cents = clamp((midiFloat - snapped) * 100, -50, 50);
+        needle.style.left = `${50 + cents}%`;
+        const rounded = Math.round(cents);
+        centsEl.textContent = Math.abs(rounded) <= 5 ? "in tune ✓" : `${rounded > 0 ? "+" : ""}${rounded}¢`;
+      }
+
+      /* ---------------- PITCH RIBBON (scrolling canvas) ---------------- */
+      function drawRibbon(tNow) {
+        const cv = $("ribbon");
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = cv.clientWidth || 600;
+        const cssH = 140;
+        if (cv.width !== Math.round(cssW * dpr)) {
+          cv.width = Math.round(cssW * dpr);
+          cv.height = Math.round(cssH * dpr);
+        }
+        const ctx = cv.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, cssW, cssH);
+
+        const dark = document.documentElement.classList.contains("dark");
+        const grid = dark ? "rgba(148,163,184,0.18)" : "rgba(100,116,139,0.18)";
+        const gridText = dark ? "rgba(148,163,184,0.8)" : "rgba(71,85,105,0.8)";
+        const accent = "#4f46e5";
+
+        const lo = App.sa - 12;
+        const hi = App.sa + 13;
+        const yOf = (m) => cssH - ((m - lo) / (hi - lo)) * cssH;
+
+        ctx.font = "10px ui-monospace, monospace";
+        for (let m = lo; m <= hi; m++) {
+          const rel = ((m - App.sa) % 12 + 12) % 12;
+          if (rel !== 0 && rel !== 7) continue; // Sa and Pa only
+          const y = yOf(m);
+          ctx.strokeStyle = grid;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(cssW, y);
+          ctx.stroke();
+          ctx.fillStyle = gridText;
+          ctx.fillText(App.notation === "western" ? midiToWest(m) : midiToSargam(m), 4, y - 2);
+        }
+
+        const t0 = tNow - RIBBON_MS;
+        const xOf = (t) => ((t - t0) / RIBBON_MS) * cssW;
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        let pen = false;
+        for (const p of ribbon) {
+          if (p.midi == null) { pen = false; continue; }
+          const x = xOf(p.t);
+          const y = yOf(p.midi);
+          if (!pen) { ctx.moveTo(x, y); pen = true; }
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      /* ---------------- CAPTURED NOTES + MELODY MAP ---------------- */
+      function relabelNotes() {
+        App.notes.forEach((n) => {
+          n.sarg = midiToSargam(n.midi);
+          n.west = midiToWest(n.midi);
+        });
+        renderNotes();
+        renderMelodyMap();
+      }
+
+      function renderNotes() {
+        $("notationName").textContent = App.notation === "western" ? "Western notes" : "sargam";
+        const box = $("notesOutput");
+        if (!App.notes.length) {
+          box.innerHTML =
+            '<p class="text-sm text-gray-400">Tap the mic and sing a tune. Detected swaras appear here — tap any to hear it.</p>';
+          return;
+        }
+        box.innerHTML = "";
+        App.notes.forEach((n) => {
+          const chip = document.createElement("button");
+          chip.className =
+            "note-chip px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-200 font-mono hover:bg-indigo-100 dark:hover:bg-indigo-900/60 flex flex-col items-center leading-tight";
+          const main = document.createElement("span");
+          main.className = "font-semibold";
+          main.textContent = App.notation === "western" ? n.west : n.sarg;
+          const sub = document.createElement("span");
+          sub.className = "text-[10px] text-gray-400";
+          sub.textContent = `${Math.round(n.endMs - n.startMs)}ms`;
+          chip.appendChild(main);
+          chip.appendChild(sub);
+          chip.title = "Tap to hear this note";
+          chip.onclick = () => playOne(n.midi);
+          box.appendChild(chip);
+        });
+      }
+
+      function renderMelodyMap() {
+        const host = $("melodyMap");
+        if (!App.notes.length) {
+          host.innerHTML = '<p class="text-sm text-gray-400">Your sung line will be drawn here.</p>';
+          return;
+        }
+        const pxPerSec = 120;
+        const padX = 24;
+        const padTop = 30;
+        const padBottom = 30;
+        const h = 240;
+
+        const t0 = App.notes[0].startMs;
+        const totalSec = (App.notes[App.notes.length - 1].endMs - t0) / 1000;
+        const w = padX * 2 + Math.max(totalSec, 1) * pxPerSec;
+
+        const midis = App.notes.map((n) => n.midi);
+        const lo = Math.min(...midis) - 1;
+        const hi = Math.max(...midis) + 1;
+        const yOf = (m) => {
+          const t = (m - lo) / (hi - lo || 1);
+          return h - padBottom - t * (h - padTop - padBottom);
+        };
+        const xOf = (ms) => padX + ((ms - t0) / 1000) * pxPerSec;
+
+        const accent = "#4f46e5";
+        const ns = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+        svg.setAttribute("width", w);
+        svg.setAttribute("height", h);
+        svg.setAttribute("class", "block");
+
+        for (let m = lo; m <= hi; m++) {
+          const rel = ((m - App.sa) % 12 + 12) % 12;
+          if (rel !== 0 && rel !== 7) continue;
+          const y = yOf(m);
+          const line = document.createElementNS(ns, "line");
+          line.setAttribute("x1", padX);
+          line.setAttribute("x2", w - padX);
+          line.setAttribute("y1", y);
+          line.setAttribute("y2", y);
+          line.setAttribute("stroke", "#9ca3af");
+          line.setAttribute("stroke-width", rel === 0 ? 1.2 : 0.8);
+          line.setAttribute("stroke-dasharray", "3 5");
+          line.setAttribute("opacity", "0.5");
+          svg.appendChild(line);
+          const lbl = document.createElementNS(ns, "text");
+          lbl.setAttribute("x", 2);
+          lbl.setAttribute("y", y - 2);
+          lbl.setAttribute("font-size", "10");
+          lbl.setAttribute("fill", "currentColor");
+          lbl.setAttribute("opacity", "0.6");
+          lbl.textContent = App.notation === "western" ? midiToWest(m) : midiToSargam(m);
+          svg.appendChild(lbl);
+        }
+
+        App.notes.forEach((n) => {
+          const x1 = xOf(n.startMs);
+          const x2 = Math.max(x1 + 6, xOf(n.endMs));
+          const y = yOf(n.midi);
+          const bar = document.createElementNS(ns, "line");
+          bar.setAttribute("x1", x1);
+          bar.setAttribute("x2", x2);
+          bar.setAttribute("y1", y);
+          bar.setAttribute("y2", y);
+          bar.setAttribute("stroke", accent);
+          bar.setAttribute("stroke-width", 6);
+          bar.setAttribute("stroke-linecap", "round");
+          svg.appendChild(bar);
+
+          const note = document.createElementNS(ns, "text");
+          note.setAttribute("x", (x1 + x2) / 2);
+          note.setAttribute("y", y - 10);
+          note.setAttribute("text-anchor", "middle");
+          note.setAttribute("font-size", "13");
+          note.setAttribute("font-family", "ui-monospace, monospace");
+          note.setAttribute("fill", "currentColor");
+          note.textContent = App.notation === "western" ? n.west : n.sarg;
+          svg.appendChild(note);
+        });
+
+        host.innerHTML = "";
+        host.appendChild(svg);
+      }
+
+      /* ---------------- PLAYBACK (Tone.js) — piano-ish synth ---------------- */
+      let piano = null;
+      let playing = false;
+      let playTimer = null;
+
+      function ensurePiano() {
+        if (typeof Tone === "undefined") {
+          toast("Audio engine (Tone.js) not loaded");
+          return false;
+        }
+        if (!piano) {
+          piano = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.004, decay: 1.4, sustain: 0.06, release: 0.9 },
+          }).toDestination();
+          piano.volume.value = -8;
+        }
+        return true;
+      }
+
+      async function playOne(midi) {
+        if (!ensurePiano()) return;
+        await Tone.start();
+        piano.triggerAttackRelease(midiToFreq(midi), 0.6);
+      }
+
+      async function togglePlay() {
+        if (playing) { stopPlay(); return; }
+        if (!App.notes.length) { toast("Sing something first"); return; }
+        if (!ensurePiano()) return;
+        await Tone.start();
+        startPlay();
+      }
+
+      function startPlay() {
+        playing = true;
+        setPlayUI(true);
+        const t0 = App.notes[0].startMs;
+        const base = Tone.now() + 0.1;
+        let lastEnd = 0;
+        App.notes.forEach((n) => {
+          const start = base + (n.startMs - t0) / 1000;
+          const dur = Math.max(0.12, (n.endMs - n.startMs) / 1000);
+          piano.triggerAttackRelease(midiToFreq(n.midi), dur, start);
+          lastEnd = Math.max(lastEnd, (n.startMs - t0) / 1000 + dur);
+        });
+        playTimer = setTimeout(stopPlay, (lastEnd + 0.5) * 1000);
+      }
+
+      function stopPlay() {
+        playing = false;
+        setPlayUI(false);
+        if (playTimer) { clearTimeout(playTimer); playTimer = null; }
+        if (piano) piano.releaseAll();
+      }
+
+      function setPlayUI(on) {
+        $("playIcon").textContent = on ? "stop" : "piano";
+        $("playLabel").textContent = on ? "Stop" : "Play on piano";
+      }
+
+      /* ---------------- NOTATION / COPY / CLEAR ---------------- */
+      function setNotation(mode) {
+        App.notation = mode;
+        const on = "bg-white dark:bg-gray-900 shadow";
+        $("notSargam").className =
+          "flex-1 px-3 py-1.5 rounded-md " + (mode === "sargam" ? "font-semibold " + on : "");
+        $("notWestern").className =
+          "flex-1 px-3 py-1.5 rounded-md " + (mode === "western" ? "font-semibold " + on : "");
+        renderNotes();
+        renderMelodyMap();
+      }
+
+      async function copyNotes() {
+        if (!App.notes.length) { toast("Nothing to copy"); return; }
+        const text =
+          `Sa = ${midiToWest(App.sa)}  |  Scale: ${SCALES[App.scale].label}\n` +
+          `Sargam:  ${App.notes.map((n) => n.sarg).join(" ")}\n` +
+          `Western: ${App.notes.map((n) => n.west).join(" ")}`;
+        try {
+          await navigator.clipboard.writeText(text);
+          toast("Copied");
+        } catch (_) {
+          toast("Copy failed");
+        }
+      }
+
+      function clearNotes() {
+        App.notes = [];
+        renderNotes();
+        renderMelodyMap();
+      }
+
+      /* ---------------- UI STATE ---------------- */
+      function setMicUI(on) {
+        $("micIcon").textContent = on ? "stop" : "mic";
+        $("micLabel").textContent = on ? "Stop" : "Sing";
+        $("micBtn").classList.toggle("listening", on);
+        $("micBtn").classList.toggle("bg-red-600", !on);
+        $("micBtn").classList.toggle("bg-slate-700", on);
+      }
+
+      /* ---------------- CONTROLS ---------------- */
+      function populateControls() {
+        const sa = $("saSelect");
+        sa.innerHTML = "";
+        SA_NOTES.forEach(([name, midi]) => {
+          const o = document.createElement("option");
+          o.value = midi;
+          o.textContent = `${name} (Sa)`;
+          sa.appendChild(o);
+        });
+        sa.value = App.sa;
+
+        const scale = $("scaleSelect");
+        scale.innerHTML = "";
+        Object.entries(SCALES).forEach(([key, v]) => {
+          const o = document.createElement("option");
+          o.value = key;
+          o.textContent = v.label;
+          scale.appendChild(o);
+        });
+        scale.value = App.scale;
+      }
+
+      /* ---------------- THEME (matches dhun / editor) ---------------- */
+      function initTheme() {
+        const root = document.documentElement;
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (localStorage.theme === "dark") root.classList.add("dark");
+        else if (localStorage.theme === "light") root.classList.remove("dark");
+        else {
+          localStorage.theme = prefersDark ? "dark" : "light";
+          root.classList.toggle("dark", prefersDark);
+        }
+        $("toggleDark").addEventListener("click", () => {
+          const isDark = root.classList.toggle("dark");
+          localStorage.theme = isDark ? "dark" : "light";
+        });
+      }
+
+      function loadPayamiDeferred() {
+        if (!document.fonts || !document.fonts.load) return;
+        document.fonts
+          .load('1em "Payami"')
+          .then(() => document.documentElement.classList.add("payami-ready"))
+          .catch(() => {});
+      }
+
+      /* ---------------- WIRING ---------------- */
+      function init() {
+        initTheme();
+        loadPayamiDeferred();
+        populateControls();
+        setNotation("sargam");
+
+        const help = $("helpModal");
+        $("toggleHelp").addEventListener("click", () => {
+          help.classList.remove("hidden");
+          help.classList.add("flex");
+        });
+        $("closeHelp").addEventListener("click", () => {
+          help.classList.add("hidden");
+          help.classList.remove("flex");
+        });
+        help.addEventListener("click", (e) => {
+          if (e.target === help) $("closeHelp").click();
+        });
+
+        $("saSelect").addEventListener("change", (e) => {
+          App.sa = parseInt(e.target.value, 10);
+          relabelNotes();
+        });
+        $("scaleSelect").addEventListener("change", (e) => {
+          App.scale = e.target.value;
+        });
+        $("sensRange").addEventListener("input", (e) => {
+          App.sensitivity = parseInt(e.target.value, 10);
+        });
+
+        $("notSargam").addEventListener("click", () => setNotation("sargam"));
+        $("notWestern").addEventListener("click", () => setNotation("western"));
+
+        $("micBtn").addEventListener("click", () => (listening ? stopMic() : startMic()));
+        $("calibrateBtn").addEventListener("click", calibrateSa);
+
+        $("playBtn").addEventListener("click", togglePlay);
+        $("copyBtn").addEventListener("click", copyNotes);
+        $("clearBtn").addEventListener("click", clearNotes);
+
+        console.log("سُر · Sur — Voice to Sargam ready");
+      }
+
+      window.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
