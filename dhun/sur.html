@@ -152,6 +152,30 @@
         </div>
 
         <canvas id="ribbon" class="w-full mt-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700" height="140"></canvas>
+
+        <!-- OTHER SOURCES: upload / URL -->
+        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+          <div class="flex flex-wrap items-center gap-3 text-sm">
+            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Or analyze audio</span>
+            <input id="fileInput" type="file" accept="audio/*" class="hidden" />
+            <button id="uploadBtn" class="px-3 py-1.5 rounded-lg bg-slate-700 text-white flex items-center gap-1">
+              <span class="material-symbols-outlined text-base">upload_file</span> Upload file
+            </button>
+            <div class="flex items-center gap-1 flex-1 min-w-[240px]">
+              <input id="urlInput" type="url" inputmode="url" placeholder="https://…/audio.mp3"
+                class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-2 text-sm" />
+              <button id="urlBtn" class="px-3 py-2 rounded-lg bg-slate-700 text-white flex items-center gap-1">
+                <span class="material-symbols-outlined text-base">link</span> Load
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 mt-2 min-h-[1.25rem]">
+            <span id="srcStatus" class="text-xs text-gray-400"></span>
+            <div id="progWrap" class="hidden flex-1 max-w-xs h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+              <div id="progBar" class="h-full bg-indigo-500 w-0 transition-[width] duration-150"></div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- CAPTURED NOTES -->
@@ -246,8 +270,8 @@
     <script>
       /* ==========================================================
          سُر — SUR · VOICE TO SARGAM
-         Sing a tune (aa aa aa) → live pitch detection → clean note
-         sequence in sargam + Western → play it back on a piano.
+         Sing / upload / link an audio clip → pitch detection (YIN)
+         → clean note sequence in sargam + Western → play on piano.
          Lives beside dhun/index.html; shares its music tables + Tone.js.
          ========================================================== */
       "use strict";
@@ -257,8 +281,9 @@
         sa: 60, // MIDI of Sa (tonic)
         scale: "chromatic", // "chromatic" or a raag key
         notation: "sargam", // 'sargam' | 'western'
-        sensitivity: 4, // 1..10 → RMS gate
+        sensitivity: 4, // 1..10 → RMS gate for the mic
         notes: [], // captured: [{midi, startMs, endMs, sarg, west}]
+        frames: [], // last analyzed pitch track [{t, midi|null}] (for the ribbon)
       };
 
       /* ---------------- MUSIC DATA (mirrors dhun/script.js) ---------------- */
@@ -283,17 +308,22 @@
         ["F#", 66], ["G", 67], ["G#", 68], ["A", 69], ["A#", 70], ["B", 71],
       ];
 
-      const FMIN = 70;   // Hz — below this we ignore (rumble)
-      const FMAX = 1100; // Hz — above this we ignore
-      const DEBOUNCE = 3;       // frames a new pitch must persist to switch
-      const MIN_NOTE_MS = 90;   // shorter blips are discarded
-      const SILENCE_MS = 160;   // gap that ends the current note
-      const RIBBON_MS = 6000;   // pitch ribbon window
+      const FMIN = 70;    // Hz — ignore below (rumble)
+      const FMAX = 1200;  // Hz — ignore above
+      const YIN_THRESHOLD = 0.12;
+
+      // segmentation
+      const MIN_NOTE_MS = 70;   // shorter blips are discarded
+      const SILENCE_MS = 140;   // gap that ends a note
+      const CONFIRM = 2;        // frames a new pitch must persist to switch
+      const MEDIAN_R = 2;       // median-smoothing radius (frames)
+      const RIBBON_MS = 6000;   // live ribbon window
 
       /* ---------------- UTIL ---------------- */
       const $ = (id) => document.getElementById(id);
       const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
       const now = () => performance.now();
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
       function toast(msg) {
         const t = document.createElement("div");
@@ -301,16 +331,12 @@
           "fixed bottom-5 right-5 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl z-50 text-sm";
         t.textContent = msg;
         document.body.appendChild(t);
-        setTimeout(() => t.remove(), 2200);
+        setTimeout(() => t.remove(), 2600);
       }
 
       /* ---------------- PITCH HELPERS ---------------- */
-      function freqToMidiFloat(f) {
-        return 69 + 12 * Math.log2(f / 440);
-      }
-      function midiToFreq(midi) {
-        return 440 * Math.pow(2, (midi - 69) / 12);
-      }
+      function freqToMidiFloat(f) { return 69 + 12 * Math.log2(f / 440); }
+      function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
       function midiToWest(midi) {
         const pc = ((midi % 12) + 12) % 12;
         const oct = Math.floor(midi / 12) - 1;
@@ -343,55 +369,133 @@
         return best;
       }
 
-      /* ---------------- PITCH DETECTION — normalized autocorrelation (ACF2+) ---------------- */
-      function autoCorrelate(buf, sampleRate) {
+      /* ---------------- PITCH DETECTION — YIN
+         Cumulative-mean-normalized difference + absolute threshold +
+         parabolic interpolation. Robust for voice; avoids the octave
+         errors that plain autocorrelation makes. Returns Hz or -1. ---------------- */
+      function yinDetect(buf, sampleRate) {
         const SIZE = buf.length;
-        let rms = 0;
-        for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-        rms = Math.sqrt(rms / SIZE);
-        const gate = 0.033 - App.sensitivity * 0.003; // 1..10 → 0.030 .. 0.003
-        if (rms < gate) return -1;
+        const tauMax = SIZE >> 1;
 
-        let r1 = 0;
-        let r2 = SIZE - 1;
-        const thres = 0.2;
-        for (let i = 0; i < SIZE / 2; i++) {
-          if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-        }
-        for (let i = 1; i < SIZE / 2; i++) {
-          if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
-        }
-        const b = buf.slice(r1, r2);
-        const n = b.length;
-        if (n < 32) return -1;
-
-        const c = new Float32Array(n);
-        for (let i = 0; i < n; i++) {
+        // difference function d(tau)
+        const d = new Float32Array(tauMax);
+        for (let tau = 1; tau < tauMax; tau++) {
           let sum = 0;
-          for (let j = 0; j < n - i; j++) sum += b[j] * b[j + i];
-          c[i] = sum;
+          for (let i = 0; i < tauMax; i++) {
+            const delta = buf[i] - buf[i + tau];
+            sum += delta * delta;
+          }
+          d[tau] = sum;
         }
 
-        let d = 0;
-        while (d < n - 1 && c[d] > c[d + 1]) d++;
-        let maxval = -1;
-        let maxpos = -1;
-        for (let i = d; i < n; i++) {
-          if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+        // cumulative mean normalized difference d'(tau)
+        const cmnd = new Float32Array(tauMax);
+        cmnd[0] = 1;
+        let running = 0;
+        for (let tau = 1; tau < tauMax; tau++) {
+          running += d[tau];
+          cmnd[tau] = running > 0 ? (d[tau] * tau) / running : 1;
         }
-        if (maxpos <= 0) return -1;
 
-        let T0 = maxpos;
-        const x1 = c[T0 - 1] || 0;
-        const x2 = c[T0];
-        const x3 = c[T0 + 1] || 0;
-        const a = (x1 + x3 - 2 * x2) / 2;
-        const bb = (x3 - x1) / 2;
-        if (a) T0 = T0 - bb / (2 * a);
+        // absolute threshold: first dip below threshold, walk to its local min
+        let tau = -1;
+        for (let t = 2; t < tauMax; t++) {
+          if (cmnd[t] < YIN_THRESHOLD) {
+            while (t + 1 < tauMax && cmnd[t + 1] < cmnd[t]) t++;
+            tau = t;
+            break;
+          }
+        }
+        if (tau === -1) {
+          // no confident dip → take global minimum if it's still fairly periodic
+          let min = Infinity;
+          let minTau = -1;
+          for (let t = 2; t < tauMax; t++) {
+            if (cmnd[t] < min) { min = cmnd[t]; minTau = t; }
+          }
+          if (min < 0.35) tau = minTau;
+          else return -1;
+        }
 
-        const freq = sampleRate / T0;
+        // parabolic interpolation around tau for sub-sample accuracy
+        let betterTau = tau;
+        if (tau > 0 && tau < tauMax - 1) {
+          const s0 = cmnd[tau - 1];
+          const s1 = cmnd[tau];
+          const s2 = cmnd[tau + 1];
+          const denom = 2 * (2 * s1 - s2 - s0);
+          if (denom !== 0) betterTau = tau + (s2 - s0) / denom;
+        }
+
+        const freq = sampleRate / betterTau;
         if (freq < FMIN || freq > FMAX) return -1;
         return freq;
+      }
+
+      /* ---------------- TWO-PASS SEGMENTATION (shared by mic + files)
+         frames: [{t(ms), midi(float)|null}] → clean note list. ---------------- */
+      function medianSmooth(frames, r) {
+        const out = frames.map((f) => ({ t: f.t, midi: f.midi }));
+        for (let i = 0; i < frames.length; i++) {
+          if (frames[i].midi == null) continue;
+          const vals = [];
+          for (let j = Math.max(0, i - r); j <= Math.min(frames.length - 1, i + r); j++) {
+            if (frames[j].midi != null) vals.push(frames[j].midi);
+          }
+          vals.sort((a, b) => a - b);
+          out[i].midi = vals[Math.floor(vals.length / 2)];
+        }
+        return out;
+      }
+
+      function analyzeFrames(frames) {
+        const sm = medianSmooth(frames, MEDIAN_R);
+        const notes = [];
+        let cur = null; // {snap, startMs, lastMs}
+        let pend = null;
+        let pendCount = 0;
+        let pendStart = 0;
+
+        const push = (c, endMs) => {
+          if (endMs - c.startMs >= MIN_NOTE_MS) {
+            notes.push({
+              midi: c.snap,
+              startMs: c.startMs,
+              endMs,
+              sarg: midiToSargam(c.snap),
+              west: midiToWest(c.snap),
+            });
+          }
+        };
+
+        for (const f of sm) {
+          if (f.midi == null) {
+            if (cur && f.t - cur.lastMs > SILENCE_MS) { push(cur, cur.lastMs); cur = null; pend = null; pendCount = 0; }
+            continue;
+          }
+          const snap = snapMidi(f.midi);
+          if (!cur) { cur = { snap, startMs: f.t, lastMs: f.t }; pend = null; pendCount = 0; continue; }
+          if (snap === cur.snap) { cur.lastMs = f.t; pend = null; pendCount = 0; continue; }
+          // a different pitch — require it to persist (glide/glitch tolerance)
+          if (snap === pend) pendCount++;
+          else { pend = snap; pendCount = 1; pendStart = f.t; }
+          if (pendCount >= CONFIRM) {
+            push(cur, cur.lastMs);
+            cur = { snap, startMs: pendStart, lastMs: f.t };
+            pend = null;
+            pendCount = 0;
+          }
+        }
+        if (cur) push(cur, cur.lastMs);
+
+        // merge same-pitch neighbours separated by only a tiny gap
+        const merged = [];
+        for (const n of notes) {
+          const p = merged[merged.length - 1];
+          if (p && p.midi === n.midi && n.startMs - p.endMs < SILENCE_MS) p.endMs = n.endMs;
+          else merged.push({ ...n });
+        }
+        return merged;
       }
 
       /* ---------------- MIC + LIVE LOOP ---------------- */
@@ -402,13 +506,15 @@
       let listening = false;
       let rafId = null;
 
-      let cur = null; // {midi, startMs, lastMs}
-      let pendMidi = null;
-      let pendCount = 0;
       let calibrating = false;
       let calibSamples = [];
+      let recordedFrames = []; // full track for the current recording
+      let ribbon = [];         // windowed copy for the live ribbon
 
-      let ribbon = []; // [{t, midi|null}]
+      function getCtx() {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtx;
+      }
 
       async function startMic() {
         if (listening) return;
@@ -420,20 +526,19 @@
           toast("Microphone permission needed");
           return;
         }
-        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === "suspended") await audioCtx.resume();
-        const src = audioCtx.createMediaStreamSource(micStream);
-        analyser = audioCtx.createAnalyser();
+        const ac = getCtx();
+        if (ac.state === "suspended") await ac.resume();
+        const src = ac.createMediaStreamSource(micStream);
+        analyser = ac.createAnalyser();
         analyser.fftSize = 2048;
         src.connect(analyser);
         sampleBuf = new Float32Array(analyser.fftSize);
 
         listening = true;
-        cur = null;
-        pendMidi = null;
-        pendCount = 0;
+        recordedFrames = [];
         ribbon = [];
         setMicUI(true);
+        $("srcStatus").textContent = "Listening… sing your tune, then tap Stop.";
         loop();
       }
 
@@ -442,93 +547,163 @@
         calibrating = false;
         setMicUI(false);
         if (rafId) cancelAnimationFrame(rafId);
-        if (cur) { commitNote(cur, cur.lastMs); cur = null; }
-        if (micStream) {
-          micStream.getTracks().forEach((t) => t.stop());
-          micStream = null;
-        }
+        if (micStream) { micStream.getTracks().forEach((t) => t.stop()); micStream = null; }
         setLive(null, null);
+        // authoritative extraction from the full recorded track
+        if (recordedFrames.length) {
+          App.frames = recordedFrames.slice();
+          App.notes = analyzeFrames(recordedFrames);
+          renderNotes();
+          renderMelodyMap();
+          drawRibbonStatic(App.frames);
+          $("srcStatus").textContent = `Captured ${App.notes.length} note${App.notes.length === 1 ? "" : "s"}.`;
+        }
       }
 
       function loop() {
         if (!listening) return;
         analyser.getFloatTimeDomainData(sampleBuf);
-        const freq = autoCorrelate(sampleBuf, audioCtx.sampleRate);
-        const t = now();
+        // RMS gate scaled by sensitivity (1..10 → 0.030 .. 0.003)
+        let rms = 0;
+        for (let i = 0; i < sampleBuf.length; i++) rms += sampleBuf[i] * sampleBuf[i];
+        rms = Math.sqrt(rms / sampleBuf.length);
+        const gate = 0.033 - App.sensitivity * 0.003;
 
-        if (freq > 0) {
-          const midiFloat = freqToMidiFloat(freq);
-          if (calibrating) {
-            calibSamples.push(midiFloat);
-          } else {
-            processPitch(midiFloat, t);
-            const snapped = snapMidi(midiFloat);
-            setLive(midiFloat, snapped, freq);
-          }
-          ribbon.push({ t, midi: midiFloat });
-        } else {
-          handleSilence(t);
-          setLive(null, null);
-          ribbon.push({ t, midi: null });
+        const t = now();
+        let midi = null;
+        let freq = -1;
+        if (rms >= gate) {
+          freq = yinDetect(sampleBuf, audioCtx.sampleRate);
+          if (freq > 0) midi = freqToMidiFloat(freq);
         }
 
+        if (calibrating) {
+          if (midi != null) calibSamples.push(midi);
+        } else {
+          recordedFrames.push({ t, midi });
+          if (midi != null) setLive(midi, snapMidi(midi), freq);
+          else setLive(null, null);
+        }
+
+        ribbon.push({ t, midi });
         const cutoff = t - RIBBON_MS;
         while (ribbon.length && ribbon[0].t < cutoff) ribbon.shift();
-        drawRibbon(t);
+        drawRibbonLive(t);
 
         rafId = requestAnimationFrame(loop);
       }
 
-      function processPitch(midiFloat, t) {
-        const midi = snapMidi(midiFloat);
-        if (!cur) {
-          cur = { midi, startMs: t, lastMs: t };
-          pendMidi = null;
-          pendCount = 0;
-          return;
-        }
-        if (midi === cur.midi) {
-          cur.lastMs = t;
-          pendMidi = null;
-          pendCount = 0;
-          return;
-        }
-        if (midi === pendMidi) pendCount++;
-        else { pendMidi = midi; pendCount = 1; }
+      /* ---------------- FILE / URL ANALYSIS ---------------- */
+      function setProgress(frac) {
+        const wrap = $("progWrap");
+        const bar = $("progBar");
+        if (frac == null) { wrap.classList.add("hidden"); return; }
+        wrap.classList.remove("hidden");
+        bar.style.width = `${Math.round(clamp(frac, 0, 1) * 100)}%`;
+      }
 
-        if (pendCount >= DEBOUNCE) {
-          commitNote(cur, cur.lastMs);
-          cur = { midi, startMs: t, lastMs: t };
-          pendMidi = null;
-          pendCount = 0;
+      // Decode → mono → resample to 22.05 kHz (fast, anti-aliased) → Float32.
+      async function decodeToMono(arrayBuffer) {
+        const ac = getCtx();
+        const decoded = await ac.decodeAudioData(arrayBuffer.slice(0));
+        const ch = decoded.numberOfChannels;
+        const len = decoded.length;
+        const monoAtSrc = ac.createBuffer(1, len, decoded.sampleRate);
+        const md = monoAtSrc.getChannelData(0);
+        for (let c = 0; c < ch; c++) {
+          const cd = decoded.getChannelData(c);
+          for (let i = 0; i < len; i++) md[i] += cd[i] / ch;
+        }
+        const targetSr = 22050;
+        const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        if (!OfflineCtx || decoded.sampleRate === targetSr) {
+          return { data: md, sampleRate: decoded.sampleRate };
+        }
+        const frames = Math.max(1, Math.ceil(decoded.duration * targetSr));
+        const off = new OfflineCtx(1, frames, targetSr);
+        const s = off.createBufferSource();
+        s.buffer = monoAtSrc;
+        s.connect(off.destination);
+        s.start();
+        const rendered = await off.startRendering();
+        return { data: rendered.getChannelData(0), sampleRate: targetSr };
+      }
+
+      async function analyzeSignal(data, sr) {
+        // normalize to a known peak so the RMS gate is meaningful across files
+        let peak = 0;
+        for (let i = 0; i < data.length; i++) { const a = Math.abs(data[i]); if (a > peak) peak = a; }
+        const norm = peak > 0 ? 0.9 / peak : 1;
+
+        const WIN = 1024;
+        const HOP = Math.max(128, Math.round(sr * 0.011)); // ~11 ms
+        const win = new Float32Array(WIN);
+        const frames = [];
+        const total = Math.max(1, Math.floor((data.length - WIN) / HOP));
+        let k = 0;
+        for (let i = 0; i + WIN <= data.length; i += HOP, k++) {
+          let rms = 0;
+          for (let j = 0; j < WIN; j++) { const v = data[i + j] * norm; win[j] = v; rms += v * v; }
+          rms = Math.sqrt(rms / WIN);
+          let midi = null;
+          if (rms >= 0.02) {
+            const f = yinDetect(win, sr);
+            if (f > 0) midi = freqToMidiFloat(f);
+          }
+          frames.push({ t: (i / sr) * 1000, midi });
+          if (k % 48 === 0) { setProgress(k / total); await sleep(0); }
+        }
+        setProgress(1);
+        return frames;
+      }
+
+      async function analyzeArrayBuffer(arrayBuffer, label) {
+        if (listening) stopMic();
+        $("srcStatus").textContent = `Decoding ${label}…`;
+        setProgress(0);
+        try {
+          const { data, sampleRate } = await decodeToMono(arrayBuffer);
+          $("srcStatus").textContent = `Analyzing ${label}…`;
+          const frames = await analyzeSignal(data, sampleRate);
+          App.frames = frames;
+          App.notes = analyzeFrames(frames);
+          renderNotes();
+          renderMelodyMap();
+          drawRibbonStatic(frames);
+          setProgress(null);
+          $("srcStatus").textContent = `${label}: ${App.notes.length} note${App.notes.length === 1 ? "" : "s"} detected.`;
+          if (!App.notes.length) toast("No clear pitch found — is it a vocal/melodic clip?");
+        } catch (e) {
+          setProgress(null);
+          $("srcStatus").textContent = "";
+          toast("Couldn't decode that audio file");
+          console.error(e);
         }
       }
 
-      function handleSilence(t) {
-        if (cur && t - cur.lastMs > SILENCE_MS) {
-          commitNote(cur, cur.lastMs);
-          cur = null;
-          pendMidi = null;
-          pendCount = 0;
-        }
+      async function handleFile(file) {
+        if (!file) return;
+        const buf = await file.arrayBuffer();
+        analyzeArrayBuffer(buf, file.name);
       }
 
-      function commitNote(note, endMs) {
-        if (endMs - note.startMs < MIN_NOTE_MS) return;
-        const prev = App.notes[App.notes.length - 1];
-        if (prev && prev.midi === note.midi && note.startMs - prev.endMs < SILENCE_MS) {
-          prev.endMs = endMs;
-        } else {
-          App.notes.push({
-            midi: note.midi,
-            startMs: note.startMs,
-            endMs,
-            sarg: midiToSargam(note.midi),
-            west: midiToWest(note.midi),
-          });
+      async function handleUrl(url) {
+        url = (url || "").trim();
+        if (!url) return;
+        $("srcStatus").textContent = "Fetching…";
+        setProgress(0);
+        try {
+          const resp = await fetch(url, { mode: "cors" });
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          const buf = await resp.arrayBuffer();
+          const name = url.split("/").pop().split("?")[0] || "audio";
+          analyzeArrayBuffer(buf, name);
+        } catch (e) {
+          setProgress(null);
+          $("srcStatus").textContent = "";
+          toast("Couldn't fetch that URL (often CORS). Try downloading it and uploading instead.");
+          console.error(e);
         }
-        renderNotes();
-        renderMelodyMap();
       }
 
       /* ---------------- SA CALIBRATION ---------------- */
@@ -589,8 +764,8 @@
         centsEl.textContent = Math.abs(rounded) <= 5 ? "in tune ✓" : `${rounded > 0 ? "+" : ""}${rounded}¢`;
       }
 
-      /* ---------------- PITCH RIBBON (scrolling canvas) ---------------- */
-      function drawRibbon(tNow) {
+      /* ---------------- PITCH RIBBON (canvas) ---------------- */
+      function ribbonCtx() {
         const cv = $("ribbon");
         const dpr = window.devicePixelRatio || 1;
         const cssW = cv.clientWidth || 600;
@@ -602,18 +777,16 @@
         const ctx = cv.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, cssW, cssH);
+        return { ctx, cssW, cssH };
+      }
 
+      function drawRibbonGrid(ctx, cssW, cssH, lo, hi) {
         const dark = document.documentElement.classList.contains("dark");
         const grid = dark ? "rgba(148,163,184,0.18)" : "rgba(100,116,139,0.18)";
         const gridText = dark ? "rgba(148,163,184,0.8)" : "rgba(71,85,105,0.8)";
-        const accent = "#4f46e5";
-
-        const lo = App.sa - 12;
-        const hi = App.sa + 13;
         const yOf = (m) => cssH - ((m - lo) / (hi - lo)) * cssH;
-
         ctx.font = "10px ui-monospace, monospace";
-        for (let m = lo; m <= hi; m++) {
+        for (let m = Math.ceil(lo); m <= hi; m++) {
           const rel = ((m - App.sa) % 12 + 12) % 12;
           if (rel !== 0 && rel !== 7) continue; // Sa and Pa only
           const y = yOf(m);
@@ -626,15 +799,39 @@
           ctx.fillStyle = gridText;
           ctx.fillText(App.notation === "western" ? midiToWest(m) : midiToSargam(m), 4, y - 2);
         }
+        return yOf;
+      }
 
+      function drawRibbonLive(tNow) {
+        const { ctx, cssW, cssH } = ribbonCtx();
+        const lo = App.sa - 12;
+        const hi = App.sa + 13;
+        const yOf = drawRibbonGrid(ctx, cssW, cssH, lo, hi);
         const t0 = tNow - RIBBON_MS;
         const xOf = (t) => ((t - t0) / RIBBON_MS) * cssW;
-        ctx.strokeStyle = accent;
+        traceRibbon(ctx, ribbon, xOf, yOf);
+      }
+
+      function drawRibbonStatic(frames) {
+        if (!frames || !frames.length) return;
+        const { ctx, cssW, cssH } = ribbonCtx();
+        const voiced = frames.filter((f) => f.midi != null).map((f) => f.midi);
+        const lo = voiced.length ? Math.min(App.sa - 6, Math.min(...voiced) - 1) : App.sa - 12;
+        const hi = voiced.length ? Math.max(App.sa + 7, Math.max(...voiced) + 1) : App.sa + 13;
+        const yOf = drawRibbonGrid(ctx, cssW, cssH, lo, hi);
+        const t0 = frames[0].t;
+        const span = Math.max(1, frames[frames.length - 1].t - t0);
+        const xOf = (t) => ((t - t0) / span) * cssW;
+        traceRibbon(ctx, frames, xOf, yOf);
+      }
+
+      function traceRibbon(ctx, frames, xOf, yOf) {
+        ctx.strokeStyle = "#4f46e5";
         ctx.lineWidth = 2.5;
         ctx.lineJoin = "round";
         ctx.beginPath();
         let pen = false;
-        for (const p of ribbon) {
+        for (const p of frames) {
           if (p.midi == null) { pen = false; continue; }
           const x = xOf(p.t);
           const y = yOf(p.midi);
@@ -646,12 +843,10 @@
 
       /* ---------------- CAPTURED NOTES + MELODY MAP ---------------- */
       function relabelNotes() {
-        App.notes.forEach((n) => {
-          n.sarg = midiToSargam(n.midi);
-          n.west = midiToWest(n.midi);
-        });
+        App.notes.forEach((n) => { n.sarg = midiToSargam(n.midi); n.west = midiToWest(n.midi); });
         renderNotes();
         renderMelodyMap();
+        if (App.frames.length) drawRibbonStatic(App.frames);
       }
 
       function renderNotes() {
@@ -659,7 +854,7 @@
         const box = $("notesOutput");
         if (!App.notes.length) {
           box.innerHTML =
-            '<p class="text-sm text-gray-400">Tap the mic and sing a tune. Detected swaras appear here — tap any to hear it.</p>';
+            '<p class="text-sm text-gray-400">Sing, upload, or link a clip. Detected swaras appear here — tap any to hear it.</p>';
           return;
         }
         box.innerHTML = "";
@@ -684,7 +879,7 @@
       function renderMelodyMap() {
         const host = $("melodyMap");
         if (!App.notes.length) {
-          host.innerHTML = '<p class="text-sm text-gray-400">Your sung line will be drawn here.</p>';
+          host.innerHTML = '<p class="text-sm text-gray-400">Your line will be drawn here.</p>';
           return;
         }
         const pxPerSec = 120;
@@ -714,7 +909,7 @@
         svg.setAttribute("height", h);
         svg.setAttribute("class", "block");
 
-        for (let m = lo; m <= hi; m++) {
+        for (let m = Math.ceil(lo); m <= hi; m++) {
           const rel = ((m - App.sa) % 12 + 12) % 12;
           if (rel !== 0 && rel !== 7) continue;
           const y = yOf(m);
@@ -773,10 +968,7 @@
       let playTimer = null;
 
       function ensurePiano() {
-        if (typeof Tone === "undefined") {
-          toast("Audio engine (Tone.js) not loaded");
-          return false;
-        }
+        if (typeof Tone === "undefined") { toast("Audio engine (Tone.js) not loaded"); return false; }
         if (!piano) {
           piano = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type: "triangle" },
@@ -795,7 +987,7 @@
 
       async function togglePlay() {
         if (playing) { stopPlay(); return; }
-        if (!App.notes.length) { toast("Sing something first"); return; }
+        if (!App.notes.length) { toast("Get some notes first"); return; }
         if (!ensurePiano()) return;
         await Tone.start();
         startPlay();
@@ -838,6 +1030,7 @@
           "flex-1 px-3 py-1.5 rounded-md " + (mode === "western" ? "font-semibold " + on : "");
         renderNotes();
         renderMelodyMap();
+        if (App.frames.length && !listening) drawRibbonStatic(App.frames);
       }
 
       async function copyNotes() {
@@ -846,18 +1039,17 @@
           `Sa = ${midiToWest(App.sa)}  |  Scale: ${SCALES[App.scale].label}\n` +
           `Sargam:  ${App.notes.map((n) => n.sarg).join(" ")}\n` +
           `Western: ${App.notes.map((n) => n.west).join(" ")}`;
-        try {
-          await navigator.clipboard.writeText(text);
-          toast("Copied");
-        } catch (_) {
-          toast("Copy failed");
-        }
+        try { await navigator.clipboard.writeText(text); toast("Copied"); }
+        catch (_) { toast("Copy failed"); }
       }
 
       function clearNotes() {
         App.notes = [];
+        App.frames = [];
         renderNotes();
         renderMelodyMap();
+        const { } = ribbonCtx(); // clears the canvas
+        $("srcStatus").textContent = "";
       }
 
       /* ---------------- UI STATE ---------------- */
@@ -905,6 +1097,7 @@
         $("toggleDark").addEventListener("click", () => {
           const isDark = root.classList.toggle("dark");
           localStorage.theme = isDark ? "dark" : "light";
+          if (App.frames.length && !listening) drawRibbonStatic(App.frames);
         });
       }
 
@@ -924,28 +1117,16 @@
         setNotation("sargam");
 
         const help = $("helpModal");
-        $("toggleHelp").addEventListener("click", () => {
-          help.classList.remove("hidden");
-          help.classList.add("flex");
-        });
-        $("closeHelp").addEventListener("click", () => {
-          help.classList.add("hidden");
-          help.classList.remove("flex");
-        });
-        help.addEventListener("click", (e) => {
-          if (e.target === help) $("closeHelp").click();
-        });
+        $("toggleHelp").addEventListener("click", () => { help.classList.remove("hidden"); help.classList.add("flex"); });
+        $("closeHelp").addEventListener("click", () => { help.classList.add("hidden"); help.classList.remove("flex"); });
+        help.addEventListener("click", (e) => { if (e.target === help) $("closeHelp").click(); });
 
-        $("saSelect").addEventListener("change", (e) => {
-          App.sa = parseInt(e.target.value, 10);
-          relabelNotes();
-        });
+        $("saSelect").addEventListener("change", (e) => { App.sa = parseInt(e.target.value, 10); relabelNotes(); });
         $("scaleSelect").addEventListener("change", (e) => {
           App.scale = e.target.value;
+          if (App.frames.length && !listening) { App.notes = analyzeFrames(App.frames); renderNotes(); renderMelodyMap(); }
         });
-        $("sensRange").addEventListener("input", (e) => {
-          App.sensitivity = parseInt(e.target.value, 10);
-        });
+        $("sensRange").addEventListener("input", (e) => { App.sensitivity = parseInt(e.target.value, 10); });
 
         $("notSargam").addEventListener("click", () => setNotation("sargam"));
         $("notWestern").addEventListener("click", () => setNotation("western"));
@@ -953,14 +1134,22 @@
         $("micBtn").addEventListener("click", () => (listening ? stopMic() : startMic()));
         $("calibrateBtn").addEventListener("click", calibrateSa);
 
+        $("uploadBtn").addEventListener("click", () => $("fileInput").click());
+        $("fileInput").addEventListener("change", (e) => { handleFile(e.target.files[0]); e.target.value = ""; });
+        $("urlBtn").addEventListener("click", () => handleUrl($("urlInput").value));
+        $("urlInput").addEventListener("keydown", (e) => { if (e.key === "Enter") handleUrl($("urlInput").value); });
+
         $("playBtn").addEventListener("click", togglePlay);
         $("copyBtn").addEventListener("click", copyNotes);
         $("clearBtn").addEventListener("click", clearNotes);
+
+        window.addEventListener("resize", () => { if (App.frames.length && !listening) drawRibbonStatic(App.frames); });
 
         console.log("سُر · Sur — Voice to Sargam ready");
       }
 
       window.addEventListener("DOMContentLoaded", init);
+
     </script>
   </body>
 </html>

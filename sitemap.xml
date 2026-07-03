@@ -51,6 +51,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://tools.shakeeb.in/dhun/sur.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://tools.shakeeb.in/editor/index.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

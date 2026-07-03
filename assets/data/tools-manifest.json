@@ -1,6 +1,6 @@
 {
   "generatedAt": "deterministic",
-  "count": 55,
+  "count": 56,
   "entries": [
     {
       "path": "alphabet/index.html",
@@ -63,6 +63,13 @@
       "folder": "dhun",
       "isIndex": true,
       "title": "دھن — Melody Studio",
+      "isRoot": false
+    },
+    {
+      "path": "dhun/sur.html",
+      "folder": "dhun",
+      "isIndex": false,
+      "title": "سُر — Sur · Voice to Sargam",
       "isRoot": false
     },
     {
