@@ -42,7 +42,8 @@ const elements = {
   readerClose: document.getElementById("reader-close"),
   readerPrev: document.getElementById("reader-prev"),
   readerNext: document.getElementById("reader-next"),
-  readerPosition: document.getElementById("reader-position"),
+  readerPositionInput: document.getElementById("reader-position-input"),
+  readerPositionTotal: document.getElementById("reader-position-total"),
   readerCopy: document.getElementById("reader-copy"),
   readerShare: document.getElementById("reader-share"),
   readerDownload: document.getElementById("reader-download"),
@@ -84,6 +85,7 @@ elements.manualForm.addEventListener("submit", onManualSubmit);
 elements.readerClose.addEventListener("click", closeReader);
 elements.readerPrev.addEventListener("click", () => stepReader(-1));
 elements.readerNext.addEventListener("click", () => stepReader(1));
+elements.readerPositionInput.addEventListener("change", onReaderPositionInput);
 elements.readerCopy.addEventListener("click", onReaderCopy);
 elements.readerShare.addEventListener("click", onReaderShare);
 elements.readerDownload.addEventListener("click", onReaderDownload);
@@ -528,13 +530,29 @@ function stepReader(delta) {
   renderReaderItem();
 }
 
+function onReaderPositionInput() {
+  const job = currentJob();
+  if (!job) return;
+
+  const rawValue = Number(elements.readerPositionInput.value);
+  if (!Number.isInteger(rawValue)) {
+    elements.readerPositionInput.value = `${state.reader.index + 1}`;
+    return;
+  }
+
+  state.reader.index = Math.min(Math.max(rawValue, 1), job.results.length) - 1;
+  renderReaderItem();
+}
+
 function renderReaderItem() {
   const job = currentJob();
   if (!job || !job.results.length) return;
 
   const item = job.results[state.reader.index];
-  elements.readerSource.textContent = `${job.label} • ${state.reader.index + 1} / ${job.results.length}`;
-  elements.readerPosition.textContent = `${state.reader.index + 1} / ${job.results.length}`;
+  elements.readerSource.textContent = job.label;
+  elements.readerPositionInput.value = `${state.reader.index + 1}`;
+  elements.readerPositionInput.max = `${job.results.length}`;
+  elements.readerPositionTotal.textContent = `/ ${job.results.length}`;
   elements.readerTitle.textContent = item.title || "Untitled";
   elements.readerAuthor.textContent = item.author || "";
 

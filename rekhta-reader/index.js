@@ -41,6 +41,11 @@ const elements = {
   searchPage: document.getElementById("search-page"),
   searchPrev: document.getElementById("search-prev"),
   searchResults: document.getElementById("search-results"),
+  searchSelectionBar: document.getElementById("search-selection-bar"),
+  searchSelectionCount: document.getElementById("search-selection-count"),
+  searchSelectionCopy: document.getElementById("search-selection-copy"),
+  searchSelectionQueue: document.getElementById("search-selection-queue"),
+  searchSelectionClear: document.getElementById("search-selection-clear"),
   searchStatus: document.getElementById("search-status"),
   searchSubmit: document.getElementById("search-submit"),
   readerClose: document.getElementById("reader-close"),
@@ -82,6 +87,7 @@ const state = {
     pageIndex: 1,
     results: [],
     selectedHref: null,
+    checkedHrefs: new Map(),
   },
 };
 
@@ -115,6 +121,9 @@ elements.searchKeyword.addEventListener("keydown", onSearchKeywordKeydown);
 elements.searchLang.addEventListener("change", onSearchLangChange);
 elements.searchPrev.addEventListener("click", () => changeSearchPage(-1));
 elements.searchNext.addEventListener("click", () => changeSearchPage(1));
+elements.searchSelectionCopy.addEventListener("click", onCopySelection);
+elements.searchSelectionQueue.addEventListener("click", onQueueSelection);
+elements.searchSelectionClear.addEventListener("click", onClearSelection);
 elements.readerClose.addEventListener("click", closeReader);
 // Wire navigation buttons to visual-direction helpers so RTL/LTR behave the same visually
 elements.readerPrev.addEventListener("click", () => stepVisualLeft());
@@ -960,7 +969,7 @@ async function runSearch(options) {
       setSearchStatus("No results found for that keyword.", "muted");
     } else {
       setSearchStatus(
-        `Showing ${results.length} books. Click one to fill the URL box.`,
+        `Showing ${results.length} books. Click one to open it, or tick several to batch-download.`,
         "success",
       );
     }
@@ -1023,6 +1032,26 @@ function renderSearchResults() {
   }
 
   results.forEach((result) => {
+    if (!result.href) {
+      return;
+    }
+
+    const card = document.createElement("div");
+    card.className = "search-result-card";
+
+    const selectLabel = document.createElement("label");
+    selectLabel.className = "search-result-select";
+    selectLabel.title = "Select for batch download";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = state.search.checkedHrefs.has(result.href);
+    checkbox.setAttribute("aria-label", "Select for batch download");
+    checkbox.addEventListener("click", (event) => event.stopPropagation());
+    checkbox.addEventListener("change", () =>
+      toggleResultSelection(result, checkbox.checked),
+    );
+    selectLabel.appendChild(checkbox);
+
     const button = document.createElement("button");
     button.type = "button";
     button.className = "search-result";
@@ -1065,8 +1094,79 @@ function renderSearchResults() {
     button.appendChild(copy);
 
     button.addEventListener("click", () => pickSearchResult(result, button));
-    elements.searchResults.appendChild(button);
+
+    card.append(selectLabel, button);
+    elements.searchResults.appendChild(card);
   });
+
+  renderSelectionBar();
+}
+
+function toggleResultSelection(result, isChecked) {
+  if (isChecked) {
+    state.search.checkedHrefs.set(result.href, result);
+  } else {
+    state.search.checkedHrefs.delete(result.href);
+  }
+
+  renderSelectionBar();
+}
+
+function renderSelectionBar() {
+  const count = state.search.checkedHrefs.size;
+  elements.searchSelectionBar.classList.toggle("hidden", count === 0);
+  elements.searchSelectionCount.textContent = `${count} selected`;
+}
+
+function onClearSelection() {
+  state.search.checkedHrefs.clear();
+  renderSearchResults();
+}
+
+async function onCopySelection() {
+  const hrefs = Array.from(state.search.checkedHrefs.values(), (r) => r.href);
+  if (!hrefs.length) {
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(hrefs.join("\n"));
+    setSearchStatus(`Copied ${hrefs.length} link${hrefs.length === 1 ? "" : "s"}.`, "success");
+  } catch {
+    setSearchStatus(
+      "Couldn't copy automatically. Select the links and copy manually.",
+      "error",
+    );
+  }
+}
+
+async function onQueueSelection() {
+  const selected = Array.from(state.search.checkedHrefs.values());
+  if (!selected.length) {
+    return;
+  }
+
+  const proxyPrefix = elements.proxyInput.value.trim();
+  setSearchStatus(`Resolving ${selected.length} book URL${selected.length === 1 ? "" : "s"}...`, "muted");
+
+  const resolutions = await Promise.allSettled(
+    selected.map((result) => resolveReaderUrl(result.href, { proxyPrefix })),
+  );
+
+  let queued = 0;
+  resolutions.forEach((outcome, index) => {
+    if (outcome.status === "fulfilled") {
+      enqueueDownload(outcome.value, selected[index].title);
+      queued += 1;
+    }
+  });
+
+  state.search.checkedHrefs.clear();
+  closeSearch();
+  setStatus(
+    `Queued ${queued} book${queued === 1 ? "" : "s"} for download.`,
+    queued ? "success" : "error",
+  );
 }
 
 async function pickSearchResult(result, buttonNode) {

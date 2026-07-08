@@ -121,38 +121,25 @@
   border-radius: 50%;
 }
 
-.poetry-reader-shell {
-  width: min(760px, calc(100vw - 32px));
-  max-height: min(88vh, 900px);
-  display: grid;
-  grid-template-rows: auto 1fr;
-  border-radius: 24px;
-  overflow: hidden;
-  background: var(--bg);
-}
-
-.poetry-reader-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.poetry-reader-toolbar .reader-nav {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
+/* .reader-shell/.reader-toolbar/.reader-stage come from ../styles.css and
+   already give the book reader its fullscreen, compact-toolbar layout; only
+   override the stage's centering so long reading content flows top-down
+   and scrolls instead of being vertically centered like a single page image. */
 .reader-toolbar-actions {
   display: flex;
   gap: 6px;
 }
 
 .poetry-reader-stage {
-  overflow-y: auto;
-  padding: 28px clamp(16px, 5vw, 56px) 40px;
-  display: block;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 28px clamp(16px, 5vw, 56px) 60px;
+}
+
+.poetry-reader-stage > * {
+  width: 100%;
+  max-width: 760px;
 }
 
 .reader-source {
@@ -187,11 +174,3 @@
   white-space: pre-wrap;
 }
 
-@media (max-width: 640px) {
-  .poetry-reader-shell {
-    width: 100vw;
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-}
