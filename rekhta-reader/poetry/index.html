@@ -153,6 +153,28 @@
     <div id="reader-modal" class="reader-modal hidden">
       <div class="reader-shell">
         <div class="reader-stage poetry-reader-stage">
+          <div id="reader-format-bar" class="reader-format-bar hidden">
+            <select id="reader-format-select" aria-label="Verse layout">
+              <option value="auto">Auto (by type)</option>
+              <option value="sher">1 column</option>
+              <option value="sher2">2 columns</option>
+              <option value="pattern-4">Qat'a / Rubai (4-line)</option>
+              <option value="mukhammas">Mukhammas (5-line)</option>
+              <option value="mukhammas-3-2">Mukhammas 3+2</option>
+              <option value="mukhammas-mixed">Mukhammas mixed</option>
+              <option value="musaddas">Musaddas (6-line)</option>
+              <option value="musaddas-6">Musaddas all-6</option>
+              <option value="musaddas-mixed">Musaddas mixed</option>
+              <option value="custom">Custom pattern&hellip;</option>
+            </select>
+            <input
+              id="reader-format-custom"
+              type="text"
+              class="hidden"
+              placeholder="e.g. 3+2"
+              aria-label="Custom shakeeb-justify pattern"
+            />
+          </div>
           <p id="reader-source" class="reader-source"></p>
           <h2 id="reader-title" class="reader-title" dir="auto"></h2>
           <p id="reader-author" class="reader-author" dir="auto"></p>

@@ -769,6 +769,44 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   };
 
+  /* --------------------- Per-selection font size --------------------- */
+  // Same wrapSelection() used by alignment/direction above: the selected
+  // markdown text gets spliced into an inline <span style="font-size:...">,
+  // which marked.parse() passes straight through untouched, so it survives
+  // save/reload/export exactly like the alignment/direction wrappers do.
+
+  window.applyFontSize = function (px) {
+    var size = parseFloat(px);
+    if (!size || size <= 0) return;
+    wrapSelection(function (t) {
+      return '<span style="font-size:' + size + 'px">' + t + "</span>";
+    });
+  };
+
+  window.onFontSizeSelectChange = function (selectEl) {
+    var value = selectEl.value;
+    var customInput = document.getElementById("fontSizeCustomInput");
+
+    if (value === "custom") {
+      if (customInput) {
+        customInput.classList.remove("hidden");
+        customInput.focus();
+      }
+      selectEl.selectedIndex = 0;
+      return;
+    }
+
+    if (customInput) customInput.classList.add("hidden");
+    if (value) window.applyFontSize(value);
+    selectEl.selectedIndex = 0;
+  };
+
+  window.onFontSizeCustomChange = function (inputEl) {
+    window.applyFontSize(inputEl.value);
+    inputEl.value = "";
+    inputEl.classList.add("hidden");
+  };
+
   /* --------------------------- Preview overlay --------------------------- */
 
   window.togglePreview = function (show) {

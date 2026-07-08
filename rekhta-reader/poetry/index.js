@@ -39,6 +39,7 @@ const elements = {
   searchResults: document.getElementById("search-results"),
 
   readerModal: document.getElementById("reader-modal"),
+  readerStage: document.querySelector(".reader-stage"),
   readerClose: document.getElementById("reader-close"),
   readerPrev: document.getElementById("reader-prev"),
   readerNext: document.getElementById("reader-next"),
@@ -51,6 +52,9 @@ const elements = {
   readerTitle: document.getElementById("reader-title"),
   readerAuthor: document.getElementById("reader-author"),
   readerBody: document.getElementById("reader-body"),
+  readerFormatBar: document.getElementById("reader-format-bar"),
+  readerFormatSelect: document.getElementById("reader-format-select"),
+  readerFormatCustom: document.getElementById("reader-format-custom"),
 };
 
 const state = {
@@ -58,7 +62,7 @@ const state = {
   poetLabel: "",
   jobs: [],
   search: { debounceTimer: null, abortController: null },
-  reader: { jobId: null, index: 0 },
+  reader: { jobId: null, index: 0, format: "auto", customPattern: "" },
 };
 
 elements.poetUrlInput.value = SAMPLE_POET_URL;
@@ -86,6 +90,11 @@ elements.readerClose.addEventListener("click", closeReader);
 elements.readerPrev.addEventListener("click", () => stepReader(-1));
 elements.readerNext.addEventListener("click", () => stepReader(1));
 elements.readerPositionInput.addEventListener("change", onReaderPositionInput);
+elements.readerFormatSelect.addEventListener("change", onReaderFormatChange);
+elements.readerFormatCustom.addEventListener("change", onReaderCustomPatternChange);
+elements.readerStage.addEventListener("touchstart", onReaderTouchStart, { passive: true });
+elements.readerStage.addEventListener("touchmove", onReaderTouchMove, { passive: true });
+elements.readerStage.addEventListener("touchend", onReaderTouchEnd);
 elements.readerCopy.addEventListener("click", onReaderCopy);
 elements.readerShare.addEventListener("click", onReaderShare);
 elements.readerDownload.addEventListener("click", onReaderDownload);
@@ -504,7 +513,7 @@ function renderJobs() {
 // ---- Reader ----
 
 function openReader(jobId) {
-  state.reader = { jobId, index: 0 };
+  state.reader = { jobId, index: 0, format: "auto", customPattern: "" };
   elements.readerModal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
   renderReaderItem();
@@ -528,6 +537,31 @@ function stepReader(delta) {
 
   state.reader.index = nextIndex;
   renderReaderItem();
+}
+
+let touchStartX = 0;
+let touchEndX = 0;
+
+function onReaderTouchStart(event) {
+  touchStartX = event.touches[0].clientX;
+}
+
+function onReaderTouchMove(event) {
+  touchEndX = event.touches[0].clientX;
+}
+
+function onReaderTouchEnd() {
+  const swipeThreshold = 50; // pixels
+  const deltaX = touchEndX - touchStartX;
+
+  if (deltaX > swipeThreshold) {
+    stepReader(-1); // swiped right -> previous
+  } else if (deltaX < -swipeThreshold) {
+    stepReader(1); // swiped left -> next
+  }
+
+  touchStartX = 0;
+  touchEndX = 0;
 }
 
 function onReaderPositionInput() {
@@ -561,27 +595,65 @@ function renderReaderItem() {
 
   elements.readerBody.innerHTML = "";
   if (job.isProse) {
+    elements.readerFormatBar.classList.add("hidden");
     elements.readerBody.className = "reader-body reader-body--prose";
     elements.readerBody.textContent = item.text;
   } else {
+    elements.readerFormatBar.classList.remove("hidden");
+    elements.readerFormatSelect.value = state.reader.format;
+    elements.readerFormatCustom.classList.toggle("hidden", state.reader.format !== "custom");
+    elements.readerFormatCustom.value = state.reader.customPattern;
+
     elements.readerBody.className = "reader-body";
-    const versePattern = versePatternForSlug(job.slug);
     const verse = document.createElement("div");
-    verse.className = "sj sher";
     verse.dataset.sjCopy = "all";
-    if (versePattern) {
-      verse.dataset.sjPattern = versePattern;
-    }
+    applyVerseFormat(
+      verse,
+      state.reader.format === "auto" ? defaultFormatForSlug(job.slug) : state.reader.format,
+      state.reader.customPattern,
+    );
     verse.textContent = item.text;
     elements.readerBody.appendChild(verse);
     window.ShakeebJustify?.apply();
   }
 }
 
-function versePatternForSlug(slug) {
-  if (slug === "rubaai" || slug === "qita") return "4";
-  if (slug === "mukhammas") return "5";
-  return "";
+// shakeeb-justify exposes most layouts as a class name on the "sj" element
+// (sher/sher2/mukhammas/musaddas + variants); a plain 4- or N-line grouping
+// is instead a data-sj-pattern on the base "sher" class -- see the
+// PoetryJustification project's README for the full set.
+function defaultFormatForSlug(slug) {
+  if (slug === "rubaai" || slug === "qita") return "pattern-4";
+  if (slug === "mukhammas") return "mukhammas";
+  return "sher";
+}
+
+function applyVerseFormat(verse, format, customPattern) {
+  if (format.startsWith("pattern-")) {
+    verse.className = "sj sher";
+    verse.dataset.sjPattern = format.slice("pattern-".length);
+    return;
+  }
+
+  if (format === "custom") {
+    verse.className = "sj sher";
+    if (customPattern) {
+      verse.dataset.sjPattern = customPattern;
+    }
+    return;
+  }
+
+  verse.className = `sj ${format}`;
+}
+
+function onReaderFormatChange() {
+  state.reader.format = elements.readerFormatSelect.value;
+  renderReaderItem();
+}
+
+function onReaderCustomPatternChange() {
+  state.reader.customPattern = elements.readerFormatCustom.value.trim();
+  renderReaderItem();
 }
 
 function onReaderCopy() {

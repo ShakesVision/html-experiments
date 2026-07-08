@@ -122,19 +122,73 @@
 }
 
 /* .reader-shell/.reader-toolbar/.reader-stage come from ../styles.css and
-   already give the book reader its fullscreen, compact-toolbar layout; only
-   override the stage's centering so long reading content flows top-down
-   and scrolls instead of being vertically centered like a single page image. */
+   already give the book reader its fullscreen, compact-toolbar layout. The
+   book reader only ever holds one bounded image, so it never needed
+   min-height:0 on the flex chain -- text content is unbounded, so without it
+   the stage refuses to shrink below its content and pushes the toolbar off
+   the bottom of the screen with no visible scrollbar. Also give the stage an
+   actual light reading background: the shared dark modal backdrop is meant
+   to frame a page image, not sit directly behind body text in the site's
+   normal (dark-on-light) text colors. */
+.reader-shell {
+  position: relative;
+  min-height: 0;
+}
+
 .reader-toolbar-actions {
   display: flex;
   gap: 6px;
+}
+
+/* Sticky (not overlaid) so it never covers the title/body text -- it's a
+   normal flow child of the stage that just stays pinned while you scroll. */
+.reader-format-bar {
+  position: sticky;
+  top: -28px;
+  z-index: 5;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 10px 0 8px;
+  background: linear-gradient(var(--bg) 75%, rgba(244, 239, 230, 0));
+}
+
+.reader-format-bar select,
+.reader-format-bar input {
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 252, 246, 0.92);
+  box-shadow: 0 6px 16px rgba(59, 37, 16, 0.18);
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--ink);
+  padding: 6px 12px;
+}
+
+.reader-format-bar input {
+  width: 90px;
+}
+
+@media (max-width: 640px) {
+  .reader-format-bar {
+    justify-content: center;
+  }
+
+  .reader-format-bar select,
+  .reader-format-bar input {
+    font-size: 0.78rem;
+  }
 }
 
 .poetry-reader-stage {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  min-height: 0;
   padding: 28px clamp(16px, 5vw, 56px) 60px;
+  background: var(--bg);
+  touch-action: pan-y;
 }
 
 .poetry-reader-stage > * {
