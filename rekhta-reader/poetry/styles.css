@@ -1,0 +1,197 @@
+/* Additive styles only — shared chrome (.hero, .panel, .hero-button,
+   .search-modal family, .queue-list family, .reader-modal family) comes from
+   ../styles.css so this app stays a visual sibling of the book downloader
+   without duplicating that CSS. */
+
+.categories-panel.hidden,
+.hidden {
+  display: none;
+}
+
+.categories-list {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
+.category-row input {
+  accent-color: var(--accent);
+}
+
+.category-row span.category-label {
+  flex: 1;
+  font-size: 0.92rem;
+}
+
+.category-row span.category-count {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.manual-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+}
+
+.manual-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.manual-panel summary i {
+  margin-right: 6px;
+}
+
+.manual-form {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.manual-form textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 90px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.7);
+  font: inherit;
+  color: var(--ink);
+}
+
+.manual-form-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.manual-format {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+
+/* Job rows reuse .queue-row/.queue-row-info/.queue-row-message from the book
+   app's stylesheet; this just adds the category badge + open-reader link. */
+.job-row-category {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(160, 63, 36, 0.12);
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.job-row-open {
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.poet-search-results .search-result {
+  text-align: center;
+}
+
+.poet-search-results .search-cover {
+  margin: 0 auto 8px;
+  border-radius: 50%;
+}
+
+.poetry-reader-shell {
+  width: min(760px, calc(100vw - 32px));
+  max-height: min(88vh, 900px);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.poetry-reader-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.poetry-reader-toolbar .reader-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reader-toolbar-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.poetry-reader-stage {
+  overflow-y: auto;
+  padding: 28px clamp(16px, 5vw, 56px) 40px;
+  display: block;
+}
+
+.reader-source {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.reader-title {
+  margin: 0 0 4px;
+  font-family: "Mehr", "Payami", serif;
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+}
+
+.reader-author {
+  margin: 0 0 20px;
+  color: var(--muted);
+}
+
+.reader-body {
+  font-family: "Mehr", "Payami", serif;
+  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+  line-height: 2.1;
+}
+
+.reader-body--prose {
+  text-align: justify;
+  text-justify: inter-word;
+  line-height: 2;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 640px) {
+  .poetry-reader-shell {
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+}

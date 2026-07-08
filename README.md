@@ -48,6 +48,7 @@ https://ur.shakeeb.in
 - [3D Tilt Studio](https://tools.shakeeb.in/mockup/skew.html)
 - [Quoter](https://tools.shakeeb.in/quoter/index.html)
 - [Rekhta Reader](https://tools.shakeeb.in/rekhta-reader/index.html)
+- [Poetry & Prose Downloader](https://tools.shakeeb.in/rekhta-reader/poetry/index.html)
 - [Utools (external)](https://utools.shakeeb.in)
 - [Qaafiyah Expert (external)](https://qaafiyah.sarbakaf.com)
 - [Hifz Helper (external)](https://quran.shakeeb.in)

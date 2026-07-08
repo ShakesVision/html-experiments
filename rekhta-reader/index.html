@@ -30,6 +30,12 @@
           Load the actual Rekhta page through a proxy, preview lazily, read
           fullscreen, and export a PDF only when needed.
         </p>
+        <p class="poetry-backlink">
+          <a href="./poetry/index.html" target="_blank" rel="noopener">
+            <i class="fa-solid fa-feather"></i> Poetry &amp; Prose Downloader
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </a>
+        </p>
 
         <div class="status-strip">
           <span class="badge" id="cache-badge">No manifest cached yet</span>
@@ -72,6 +78,15 @@
           >
             PDF
           </button>
+          <button
+            id="queue-add-button"
+            type="button"
+            class="hero-button"
+            disabled
+            title="Add the loaded book to the download queue"
+          >
+            <i class="fa-solid fa-layer-group"></i> Queue
+          </button>
           <button id="cancel-button" type="button" class="hero-button" disabled>
             Stop
           </button>
@@ -108,6 +123,28 @@
           <h2>Preview</h2>
           <div id="preview-grid" class="preview-grid"></div>
         </section>
+      </section>
+
+      <section class="panel queue-panel">
+        <h2><i class="fa-solid fa-download"></i> Download queue</h2>
+        <p class="queue-hint">
+          Queue several books at once. Pages render straight to PDF in the
+          background &mdash; no previews are shown here, and books download
+          with overlapping progress instead of waiting in a strict line.
+        </p>
+
+        <form id="queue-add-form" class="queue-add-form">
+          <textarea
+            id="queue-urls"
+            placeholder="Paste one or more Rekhta book URLs, one per line..."
+            rows="2"
+          ></textarea>
+          <button type="submit" class="hero-button hero-button--accent">
+            <i class="fa-solid fa-plus"></i> Add to queue
+          </button>
+        </form>
+
+        <ul id="queue-list" class="queue-list"></ul>
       </section>
     </main>
 

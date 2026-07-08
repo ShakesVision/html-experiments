@@ -467,6 +467,131 @@ input {
   box-shadow: 0 16px 40px rgba(43, 25, 9, 0.18);
 }
 
+.poetry-backlink {
+  margin: -4px 0 6px;
+}
+
+.poetry-backlink a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.86rem;
+}
+
+.poetry-backlink a:hover {
+  color: var(--accent);
+}
+
+.queue-panel {
+  grid-column: 1 / -1;
+}
+
+.queue-hint {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.queue-add-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.queue-add-form textarea {
+  flex: 1;
+  resize: vertical;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.7);
+  font: inherit;
+  color: var(--ink);
+}
+
+.queue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.queue-empty {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.queue-row {
+  display: grid;
+  grid-template-columns: 1fr minmax(90px, 160px) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.queue-row-info {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.queue-row-info strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+}
+
+.queue-row-message {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.queue-row progress {
+  width: 100%;
+  height: 10px;
+}
+
+.queue-row-action {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.queue-row--done .queue-row-message {
+  color: var(--success);
+}
+
+.queue-row--error .queue-row-message,
+.queue-row--cancelled .queue-row-message {
+  color: var(--error);
+}
+
+@media (max-width: 640px) {
+  .queue-add-form {
+    flex-direction: column;
+  }
+
+  .queue-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .queue-row progress {
+    grid-column: 1 / -1;
+  }
+}
+
 .reader-modal {
   position: fixed;
   inset: 0;
