@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="../assets/css/tailwind.css" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <script src="ur-phonetic.js"></script>
+    <!-- shakeeb-justify: turns selected poetry into justified, stanza-aware layout -->
+    <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@2.0.0/dist/shakeeb-justify.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=Gulzar&display=swap');
 
@@ -88,6 +90,19 @@
                 <option value="1">Size: Small</option>
                 <option value="5">Size: Large</option>
                 <option value="7">Size: Huge</option>
+            </select>
+            <select id="poetryFormatSelect" class="bg-transparent text-sm border-none outline-none cursor-pointer py-1 px-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700" title="Justify poetry (shakeeb-justify) — applies to selection, or all text if nothing is selected">
+                <option value="">Poetry ▾</option>
+                <option value="sher">Sher · 1 column</option>
+                <option value="sher2">Sher · 2 columns</option>
+                <option value="pattern-4">Qat'a / Rubai (4)</option>
+                <option value="mukhammas">Mukhammas (5)</option>
+                <option value="mukhammas-3-2">Mukhammas 3+2</option>
+                <option value="mukhammas-mixed">Mukhammas mixed</option>
+                <option value="musaddas">Musaddas (6)</option>
+                <option value="musaddas-6">Musaddas all-6</option>
+                <option value="musaddas-mixed">Musaddas mixed</option>
+                <option value="custom">Custom pattern…</option>
             </select>
             <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition ml-auto" onclick="copyEditorText()" title="Copy Text">
                 <span class="material-symbols-outlined text-xl">content_copy</span>
@@ -213,6 +228,64 @@
             if (fontSizeSelect) {
                 fontSizeSelect.addEventListener('change', (e) => {
                     document.execCommand('fontSize', false, e.target.value);
+                });
+            }
+
+            // Poetry formatting via shakeeb-justify. Mirrors the other toolbar
+            // controls: it acts on the current selection (or the whole editor
+            // when nothing is selected), wrapping the text in a `.sj` block and
+            // letting the library justify it in place.
+            function escapeHtml(s) {
+                return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+
+            function buildPoetryHtml(format, customPattern, text) {
+                const body = escapeHtml(text).replace(/\r?\n/g, '<br>');
+                let cls = 'sj';
+                let attr = '';
+                if (format === 'custom') {
+                    cls = 'sj sher';
+                    if (customPattern) attr = ` data-sj-pattern="${customPattern.replace(/"/g, '&quot;')}"`;
+                } else if (format.startsWith('pattern-')) {
+                    cls = 'sj sher';
+                    attr = ` data-sj-pattern="${format.slice('pattern-'.length)}"`;
+                } else {
+                    cls = 'sj ' + format;
+                }
+                return `<div class="${cls}"${attr}>${body}</div>`;
+            }
+
+            function applyPoetryFormat(format) {
+                let customPattern = '';
+                if (format === 'custom') {
+                    customPattern = (window.prompt('shakeeb-justify pattern (e.g. 4, or 3+2):', '') || '').trim();
+                    if (!customPattern) return;
+                }
+                const selection = window.getSelection();
+                const hasSelection =
+                    selection && selection.rangeCount && !selection.isCollapsed &&
+                    textarea.contains(selection.anchorNode);
+                const text = hasSelection ? selection.toString() : (textarea.innerText || '');
+                if (!text.trim()) return;
+
+                const html = buildPoetryHtml(format, customPattern, text);
+                textarea.focus();
+                if (hasSelection) {
+                    document.execCommand('insertHTML', false, html);
+                } else {
+                    textarea.innerHTML = html;
+                }
+                if (window.ShakeebJustify) {
+                    try { ShakeebJustify.apply(); } catch (err) { /* ignore */ }
+                }
+            }
+
+            const poetryFormatSelect = document.getElementById('poetryFormatSelect');
+            if (poetryFormatSelect) {
+                poetryFormatSelect.addEventListener('change', (e) => {
+                    const value = e.target.value;
+                    if (value) applyPoetryFormat(value);
+                    e.target.selectedIndex = 0; // reset to the "Poetry ▾" label
                 });
             }
 

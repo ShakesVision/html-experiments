@@ -85,6 +85,10 @@ const state = {
   previewObserver: null,
   previewRequests: new Map(),
   isTwoPageMode: false,
+  // "auto" = follow viewport width (default); "one"/"two" = an explicit
+  // choice (from a view button or the URL) that survives window resizes and
+  // is reflected in the address bar as &view=1|2 for shareability.
+  viewMode: "auto",
   currentPages: [] /* Stores the page(s) currently displayed in reader */,
   previewUrls: new Map(),
   downloadQueue: [],
@@ -209,9 +213,10 @@ function syncBookUrlToLocation(bookUrl, historyMode) {
   } else {
     params.delete("lang");
   }
-  // The open page is owned by the reader (syncPageToLocation); clear any
-  // stale value left over from a previously-open book.
+  // The open page / view are owned by the reader (syncPageToLocation); clear
+  // any stale values left over from a previously-open book.
   params.delete("page");
+  params.delete("view");
 
   const nextUrl = `${location.pathname}?${params.toString()}${location.hash}`;
   if (historyMode === "replace") {
@@ -234,6 +239,13 @@ function syncPageToLocation(pageIndex) {
     return; // only track pages for a routed book
   }
   params.set("page", `${pageIndex + 1}`);
+  if (state.viewMode === "one") {
+    params.set("view", "1");
+  } else if (state.viewMode === "two") {
+    params.set("view", "2");
+  } else {
+    params.delete("view");
+  }
   history.replaceState(
     null,
     "",
@@ -243,10 +255,11 @@ function syncPageToLocation(pageIndex) {
 
 function clearPageFromLocation() {
   const params = new URLSearchParams(location.search);
-  if (!params.has("page")) {
+  if (!params.has("page") && !params.has("view")) {
     return;
   }
   params.delete("page");
+  params.delete("view");
   history.replaceState(
     null,
     "",
@@ -257,6 +270,12 @@ function clearPageFromLocation() {
 function pageParamToIndex(rawValue) {
   const page = parseInt(rawValue, 10);
   return Number.isFinite(page) && page > 0 ? page - 1 : 0;
+}
+
+function viewParamToMode(rawValue) {
+  if (rawValue === "1") return "one";
+  if (rawValue === "2") return "two";
+  return null;
 }
 
 function bootstrapFromLocation() {
@@ -272,6 +291,7 @@ function bootstrapFromLocation() {
     openInReader: true,
     historyMode: "replace",
     openAtPage: pageParamToIndex(params.get("page")),
+    openView: viewParamToMode(params.get("view")),
   });
 }
 
@@ -293,6 +313,7 @@ function onLocationPopState() {
     openInReader: true,
     historyMode: "none",
     openAtPage: pageParamToIndex(params.get("page")),
+    openView: viewParamToMode(params.get("view")),
   });
 }
 
@@ -308,7 +329,7 @@ async function onLoadBook(event) {
   await loadBook(bookUrl, { openInReader: false, historyMode: "push" });
 }
 
-async function loadBook(rawBookUrl, { openInReader = false, historyMode = "push", openAtPage = 0 } = {}) {
+async function loadBook(rawBookUrl, { openInReader = false, historyMode = "push", openAtPage = 0, openView = null } = {}) {
   // Internal removal of /detail/ from the URL
   const bookUrl = rawBookUrl.replace(/\/detail\//i, "/");
   const proxyPrefix = elements.proxyInput.value.trim();
@@ -343,6 +364,10 @@ async function loadBook(rawBookUrl, { openInReader = false, historyMode = "push"
     syncBookUrlToLocation(bookUrl, historyMode);
 
     if (openInReader) {
+      if (openView === "one" || openView === "two") {
+        state.viewMode = openView;
+        state.isTwoPageMode = openView === "two";
+      }
       const lastIndex = Math.max(manifest.pageCount - 1, 0);
       openReader(Math.min(Math.max(openAtPage, 0), lastIndex));
     }
@@ -752,6 +777,7 @@ function resetPreviewState() {
   state.previewRequests.clear();
   state.isUrduBook = false;
   state.modalPageIndex = 0;
+  state.viewMode = "auto";
   state.currentPages = [];
 
   state.previewUrls.forEach((objectUrl) => {
@@ -818,6 +844,9 @@ function handleError(error, fallbackMessage) {
 }
 
 function setTwoPageMode(enable) {
+  // An explicit choice: remember it as a sticky preference so a later resize
+  // won't silently override it, and so it round-trips into the shared URL.
+  state.viewMode = enable ? "two" : "one";
   state.isTwoPageMode = enable;
   renderReaderViewMode();
   renderReaderPages(state.modalPageIndex);
@@ -911,6 +940,7 @@ function openReader(pageIndex) {
 
   onWindowResize(); /* Call on resize to set two-page mode initially */
   window.addEventListener("resize", onWindowResize);
+  renderReaderViewMode(); // reflect the (possibly URL-driven) mode on the buttons
 
   if (elements.readerStage) {
     elements.readerStage.addEventListener("touchstart", onTouchStart);
@@ -1563,6 +1593,17 @@ function stepVisualRight() {
 const MIN_TWO_PAGE_WIDTH = 1024; // Minimum width for two-page display
 
 function onWindowResize() {
+  // An explicit one/two-page choice wins over the viewport; only "auto"
+  // follows the window width.
+  if (state.viewMode !== "auto") {
+    const want = state.viewMode === "two";
+    if (want !== state.isTwoPageMode) {
+      state.isTwoPageMode = want;
+      renderReaderPages(state.modalPageIndex);
+    }
+    return;
+  }
+
   const oldTwoPageMode = state.isTwoPageMode;
   state.isTwoPageMode = window.innerWidth >= MIN_TWO_PAGE_WIDTH;
 
