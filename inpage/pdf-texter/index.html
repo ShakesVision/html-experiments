@@ -7,9 +7,12 @@
     <link rel="icon" type="image/x-icon" href="./NaseemUrdu.png" />
     <link rel="stylesheet" href="../../assets/css/tailwind.css" />
     <script defer src="../../assets/js/shared-init.js"></script>
-    <link rel="canonical" href="https://tools.shakeeb.in/inpage/pdf-texter/index.html">
-    <link rel="manifest" href="../../manifest.webmanifest">
-    <meta name="theme-color" content="#1b4965">
+    <link
+      rel="canonical"
+      href="https://tools.shakeeb.in/inpage/pdf-texter/index.html"
+    />
+    <link rel="manifest" href="../../manifest.webmanifest" />
+    <meta name="theme-color" content="#1b4965" />
   </head>
   <body class="min-h-screen bg-stone-950 text-stone-100">
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -23,19 +26,19 @@
             <p
               class="mb-2 text-xs uppercase tracking-[0.35em] text-amber-300/80"
             >
-              Frontend-Only Prototype
+              Frontend-Only
             </p>
             <h1
               class="text-3xl font-black tracking-tight text-amber-50 sm:text-4xl"
             >
-              Naseem PDF Texter Web
+              Naseem PDF Texter Web <sup> BETA </sup>
             </h1>
             <p
               class="mt-3 max-w-2xl text-sm leading-6 text-stone-300 sm:text-base"
             >
-              Browser-side PDF decoding prototype that lifts the legacy WinForms
-              ligature logic into JavaScript and processes single pages, ranges,
-              or whole books.
+              Browser-side PDF decoding of InPage made books that processes
+              single pages, ranges, or whole books. — Shakeeb A. 2026,
+              Originally by Rana bhai.
             </p>
           </div>
           <div
@@ -214,15 +217,10 @@
               Runtime notes
             </h3>
             <ul class="space-y-2 text-sm leading-6 text-stone-300">
-              <li>Uses the original XML mapping files from the legacy app.</li>
               <li>`Paragraph` mode is now the default output mode.</li>
               <li>
-                Uses MuPDF WebAssembly in-browser instead of the old PowerShell
-                preprocessing path.
-              </li>
-              <li>
-                Page 5 is the default starting point for the supplied sample
-                PDF.
+                Choose page-range or single page mode intially to check whether
+                the book is extractable or not before processing the whole book.
               </li>
             </ul>
           </div>
