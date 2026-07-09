@@ -30,6 +30,9 @@ const elements = {
   manualForm: document.getElementById("manual-form"),
   manualLinks: document.getElementById("manual-links"),
 
+  uploadForm: document.getElementById("upload-form"),
+  uploadFile: document.getElementById("upload-file"),
+
   searchModal: document.getElementById("search-modal"),
   searchClose: document.getElementById("search-close"),
   searchKeyword: document.getElementById("search-keyword"),
@@ -85,6 +88,7 @@ elements.searchKeyword.addEventListener("keydown", (event) => {
 });
 elements.categoriesStart.addEventListener("click", onStartCategories);
 elements.manualForm.addEventListener("submit", onManualSubmit);
+elements.uploadForm.addEventListener("submit", onUploadSubmit);
 
 elements.readerClose.addEventListener("click", closeReader);
 elements.readerPrev.addEventListener("click", () => stepReader(-1));
@@ -434,6 +438,88 @@ function onManualSubmit(event) {
   const isProse = document.querySelector('input[name="manual-format"]:checked').value === "prose";
   enqueueManualJob(links, isProse);
   elements.manualLinks.value = "";
+}
+
+// Re-opens a .txt/.json file this app downloaded earlier. There's no
+// reliable way to tell poetry and prose apart from a plain .txt file alone,
+// so the user says which it is via the format radio next to the picker.
+async function onUploadSubmit(event) {
+  event.preventDefault();
+  const file = elements.uploadFile.files[0];
+  if (!file) {
+    setStatus("Choose a .txt or .json file first.", "error");
+    return;
+  }
+
+  const isProse = document.querySelector('input[name="upload-format"]:checked').value === "prose";
+
+  try {
+    const text = await file.text();
+    const items = isProse ? parseProseJson(text) : parsePoetryTxt(text);
+
+    if (!items.length) {
+      setStatus("That file didn't contain any recognizable entries.", "error");
+      return;
+    }
+
+    const job = {
+      id: `job-${state.jobs.length}-${Math.random().toString(36).slice(2, 8)}`,
+      label: file.name,
+      slug: "upload",
+      isProse,
+      href: null,
+      manualItems: null,
+      status: "done",
+      message: `${items.length} loaded`,
+      done: items.length,
+      total: items.length,
+      results: items,
+      abortController: new AbortController(),
+    };
+
+    state.jobs.push(job);
+    renderJobs();
+    openReader(job.id);
+    elements.uploadForm.reset();
+    setStatus(`Opened ${file.name} (${items.length} entries).`, "success");
+  } catch (error) {
+    console.error(error);
+    setStatus(`Couldn't open that file. ${error.message}`, "error");
+  }
+}
+
+// Poetry export shape: blank-line-separated blocks, each block's own first
+// line doubling as its title (same convention used for inline couplets).
+function parsePoetryTxt(text) {
+  return text
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => {
+      const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+      return { title: lines[0] || "Untitled", author: "", text: lines.join("\n"), href: "" };
+    });
+}
+
+// Prose export shape: an array of {title, text, label, description, link,
+// url} (see downloadJob below) -- title and label both fold the author in,
+// so pull it back out of the label's "...,مصنف:NAME" suffix.
+function parseProseJson(text) {
+  const payload = JSON.parse(text);
+  if (!Array.isArray(payload)) {
+    throw new Error("Expected a JSON array of stories.");
+  }
+
+  return payload.map((entry) => {
+    const authorMatch = (entry.label || "").match(/مصنف:(.*)$/);
+    const author = authorMatch ? authorMatch[1].trim() : "";
+    let title = entry.title || "Untitled";
+    if (author && title.endsWith(` — ${author}`)) {
+      title = title.slice(0, -(author.length + 3));
+    }
+
+    return { title, author, text: entry.text || "", href: entry.url || entry.link || "" };
+  });
 }
 
 function renderJobs() {
