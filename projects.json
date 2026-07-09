@@ -368,6 +368,22 @@
     "link": "rekhta-reader/index.html"
   },
   {
+    "id": 42,
+    "slug": "rekhta-poetry",
+    "title": "Poetry & Prose Downloader",
+    "description": "Discover a poet or author's full catalogue on Rekhta and read or download every ghazal, nazm, couplet, or story.",
+    "desc": "Discover a poet or author's full catalogue on Rekhta and read or download every ghazal, nazm, couplet, or story.",
+    "category": "Urdu & language",
+    "status": "alpha",
+    "tags": ["urdu", "poetry", "reader", "scraper"],
+    "offlineSupport": "shell-cache",
+    "external": false,
+    "featured": false,
+    "lastReviewed": "2026-07-08",
+    "img": "rekhta-reader/icon.png",
+    "link": "rekhta-reader/poetry/index.html"
+  },
+  {
     "id": 25,
     "slug": "utools",
     "title": "Utools",

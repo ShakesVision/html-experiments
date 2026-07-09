@@ -1,6 +1,6 @@
 {
   "generatedAt": "deterministic",
-  "count": 56,
+  "count": 57,
   "entries": [
     {
       "path": "alphabet/index.html",
@@ -273,6 +273,13 @@
       "folder": "rekhta-reader",
       "isIndex": true,
       "title": "Rekhta Book Downloader",
+      "isRoot": false
+    },
+    {
+      "path": "rekhta-reader/poetry/index.html",
+      "folder": "rekhta-reader",
+      "isIndex": true,
+      "title": "Poetry &amp; Prose Downloader",
       "isRoot": false
     },
     {

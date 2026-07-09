@@ -1,3 +1,5 @@
+import { applyProxyPrefix, createLimiter, getDeviceProfile } from "./shared.js";
+
 const DEFAULT_PROXY_PREFIX = "";
 const PAGE_KEY_ENDPOINT =
   "https://ebooksapi.rekhta.org/api_getebookpagebyid_websiteapp/?wref=from-site&&pgid=";
@@ -199,18 +201,6 @@ function normalizeManifest(bookUrl, html) {
   };
 }
 
-function applyProxyPrefix(url, proxyPrefix) {
-  if (!proxyPrefix) {
-    return url;
-  }
-
-  if (proxyPrefix.includes("{url}")) {
-    return proxyPrefix.replace("{url}", encodeURIComponent(url));
-  }
-
-  return `${proxyPrefix}${encodeURIComponent(url)}`;
-}
-
 async function unscramblePage(options) {
   const { imageBlob, pageKey, tileGap, tileSize } = options;
   const source = await loadImageSource(imageBlob);
@@ -348,45 +338,3 @@ function stringToStringArray(input) {
   return input.split(",").map((item) => item.replace(/"/g, "").trim());
 }
 
-function createLimiter(concurrency) {
-  const queue = [];
-  let activeCount = 0;
-
-  return async (task) => {
-    if (activeCount >= concurrency) {
-      await new Promise((resolve) => {
-        queue.push(resolve);
-      });
-    }
-
-    activeCount += 1;
-
-    try {
-      return await task();
-    } finally {
-      activeCount -= 1;
-      const nextTask = queue.shift();
-      if (nextTask) {
-        nextTask();
-      }
-    }
-  };
-}
-
-function getDeviceProfile() {
-  const hardwareConcurrency = navigator.hardwareConcurrency || 4;
-  const deviceMemory = navigator.deviceMemory || 4;
-
-  return {
-    deviceMemory,
-    downloadConcurrency: Math.max(
-      1,
-      Math.min(2, Math.floor(Math.min(hardwareConcurrency, deviceMemory) / 2)),
-    ),
-    hardwareConcurrency,
-    previewConcurrency: Math.max(
-      1,
-      Math.min(4, Math.floor((hardwareConcurrency + deviceMemory) / 3)),
-    ),
-  };
-}

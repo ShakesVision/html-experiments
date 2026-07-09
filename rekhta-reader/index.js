@@ -28,6 +28,10 @@ const elements = {
   previewGrid: document.getElementById("preview-grid"),
   progressBar: document.getElementById("task-progress"),
   progressLabel: document.getElementById("progress-label"),
+  queueAddButton: document.getElementById("queue-add-button"),
+  queueAddForm: document.getElementById("queue-add-form"),
+  queueUrlsInput: document.getElementById("queue-urls"),
+  queueList: document.getElementById("queue-list"),
   searchButton: document.getElementById("search-button"),
   searchClose: document.getElementById("search-close"),
   searchKeyword: document.getElementById("search-keyword"),
@@ -37,6 +41,11 @@ const elements = {
   searchPage: document.getElementById("search-page"),
   searchPrev: document.getElementById("search-prev"),
   searchResults: document.getElementById("search-results"),
+  searchSelectionBar: document.getElementById("search-selection-bar"),
+  searchSelectionCount: document.getElementById("search-selection-count"),
+  searchSelectionCopy: document.getElementById("search-selection-copy"),
+  searchSelectionQueue: document.getElementById("search-selection-queue"),
+  searchSelectionClear: document.getElementById("search-selection-clear"),
   searchStatus: document.getElementById("search-status"),
   searchSubmit: document.getElementById("search-submit"),
   readerClose: document.getElementById("reader-close"),
@@ -69,6 +78,7 @@ const state = {
   isTwoPageMode: false,
   currentPages: [] /* Stores the page(s) currently displayed in reader */,
   previewUrls: new Map(),
+  downloadQueue: [],
   search: {
     abortController: null,
     debounceTimer: null,
@@ -77,16 +87,25 @@ const state = {
     pageIndex: 1,
     results: [],
     selectedHref: null,
+    checkedHrefs: new Map(),
   },
 };
 
 const previewLimiter = createLimiter(deviceProfile.previewConcurrency);
+// Shared across the currently-open book's Download button AND every queued
+// download below, so total concurrent canvas/unscramble work never exceeds
+// what the device can safely handle, no matter how many books are "in
+// flight" at once (mobile-safe: deviceProfile scales this down on low-memory
+// devices).
+const sharedDownloadLimiter = createLimiter(deviceProfile.downloadConcurrency);
 
 elements.urlInput.value = SAMPLE_BOOK_URL;
 elements.proxyInput.value =
   localStorage.getItem(PROXY_STORAGE_KEY) || DEFAULT_PROXY_TEMPLATE;
 elements.bookForm.addEventListener("submit", onLoadBook);
 elements.downloadButton.addEventListener("click", onDownloadPdf);
+elements.queueAddButton.addEventListener("click", onQueueAddCurrentBook);
+elements.queueAddForm.addEventListener("submit", onQueueAddSubmit);
 elements.cancelButton.addEventListener("click", onCancelWork);
 elements.searchButton.addEventListener("click", openSearch);
 elements.searchClose.addEventListener("click", (event) => {
@@ -102,6 +121,9 @@ elements.searchKeyword.addEventListener("keydown", onSearchKeywordKeydown);
 elements.searchLang.addEventListener("change", onSearchLangChange);
 elements.searchPrev.addEventListener("click", () => changeSearchPage(-1));
 elements.searchNext.addEventListener("click", () => changeSearchPage(1));
+elements.searchSelectionCopy.addEventListener("click", onCopySelection);
+elements.searchSelectionQueue.addEventListener("click", onQueueSelection);
+elements.searchSelectionClear.addEventListener("click", onClearSelection);
 elements.readerClose.addEventListener("click", closeReader);
 // Wire navigation buttons to visual-direction helpers so RTL/LTR behave the same visually
 elements.readerPrev.addEventListener("click", () => stepVisualLeft());
@@ -122,19 +144,107 @@ setProgress(0, "Idle");
 renderDeviceHint();
 renderSearchState();
 renderReaderViewMode();
+renderQueue();
+window.addEventListener("popstate", onLocationPopState);
+bootstrapFromLocation();
+
+// ---- URL routing: keep the address bar in sync with the open book ----
+// Books normalize down to https://www.rekhta.org/ebooks/{slug}[?lang=xx]
+// by the time they're actually loaded (see the /detail/ strip below and
+// resolveReaderUrl()), so links use the short `?book={slug}&lang=xx` form.
+// Anything that doesn't fit that shape (proxy quirks, a future URL layout)
+// is still supported by storing the full absolute URL in `book` instead.
+const REKHTA_EBOOK_PATTERN = /^https?:\/\/(?:www\.)?rekhta\.org\/ebooks\/([^/?#]+)/i;
+
+function bookUrlToParams(bookUrl) {
+  const match = bookUrl.match(REKHTA_EBOOK_PATTERN);
+  if (!match) {
+    return { book: bookUrl, lang: "" };
+  }
+
+  const lang = new URL(bookUrl).searchParams.get("lang") || "";
+  return { book: match[1], lang };
+}
+
+function paramsToBookUrl(book, lang) {
+  if (!book) {
+    return "";
+  }
+
+  if (book.includes("://")) {
+    return book;
+  }
+
+  return `https://www.rekhta.org/ebooks/${book}${lang ? `?lang=${lang}` : ""}`;
+}
+
+function syncBookUrlToLocation(bookUrl, historyMode) {
+  if (historyMode === "none") {
+    return;
+  }
+
+  const { book, lang } = bookUrlToParams(bookUrl);
+  const params = new URLSearchParams(location.search);
+  params.set("book", book);
+  if (lang) {
+    params.set("lang", lang);
+  } else {
+    params.delete("lang");
+  }
+
+  const nextUrl = `${location.pathname}?${params.toString()}${location.hash}`;
+  if (historyMode === "replace") {
+    history.replaceState(null, "", nextUrl);
+  } else {
+    history.pushState(null, "", nextUrl);
+  }
+}
+
+function bootstrapFromLocation() {
+  const params = new URLSearchParams(location.search);
+  const book = params.get("book");
+  if (!book) {
+    return;
+  }
+
+  const bookUrl = paramsToBookUrl(book, params.get("lang") || "");
+  elements.urlInput.value = bookUrl;
+  loadBook(bookUrl, { openInReader: true, historyMode: "replace" });
+}
+
+function onLocationPopState() {
+  const params = new URLSearchParams(location.search);
+  const book = params.get("book");
+
+  if (!book) {
+    cancelActiveWork();
+    resetPreviewState();
+    setStatus("Paste a Rekhta URL or use the sample book to load the manifest.");
+    setProgress(0, "Idle");
+    return;
+  }
+
+  const bookUrl = paramsToBookUrl(book, params.get("lang") || "");
+  elements.urlInput.value = bookUrl;
+  loadBook(bookUrl, { openInReader: true, historyMode: "none" });
+}
 
 async function onLoadBook(event) {
   event.preventDefault();
-  let bookUrl = elements.urlInput.value.trim();
-  const proxyPrefix = elements.proxyInput.value.trim();
-
-  // Internal removal of /detail/ from the URL
-  bookUrl = bookUrl.replace(/\/detail\//i, "/");
+  const bookUrl = elements.urlInput.value.trim();
 
   if (!bookUrl) {
     setStatus("Enter a book URL before loading.", "error");
     return;
   }
+
+  await loadBook(bookUrl, { openInReader: false, historyMode: "push" });
+}
+
+async function loadBook(rawBookUrl, { openInReader = false, historyMode = "push" } = {}) {
+  // Internal removal of /detail/ from the URL
+  const bookUrl = rawBookUrl.replace(/\/detail\//i, "/");
+  const proxyPrefix = elements.proxyInput.value.trim();
 
   localStorage.setItem(PROXY_STORAGE_KEY, proxyPrefix);
   bookClient = createBookClient({ proxyPrefix });
@@ -162,6 +272,12 @@ async function onLoadBook(event) {
       `Loaded ${manifest.bookName}. Rekhta is fetched through the configured proxy.`,
       "success",
     );
+    elements.urlInput.value = bookUrl;
+    syncBookUrlToLocation(bookUrl, historyMode);
+
+    if (openInReader) {
+      openReader(0);
+    }
   } catch (error) {
     handleError(
       error,
@@ -170,21 +286,16 @@ async function onLoadBook(event) {
   }
 }
 
-function generatePdfFilename() {
-  const title = elements.metaTitle.textContent || "book";
-  const author = elements.metaAuthor.textContent || "unknown";
-  const pagesText = elements.metaPages.textContent || "0 pages";
-  const pageCount = pagesText.split(" ")[0]; // Extract just the number
-
+function generatePdfFilename({ title, author, pageCount }) {
   // Clean up strings: remove special characters, convert to filename-safe format
-  const cleanTitle = title
+  const cleanTitle = (title || "book")
     .trim()
     .replace(/[^\w\s-]/g, "") // Remove special chars
     .replace(/\s+/g, "-") // Replace spaces with hyphens
     .toLowerCase()
     .slice(0, 50); // Limit to 50 chars
 
-  const cleanAuthor = author
+  const cleanAuthor = (author || "unknown")
     .trim()
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-")
@@ -192,8 +303,50 @@ function generatePdfFilename() {
     .slice(0, 30); // Limit to 30 chars
 
   // Format: title-author-pagecount
-  const filename = `${cleanTitle}_${cleanAuthor}_${pageCount}p.pdf`;
-  return filename;
+  return `${cleanTitle}_${cleanAuthor}_${pageCount ?? 0}p.pdf`;
+}
+
+// Shared by the "PDF" button (current book) and every queued download below.
+async function downloadBookToPdf(client, manifest, { limiter, onProgress, signal } = {}) {
+  const renderJobs = manifest.scrambleMap.map((pageRef) =>
+    limiter(() => client.renderPageToCanvas(pageRef, { signal })),
+  );
+
+  let pdfDocument = null;
+
+  for (let index = 0; index < renderJobs.length; index += 1) {
+    const canvas = await renderJobs[index];
+    const orientation = canvas.width > canvas.height ? "landscape" : "portrait";
+    const pageFormat = [canvas.width, canvas.height];
+
+    if (!pdfDocument) {
+      pdfDocument = new jsPDF({
+        compress: true,
+        format: pageFormat,
+        orientation,
+        unit: "pt",
+      });
+    } else {
+      pdfDocument.addPage(pageFormat, orientation);
+    }
+
+    pdfDocument.addImage(
+      canvas,
+      "JPEG",
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+      undefined,
+      "FAST",
+    );
+    canvas.width = 1;
+    canvas.height = 1;
+
+    onProgress?.(index + 1, renderJobs.length);
+  }
+
+  return pdfDocument;
 }
 
 async function onDownloadPdf() {
@@ -206,63 +359,184 @@ async function onDownloadPdf() {
   const abortController = new AbortController();
   state.abortController = abortController;
 
-  const pageRefs = state.manifest.scrambleMap;
-  const downloadLimiter = createLimiter(deviceProfile.downloadConcurrency);
-  const renderJobs = pageRefs.map((pageRef) =>
-    downloadLimiter(() =>
-      bookClient.renderPageToCanvas(pageRef, {
-        signal: abortController.signal,
-      }),
-    ),
-  );
-
   setBusy(true, "Preparing PDF...");
   setProgress(1, "Preparing PDF");
 
-  let pdfDocument = null;
-
   try {
-    for (let index = 0; index < renderJobs.length; index += 1) {
-      const canvas = await renderJobs[index];
-      const orientation =
-        canvas.width > canvas.height ? "landscape" : "portrait";
-      const pageFormat = [canvas.width, canvas.height];
+    const pdfDocument = await downloadBookToPdf(bookClient, state.manifest, {
+      limiter: sharedDownloadLimiter,
+      signal: abortController.signal,
+      onProgress: (done, total) => {
+        setProgress(Math.round((done / total) * 100), `Building PDF ${done}/${total}`);
+      },
+    });
 
-      if (!pdfDocument) {
-        pdfDocument = new jsPDF({
-          compress: true,
-          format: pageFormat,
-          orientation,
-          unit: "pt",
-        });
-      } else {
-        pdfDocument.addPage(pageFormat, orientation);
-      }
-
-      pdfDocument.addImage(
-        canvas,
-        "JPEG",
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-        undefined,
-        "FAST",
-      );
-      canvas.width = 1;
-      canvas.height = 1;
-
-      const completion = Math.round(((index + 1) / renderJobs.length) * 100);
-      setProgress(completion, `Building PDF ${index + 1}/${renderJobs.length}`);
-    }
-
-    const filename = generatePdfFilename();
+    const filename = generatePdfFilename({
+      title: state.manifest.bookName,
+      author: state.manifest.author,
+      pageCount: state.manifest.pageCount,
+    });
     pdfDocument.save(filename);
     setBusy(false);
     setStatus("PDF export finished.", "success");
   } catch (error) {
     handleError(error, "PDF export stopped before completion.");
   }
+}
+
+// ---- Download queue: several books at once, no page previews ----
+
+function onQueueAddCurrentBook() {
+  if (!state.manifest) {
+    return;
+  }
+
+  enqueueDownload(state.manifest.bookUrl, state.manifest.bookName);
+}
+
+function onQueueAddSubmit(event) {
+  event.preventDefault();
+  const urls = elements.queueUrlsInput.value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /^https?:\/\//i.test(line));
+
+  if (!urls.length) {
+    setStatus("Paste at least one valid book URL to queue.", "error");
+    return;
+  }
+
+  urls.forEach((url) => enqueueDownload(url));
+  elements.queueUrlsInput.value = "";
+}
+
+function enqueueDownload(url, titleHint) {
+  const item = {
+    id: `q${state.downloadQueue.length}-${Math.random().toString(36).slice(2, 8)}`,
+    url,
+    title: titleHint || url,
+    status: "queued",
+    progress: 0,
+    message: "Queued",
+    abortController: null,
+  };
+
+  state.downloadQueue.push(item);
+  renderQueue();
+  processQueueItem(item);
+  return item;
+}
+
+async function processQueueItem(item) {
+  item.abortController = new AbortController();
+  const { signal } = item.abortController;
+  const proxyPrefix = elements.proxyInput.value.trim();
+  // A queue item gets its own bookClient instance so it never fights the
+  // main viewer's `bookClient` (which can be reassigned by loadBook() while
+  // a queued download is still in flight).
+  const client = createBookClient({ proxyPrefix });
+
+  item.status = "fetching";
+  item.message = "Loading manifest...";
+  renderQueue();
+
+  try {
+    const manifest = await client.getManifest(item.url, { signal });
+    item.title = manifest.bookName;
+    item.status = "downloading";
+    renderQueue();
+
+    const pdfDocument = await downloadBookToPdf(client, manifest, {
+      limiter: sharedDownloadLimiter,
+      signal,
+      onProgress: (done, total) => {
+        item.progress = Math.round((done / total) * 100);
+        item.message = `Rendering ${done}/${total}`;
+        renderQueue();
+      },
+    });
+
+    pdfDocument.save(
+      generatePdfFilename({
+        title: manifest.bookName,
+        author: manifest.author,
+        pageCount: manifest.pageCount,
+      }),
+    );
+
+    item.status = "done";
+    item.progress = 100;
+    item.message = "Downloaded";
+  } catch (error) {
+    if (error.name === "AbortError") {
+      item.status = "cancelled";
+      item.message = "Cancelled";
+    } else {
+      console.error(error);
+      item.status = "error";
+      item.message = error.message || "Failed to download.";
+    }
+  } finally {
+    renderQueue();
+  }
+}
+
+function renderQueue() {
+  elements.queueList.innerHTML = "";
+
+  if (!state.downloadQueue.length) {
+    const empty = document.createElement("li");
+    empty.className = "queue-empty";
+    empty.textContent = "No books queued yet.";
+    elements.queueList.appendChild(empty);
+    return;
+  }
+
+  state.downloadQueue.forEach((item) => {
+    const isActive =
+      item.status === "queued" ||
+      item.status === "fetching" ||
+      item.status === "downloading";
+
+    const row = document.createElement("li");
+    row.className = `queue-row queue-row--${item.status}`;
+
+    const info = document.createElement("div");
+    info.className = "queue-row-info";
+    const title = document.createElement("strong");
+    title.dir = "auto";
+    title.textContent = item.title;
+    const message = document.createElement("span");
+    message.className = "queue-row-message";
+    message.textContent = item.message;
+    info.append(title, message);
+
+    const progress = document.createElement("progress");
+    progress.max = 100;
+    progress.value = item.progress;
+
+    const actionButton = document.createElement("button");
+    actionButton.type = "button";
+    actionButton.className = "queue-row-action";
+    actionButton.setAttribute("aria-label", isActive ? "Cancel" : "Remove");
+    actionButton.innerHTML = isActive
+      ? '<i class="fa-solid fa-xmark"></i>'
+      : '<i class="fa-solid fa-trash"></i>';
+    actionButton.addEventListener("click", () => {
+      if (isActive) {
+        item.abortController?.abort();
+        return;
+      }
+
+      state.downloadQueue = state.downloadQueue.filter(
+        (entry) => entry.id !== item.id,
+      );
+      renderQueue();
+    });
+
+    row.append(info, progress, actionButton);
+    elements.queueList.appendChild(row);
+  });
 }
 
 function onCancelWork() {
@@ -293,6 +567,7 @@ function renderManifest(manifest) {
   }
 
   elements.downloadButton.disabled = false;
+  elements.queueAddButton.disabled = false;
   elements.readerPageTotal.textContent = `/ ${manifest.pageCount}`;
   elements.readerPageInput.max = `${manifest.pageCount}`;
 
@@ -418,6 +693,7 @@ function resetPreviewState() {
   state.previewUrls.clear();
   elements.previewGrid.innerHTML = "";
   elements.downloadButton.disabled = true;
+  elements.queueAddButton.disabled = true;
   elements.cacheBadge.textContent = "No manifest cached yet";
   elements.metaTitle.textContent = "No book loaded";
   elements.metaAuthor.textContent = "Waiting for manifest";
@@ -693,7 +969,7 @@ async function runSearch(options) {
       setSearchStatus("No results found for that keyword.", "muted");
     } else {
       setSearchStatus(
-        `Showing ${results.length} books. Click one to fill the URL box.`,
+        `Showing ${results.length} books. Click one to open it, or tick several to batch-download.`,
         "success",
       );
     }
@@ -756,6 +1032,26 @@ function renderSearchResults() {
   }
 
   results.forEach((result) => {
+    if (!result.href) {
+      return;
+    }
+
+    const card = document.createElement("div");
+    card.className = "search-result-card";
+
+    const selectLabel = document.createElement("label");
+    selectLabel.className = "search-result-select";
+    selectLabel.title = "Select for batch download";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = state.search.checkedHrefs.has(result.href);
+    checkbox.setAttribute("aria-label", "Select for batch download");
+    checkbox.addEventListener("click", (event) => event.stopPropagation());
+    checkbox.addEventListener("change", () =>
+      toggleResultSelection(result, checkbox.checked),
+    );
+    selectLabel.appendChild(checkbox);
+
     const button = document.createElement("button");
     button.type = "button";
     button.className = "search-result";
@@ -798,8 +1094,79 @@ function renderSearchResults() {
     button.appendChild(copy);
 
     button.addEventListener("click", () => pickSearchResult(result, button));
-    elements.searchResults.appendChild(button);
+
+    card.append(selectLabel, button);
+    elements.searchResults.appendChild(card);
   });
+
+  renderSelectionBar();
+}
+
+function toggleResultSelection(result, isChecked) {
+  if (isChecked) {
+    state.search.checkedHrefs.set(result.href, result);
+  } else {
+    state.search.checkedHrefs.delete(result.href);
+  }
+
+  renderSelectionBar();
+}
+
+function renderSelectionBar() {
+  const count = state.search.checkedHrefs.size;
+  elements.searchSelectionBar.classList.toggle("hidden", count === 0);
+  elements.searchSelectionCount.textContent = `${count} selected`;
+}
+
+function onClearSelection() {
+  state.search.checkedHrefs.clear();
+  renderSearchResults();
+}
+
+async function onCopySelection() {
+  const hrefs = Array.from(state.search.checkedHrefs.values(), (r) => r.href);
+  if (!hrefs.length) {
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(hrefs.join("\n"));
+    setSearchStatus(`Copied ${hrefs.length} link${hrefs.length === 1 ? "" : "s"}.`, "success");
+  } catch {
+    setSearchStatus(
+      "Couldn't copy automatically. Select the links and copy manually.",
+      "error",
+    );
+  }
+}
+
+async function onQueueSelection() {
+  const selected = Array.from(state.search.checkedHrefs.values());
+  if (!selected.length) {
+    return;
+  }
+
+  const proxyPrefix = elements.proxyInput.value.trim();
+  setSearchStatus(`Resolving ${selected.length} book URL${selected.length === 1 ? "" : "s"}...`, "muted");
+
+  const resolutions = await Promise.allSettled(
+    selected.map((result) => resolveReaderUrl(result.href, { proxyPrefix })),
+  );
+
+  let queued = 0;
+  resolutions.forEach((outcome, index) => {
+    if (outcome.status === "fulfilled") {
+      enqueueDownload(outcome.value, selected[index].title);
+      queued += 1;
+    }
+  });
+
+  state.search.checkedHrefs.clear();
+  closeSearch();
+  setStatus(
+    `Queued ${queued} book${queued === 1 ? "" : "s"} for download.`,
+    queued ? "success" : "error",
+  );
 }
 
 async function pickSearchResult(result, buttonNode) {
@@ -824,12 +1191,9 @@ async function pickSearchResult(result, buttonNode) {
     });
 
     elements.urlInput.value = resolvedUrl;
-    elements.urlInput.focus();
-    setSearchStatus(
-      "Added to the URL box. You can click another result anytime.",
-      "success",
-    );
-    setStatus(`Selected: ${resolvedUrl}`, "success");
+    closeSearch();
+    setStatus(`Opening: ${resolvedUrl}`, "success");
+    await loadBook(resolvedUrl, { openInReader: true, historyMode: "push" });
   } catch (error) {
     if (error.name === "AbortError") {
       return;

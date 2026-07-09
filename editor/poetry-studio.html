@@ -16,6 +16,7 @@
     <script src="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@latest/dist/shakeeb-justify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="ur-phonetic.js"></script>
     <script defer src="../assets/js/shared-init.js"></script>
@@ -76,17 +77,20 @@
         direction: rtl; text-align: right;
         font-family: "Payami", "Mehr", serif; font-size: 1.15rem; line-height: 2.1;
       }
-      /* Poetry renders in our own justified preview → hide Toast's md preview. */
+      /* Poetry renders in our own justified preview → hide Toast's md preview.
+         The splitter needs matching specificity + !important: Toast's own
+         stylesheet rule otherwise wins, leaving a stray 1px divider floating
+         in the middle of the now-full-width source editor. */
       .toastui-editor-md-preview { display: none; }
-      .toastui-editor-md-splitter { display: none; }
+      .toastui-editor-md-container .toastui-editor-md-splitter { display: none !important; }
       .toastui-editor-md-container .toastui-editor { width: 100% !important; }
 
       /* Compact format bar (alignment + direction) */
       .fmt-btn { display:inline-flex; align-items:center; justify-content:center; padding:6px; border-radius:9px; color:#9d174d; background:#fdf2f8; border:0; cursor:pointer; transition:.15s; }
       .fmt-btn:hover { background:#fbcfe8; }
 
-      /* #print-area square-corner option for clean image export */
-      #print-area.square-corners { border-radius: 0 !important; }
+      /* .print-page square-corner option for clean image export */
+      .print-page.square-corners { border-radius: 0 !important; }
 
       /* Mobile preview FAB + full-screen overlay */
       #previewFab { position: fixed; left: 1rem; bottom: 1rem; z-index: 40; box-shadow: 0 10px 24px rgba(219,39,119,.35); }
@@ -95,23 +99,87 @@
       #previewOverlay.open { display: block; }
       #previewOverlayBody { background: transparent; min-height: 100%; display: flex; align-items: flex-start; justify-content: center; }
 
-      #print-area {
+      /* Every [page]-break or auto-height-overflow split lands in its own
+         sibling .print-page card (#print-area is simply the first one), each
+         independently exportable. */
+      /* Top padding needs to be at least as big as the page-label's own
+         protrusion above a card's edge (its height + its negative offset)
+         -- otherwise only the FIRST card clips it, since every later card
+         gets that same clearance for free from the flex gap above it. */
+      #previewHost { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 24px 4px 4px; }
+      .print-page-label {
+        position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+        background: #1f2937; color: #fff; font-size: 0.7rem; padding: 2px 10px;
+        border-radius: 999px; z-index: 2;
+      }
+      .print-page-download {
+        position: absolute; top: 8px; left: 8px; z-index: 2;
+        width: 30px; height: 30px; border-radius: 8px; border: 0; cursor: pointer;
+        background: rgba(15, 23, 42, 0.55); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .print-page-download .material-symbols-outlined { font-size: 16px; }
+
+      .print-page {
         font-family: "Payami", "Mehr", serif;
         white-space: normal; text-align: justify;
         max-width: 100%; margin-inline: auto;
       }
-      #print-area .poetry-empty-line { height: 1.6em; }
-      #print-area :first-child { margin-top: 0; }
-      #print-area :last-child { margin-bottom: 0; }
-      #print-area h1, #print-area h2, #print-area h3,
-      #print-area h4, #print-area h5, #print-area h6 { font-weight: 700; margin: 0.75em 0 0.35em; }
-      #print-area p, #print-area ul, #print-area ol,
-      #print-area blockquote, #print-area pre { margin: 0.6em 0; }
-      #print-area ul, #print-area ol { padding-right: 1.5em; }
-      #print-area blockquote { border-right: 4px solid #f9a8d4; padding-right: 1em; color: #475569; }
-      #print-area code { background: rgba(15, 23, 42, 0.08); border-radius: 0.4rem; padding: 0.1rem 0.35rem; font-size: 0.9em; }
-      #print-area pre code { display: block; padding: 1rem; overflow: auto; }
-      #print-area a { color: #db2777; text-decoration: underline; }
+      .print-page .poetry-empty-line { height: 1.6em; }
+      .print-page :first-child { margin-top: 0; }
+      .print-page :last-child { margin-bottom: 0; }
+      .print-page h1, .print-page h2, .print-page h3,
+      .print-page h4, .print-page h5, .print-page h6 { font-weight: 700; margin: 0.75em 0 0.35em; }
+      .print-page p, .print-page ul, .print-page ol,
+      .print-page blockquote, .print-page pre { margin: 0.6em 0; }
+      .print-page ul, .print-page ol { padding-right: 1.5em; }
+      .print-page blockquote { border-right: 4px solid #f9a8d4; padding-right: 1em; color: #475569; }
+      .print-page code { background: rgba(15, 23, 42, 0.08); border-radius: 0.4rem; padding: 0.1rem 0.35rem; font-size: 0.9em; }
+      .print-page pre code { display: block; padding: 1rem; overflow: auto; }
+      .print-page a { color: #db2777; text-decoration: underline; }
+
+      /* Sher counter: poetry is centered via ShakeebJustify's own rows, which
+         leaves margin space on both sides -- the badge sits in the right-hand
+         margin (physical right, per spec) with a short line reaching back
+         toward the row's edge. Forcing direction:ltr here matters: the whole
+         page is dir="rtl", and CSS flexbox's "row" main axis is direction-
+         aware -- without this override the line and number swap places
+         (number ends up touching the text instead of the line). */
+      .print-page .sj-row { position: relative; }
+      .print-page .sj-counter {
+        position: absolute;
+        left: 100%;
+        top: 0;
+        bottom: 0;
+        display: flex;
+        direction: ltr;
+        align-items: center;
+        gap: 6px;
+        padding-left: 8px;
+        white-space: nowrap;
+        font-family: sans-serif;
+        font-size: 0.75em;
+        pointer-events: none;
+      }
+      .print-page .sj-counter::before {
+        content: "";
+        width: 18px;
+        height: 1px;
+        background: #db2777;
+        opacity: 0.5;
+      }
+      .print-page .sj-counter-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.6em;
+        height: 1.6em;
+        padding: 0 0.3em;
+        border-radius: 999px;
+        background: #db2777;
+        color: #fff;
+        font-weight: 600;
+      }
 
       .unsplash-thumb { width: 100%; height: 56px; object-fit: cover; border-radius: 10px; cursor: pointer; border: 2px solid transparent; }
       .unsplash-thumb:hover { border-color: #ec4899; }
@@ -155,9 +223,30 @@
                 <option value="Mehr">مہر نستعلیق</option>
                 <option value="Emaad">عماد نستعلیق</option>
               </select>
+              <span class="w-px h-5 bg-pink-200 mx-1"></span>
+              <input
+                id="fontSizeInput"
+                type="number"
+                min="1"
+                placeholder="حجم px"
+                title="حجم — shows the font-size around the cursor; change it while text is selected to apply, otherwise it's just a read-out"
+                class="border border-gray-200 p-2 rounded-lg text-sm w-20"
+                onchange="onFontSizeInputChange(this)"
+              />
               <button onclick="toggleCssModal(true)" class="icon-btn bg-slate-600" title="Preview CSS">
                 <span class="material-symbols-outlined">css</span>
               </button>
+              <button onclick="insertPageBreak()" class="icon-btn bg-indigo-600" title="صفحہ وقفہ — Insert page break">
+                <span class="material-symbols-outlined">insert_page_break</span>
+              </button>
+              <label class="flex items-center gap-1 text-xs text-gray-600 bg-white px-2 py-1.5 rounded-lg border border-gray-200 cursor-pointer select-none" title="ہر شعر پر نمبر — number each sher">
+                <input type="checkbox" id="showCounterToggle" class="w-3.5 h-3.5" />
+                شمار
+              </label>
+              <select id="counterModeSelect" class="border border-gray-200 p-1.5 rounded-lg text-xs" title="نمبرنگ کی نوعیت — whether the sher count continues across pages or restarts on each one">
+                <option value="continue">Continue across pages</option>
+                <option value="new">Restart each page</option>
+              </select>
               <button onclick="toggleAboutModal(true)" class="icon-btn bg-pink-600" title="About / Credits — shakeeb-justify">
                 <span class="material-symbols-outlined">auto_awesome</span>
               </button>
@@ -242,6 +331,10 @@
                 <input id="pageH" type="number" placeholder="H px" class="w-20 border border-gray-200 p-1.5 rounded-lg text-center text-sm" />
                 <button onclick="applyCustomSize()" class="icon-btn bg-indigo-500"><span class="material-symbols-outlined">check</span></button>
               </div>
+              <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer select-none" title="جب صفحہ سائز مقرر ہو تو مواد اس اونچائی پر نئے صفحے میں خودکار تقسیم ہو — when a fixed page size is chosen, overflowing content automatically continues onto new page cards at that exact height. Unchecked: only width follows the page size, height grows with content (today's behaviour).">
+                <input type="checkbox" id="paginateHeightToggle" checked class="w-3.5 h-3.5" />
+                اونچائی کے مطابق تقسیم — paginate by height
+              </label>
             </div>
             <div class="flex gap-2 items-center flex-wrap">
               <input id="fontNameInput" placeholder="نام — name" class="w-28 border border-gray-200 p-2 rounded-lg text-right text-sm" />
@@ -268,7 +361,9 @@
         <!-- ============== PREVIEW COLUMN ============== -->
         <div class="flex flex-col items-stretch gap-4">
           <div class="bg-white/70 backdrop-blur rounded-2xl shadow-md p-4 flex items-center justify-center gap-3 flex-wrap">
-            <button onclick="downloadImage()" class="icon-btn bg-green-500" title="تصویر ڈاؤن لوڈ"><span class="material-symbols-outlined">download</span></button>
+            <button id="downloadBtn" onclick="downloadImage()" class="icon-btn bg-green-500" title="تصویر ڈاؤن لوڈ">
+              <span id="downloadBtnIcon" class="material-symbols-outlined">download</span>
+            </button>
             <button onclick="window.print()" class="icon-btn bg-gray-700" title="پرنٹ"><span class="material-symbols-outlined">print</span></button>
             <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-600 select-none">
               <input type="checkbox" id="roundedToggle" class="w-4 h-4 text-pink-600 rounded border-gray-300" />
@@ -276,7 +371,7 @@
             </label>
           </div>
           <div id="previewHost" class="overflow-auto rounded-3xl">
-            <div id="print-area" class="bg-white/80 backdrop-blur rounded-3xl square-corners shadow-xl px-10 py-12 text-center text-xl leading-loose min-h-[300px] transition-all"></div>
+            <div id="print-area" class="print-page bg-white/80 backdrop-blur rounded-3xl square-corners shadow-xl px-10 py-12 text-center text-xl leading-loose min-h-[300px] transition-all"></div>
           </div>
         </div>
       </div>
@@ -289,7 +384,10 @@
           <h2 class="text-lg font-semibold text-slate-800">Preview Custom CSS</h2>
           <button type="button" class="icon-btn bg-slate-700" onclick="toggleCssModal(false)"><span class="material-symbols-outlined">close</span></button>
         </div>
-        <textarea id="customCssInput" rows="8" class="w-full border border-slate-200 rounded-2xl p-4 text-left font-mono text-sm" placeholder="border: 3px solid #111; box-shadow: 0 15px 30px rgba(0,0,0,.12);"></textarea>
+        <p class="text-xs text-slate-500">
+          Real CSS, applied globally to the preview &mdash; selectors, <code>:hover</code>, <code>::before</code>/<code>::after</code>, all of it. Target <code>#print-area</code>, e.g. <code>#print-area h1:hover { background: #fef3c7; }</code>
+        </p>
+        <textarea id="customCssInput" dir="ltr" rows="8" class="w-full border border-slate-200 rounded-2xl p-4 text-left font-mono text-sm" placeholder="#print-area h1:hover { background: #fef3c7; }"></textarea>
         <div class="flex justify-end gap-2">
           <button type="button" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700" onclick="toggleCssModal(false)">Close</button>
           <button type="button" class="px-4 py-2 rounded-xl bg-pink-600 text-white" onclick="saveCustomCssFromModal()">Apply</button>

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Poetry &amp; Prose Downloader</title>
+    <link rel="icon" type="image/x-icon" href="../icon.png" />
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="../../assets/css/nastaliq-fonts.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@2.0.0/dist/shakeeb-justify.min.js"></script>
+    <script src="./index.js" type="module"></script>
+    <script defer src="../../assets/js/shared-init.js"></script>
+    <link rel="canonical" href="https://tools.shakeeb.in/rekhta-reader/poetry/index.html">
+    <link rel="manifest" href="../../manifest.webmanifest">
+    <meta name="theme-color" content="#1b4965">
+    <link rel="stylesheet" href="../../assets/css/tailwind.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero hero--compact">
+        <p class="eyebrow">Rekhta Downloader</p>
+        <h1>Poetry &amp; prose downloader.</h1>
+        <p>
+          Discover every ghazal, nazm, couplet, or story a poet or author has
+          on Rekhta &mdash; no bookmarklet, no scrolling. Read them right
+          here, or download the lot.
+        </p>
+        <p class="poetry-backlink">
+          <a href="../index.html"><i class="fa-solid fa-arrow-left"></i> Book downloader</a>
+        </p>
+
+        <div class="status-strip">
+          <span class="badge" id="cache-badge">Search for a poet or author to begin</span>
+          <div class="status-copy">
+            <strong id="progress-label">Idle</strong>
+            <p id="status-text" data-tone="muted"></p>
+          </div>
+        </div>
+
+        <form id="poet-form" class="hero-toolbar">
+          <input
+            id="poet-url"
+            name="url"
+            type="url"
+            placeholder="Poet/author profile URL"
+            autocomplete="off"
+          />
+          <input
+            id="proxy-prefix"
+            name="proxy"
+            type="text"
+            placeholder="Proxy prefix (use {url})"
+            autocomplete="off"
+          />
+          <button id="discover-button" type="submit" class="hero-button hero-button--accent">
+            Discover
+          </button>
+          <button id="search-button" type="button" class="hero-button">
+            Search
+          </button>
+        </form>
+      </section>
+
+      <section id="categories-panel" class="panel categories-panel hidden">
+        <h2><i class="fa-solid fa-list-check"></i> What to fetch</h2>
+        <p class="queue-hint">
+          Found on <strong id="categories-poet-name">this poet's</strong> profile. Everything is
+          pre-selected &mdash; untick anything you don't want.
+        </p>
+        <ul id="categories-list" class="categories-list"></ul>
+        <button id="categories-start" type="button" class="hero-button hero-button--accent">
+          <i class="fa-solid fa-play"></i> Start
+        </button>
+      </section>
+
+      <section class="panel queue-panel">
+        <h2><i class="fa-solid fa-list"></i> Jobs</h2>
+        <p class="queue-hint">
+          Each checked category becomes its own job below, fetched with
+          overlapping progress rather than one strict queue.
+        </p>
+        <ul id="jobs-list" class="queue-list"></ul>
+      </section>
+
+      <details class="panel manual-panel">
+        <summary><i class="fa-solid fa-link"></i> Paste links manually</summary>
+        <p class="queue-hint">
+          Have your own list of ghazal/nazm/story links (e.g. from an older
+          dRekhta export)? Paste them here instead of discovering a poet.
+        </p>
+        <form id="manual-form" class="manual-form">
+          <textarea
+            id="manual-links"
+            placeholder="Paste one Rekhta link per line..."
+            rows="4"
+          ></textarea>
+          <div class="manual-form-row">
+            <label class="manual-format">
+              <input type="radio" name="manual-format" value="poetry" checked />
+              Poetry (.txt)
+            </label>
+            <label class="manual-format">
+              <input type="radio" name="manual-format" value="prose" />
+              Prose (.json)
+            </label>
+            <button type="submit" class="hero-button hero-button--accent">
+              <i class="fa-solid fa-play"></i> Fetch these links
+            </button>
+          </div>
+        </form>
+      </details>
+
+      <details class="panel manual-panel" open>
+        <summary><i class="fa-solid fa-file-arrow-up"></i> Open a downloaded file</summary>
+        <p class="queue-hint">
+          Re-open a <code>.txt</code> or <code>.json</code> file you downloaded from
+          here earlier. Say which it is &mdash; there's no reliable way to guess from
+          a plain text file alone.
+        </p>
+        <form id="upload-form" class="manual-form">
+          <input id="upload-file" type="file" accept=".txt,.json,text/plain,application/json" />
+          <div class="manual-form-row">
+            <label class="manual-format">
+              <input type="radio" name="upload-format" value="poetry" checked />
+              Poetry (.txt)
+            </label>
+            <label class="manual-format">
+              <input type="radio" name="upload-format" value="prose" />
+              Prose (.json)
+            </label>
+            <button type="submit" class="hero-button hero-button--accent">
+              <i class="fa-solid fa-book-open"></i> Open in reader
+            </button>
+          </div>
+        </form>
+      </details>
+    </main>
+
+    <div id="search-modal" class="search-modal hidden" role="dialog" aria-modal="true" aria-label="Poet search">
+      <div class="search-shell">
+        <header class="search-header">
+          <div class="search-toprow">
+            <h2 class="search-title">Find a poet or author</h2>
+            <button id="search-close" type="button" class="search-close" aria-label="Close search">&times;</button>
+          </div>
+
+          <div class="search-controls">
+            <label class="search-field">
+              <span>Name</span>
+              <input id="search-keyword" type="search" placeholder="Type a poet or author name..." autocomplete="off" />
+            </label>
+            <label class="search-field">
+              <span>Lang</span>
+              <select id="search-lang">
+                <option value="3" selected>Urdu (3)</option>
+                <option value="2">Hindi (2)</option>
+                <option value="1">English (1)</option>
+              </select>
+            </label>
+            <button id="search-submit" type="button" class="hero-button hero-button--accent">Search</button>
+          </div>
+
+          <p id="search-status" class="search-status" data-tone="muted"></p>
+        </header>
+
+        <div id="search-results" class="search-results poet-search-results" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div id="reader-modal" class="reader-modal hidden">
+      <div class="reader-shell">
+        <div class="reader-stage poetry-reader-stage">
+          <div id="reader-format-bar" class="reader-format-bar hidden">
+            <select id="reader-format-select" aria-label="Verse layout">
+              <option value="auto">Auto (by type)</option>
+              <option value="sher">1 column</option>
+              <option value="sher2">2 columns</option>
+              <option value="pattern-4">Qat'a / Rubai (4-line)</option>
+              <option value="mukhammas">Mukhammas (5-line)</option>
+              <option value="mukhammas-3-2">Mukhammas 3+2</option>
+              <option value="mukhammas-mixed">Mukhammas mixed</option>
+              <option value="musaddas">Musaddas (6-line)</option>
+              <option value="musaddas-6">Musaddas all-6</option>
+              <option value="musaddas-mixed">Musaddas mixed</option>
+              <option value="custom">Custom pattern&hellip;</option>
+            </select>
+            <input
+              id="reader-format-custom"
+              type="text"
+              class="hidden"
+              placeholder="e.g. 3+2"
+              aria-label="Custom shakeeb-justify pattern"
+            />
+          </div>
+          <p id="reader-source" class="reader-source"></p>
+          <h2 id="reader-title" class="reader-title" dir="auto"></h2>
+          <p id="reader-author" class="reader-author" dir="auto"></p>
+          <div id="reader-body" class="reader-body" dir="rtl"></div>
+        </div>
+        <div class="reader-toolbar">
+          <button id="reader-close" type="button" class="reader-action" aria-label="Close reader">
+            <i class="fas fa-close"></i>
+          </button>
+          <div class="reader-toolbar-actions">
+            <button id="reader-copy" type="button" class="reader-action" aria-label="Copy">
+              <i class="fa-solid fa-copy"></i>
+            </button>
+            <button id="reader-share" type="button" class="reader-action" aria-label="Share">
+              <i class="fa-solid fa-share-nodes"></i>
+            </button>
+            <button id="reader-download" type="button" class="reader-action" aria-label="Download this job">
+              <i class="fa-solid fa-download"></i>
+            </button>
+          </div>
+          <div class="reader-nav">
+            <button id="reader-prev" type="button" class="reader-action" aria-label="Previous">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <label class="reader-pagebox" for="reader-position-input">
+              <input id="reader-position-input" type="number" min="1" inputmode="numeric" />
+              <span id="reader-position-total">/ 1</span>
+            </label>
+            <button id="reader-next" type="button" class="reader-action" aria-label="Next">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

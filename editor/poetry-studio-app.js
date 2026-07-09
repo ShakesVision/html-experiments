@@ -19,6 +19,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var previewEl = document.getElementById("print-area");
   var fontSelector = document.getElementById("fontSelector");
+  var fontSizeInput = document.getElementById("fontSizeInput");
+  var showCounterToggle = document.getElementById("showCounterToggle");
+  var counterModeSelect = document.getElementById("counterModeSelect");
+  var paginateHeightToggle = document.getElementById("paginateHeightToggle");
   var titleEl = document.getElementById("poetryTitle");
   var bgEl = document.getElementById("bgInput");
   var colorEl = document.getElementById("colorInput");
@@ -139,7 +143,13 @@ document.addEventListener("DOMContentLoaded", function () {
       initialEditType: "markdown",
       previewStyle: "vertical",
       usageStatistics: false,
-      hideModeSwitch: false,
+      // WYSIWYG mode round-trips through Toast UI's own ProseMirror doc
+      // model, which has no idea what our [sj]...[/sj] poetry blocks or
+      // injected <span style="font-size:..."> HTML mean -- switching into
+      // and back out of it mangles them a little more each time. The
+      // markdown string is the one source of truth; #print-area below is
+      // the only rendered view.
+      hideModeSwitch: true,
       initialValue: initialValue || "",
       plugins: plugins,
       toolbarItems: [
@@ -155,6 +165,10 @@ document.addEventListener("DOMContentLoaded", function () {
       renderPreview();
       autoSave();
       histCapture();
+    });
+
+    editor.on("caretChange", function () {
+      updateFontSizeInputFromCursor();
     });
 
     // Urdu phonetic keyboard. Using Toast's insertText API (not manual textarea
@@ -273,13 +287,207 @@ document.addEventListener("DOMContentLoaded", function () {
     return chunks.join("\n");
   }
 
-  function renderPreview() {
-    if (!previewEl) return;
-    var prepared = preprocessInput(getMarkdown());
-    previewEl.innerHTML = window.marked ? marked.parse(prepared) : prepared.replace(/\n/g, "<br>");
+  /* ----------------------------- Pagination ----------------------------- */
+  // [page] on its own line is a manual break -- always starts a new card.
+  // Within each resulting section, if a fixed page size is chosen AND the
+  // height-pagination checkbox is on, content that would overflow that
+  // page's exact height automatically continues onto further cards too.
+  // Splits only ever happen BETWEEN top-level rendered blocks (a heading, a
+  // paragraph, one whole [sj] block, etc.) -- never partway through one, to
+  // keep this tractable. A single block taller than one page simply
+  // overflows that page's card, same as today's un-paginated behaviour.
+
+  function splitMarkdownOnPageBreaks(markdown) {
+    return markdown.split(/^\[page\]\s*$/im);
+  }
+
+  function getPageTargetDimensions() {
+    if (currentPageSize === "auto") return null;
+    var w, h;
+    if (currentPageSize === "custom") {
+      w = Number(document.getElementById("pageW").value) || 0;
+      h = Number(document.getElementById("pageH").value) || 0;
+    } else {
+      var parts = currentPageSize.split("x");
+      w = Number(parts[0]);
+      h = Number(parts[1]);
+    }
+    return w && h ? { width: w, height: h } : null;
+  }
+
+  function renderSectionHtml(sectionMarkdown) {
+    var prepared = preprocessInput(sectionMarkdown);
+    return window.marked ? marked.parse(prepared) : prepared.replace(/\n/g, "<br>");
+  }
+
+  // Renders one section into a hidden probe styled exactly like a real page
+  // card (same classes/inline styles, so padding/font/line-height all
+  // match), fixed to the target height with overflow hidden, then greedily
+  // moves top-level blocks out to a new page the moment scrollHeight tips
+  // past clientHeight. Returns an array of HTML strings, one per page.
+  function paginateSectionByHeight(sectionMarkdown, dims) {
+    var html = renderSectionHtml(sectionMarkdown);
+
+    var probe = document.createElement("div");
+    probe.className = previewEl.className;
+    probe.style.cssText = previewEl.style.cssText;
+    probe.style.position = "fixed";
+    probe.style.visibility = "hidden";
+    probe.style.left = "-99999px";
+    probe.style.top = "0";
+    probe.style.width = dims.width + "px";
+    probe.style.height = dims.height + "px";
+    probe.style.maxWidth = "none";
+    probe.style.maxHeight = dims.height + "px";
+    probe.style.overflow = "hidden";
+    probe.style.boxSizing = "border-box";
+    document.body.appendChild(probe);
+    probe.innerHTML = html;
+
+    // Expand [sj] blocks into their real row/spacer markup before measuring
+    // -- a raw, unrendered block's height doesn't reflect its laid-out size.
     if (window.ShakeebJustify) {
       try { ShakeebJustify.apply(); } catch (e) { /* ignore */ }
     }
+
+    var chunks = Array.prototype.slice.call(probe.children);
+    probe.innerHTML = "";
+
+    var pages = [];
+    chunks.forEach(function (chunk) {
+      probe.appendChild(chunk);
+      if (probe.scrollHeight > probe.clientHeight + 1 && probe.children.length > 1) {
+        probe.removeChild(chunk);
+        pages.push(probe.innerHTML);
+        probe.innerHTML = "";
+        probe.appendChild(chunk);
+      }
+    });
+    if (probe.children.length) pages.push(probe.innerHTML);
+
+    document.body.removeChild(probe);
+    return pages.length ? pages : [html];
+  }
+
+  function clearExtraPrintPages() {
+    Array.prototype.forEach.call(document.querySelectorAll(".print-page"), function (el) {
+      if (el !== previewEl) el.remove();
+    });
+  }
+
+  function createExtraPrintPage() {
+    var card = document.createElement("div");
+    card.className = previewEl.className;
+    card.style.cssText = previewEl.style.cssText;
+    var host = document.getElementById("previewHost");
+    if (host) host.appendChild(card);
+    return card;
+  }
+
+  function renderPageChrome(cards) {
+    cards.forEach(function (card, index) {
+      var oldLabel = card.querySelector(".print-page-label");
+      var oldBtn = card.querySelector(".print-page-download");
+      if (oldLabel) oldLabel.remove();
+      if (oldBtn) oldBtn.remove();
+      if (cards.length < 2) return;
+
+      card.style.position = "relative";
+
+      var label = document.createElement("div");
+      label.className = "print-page-label";
+      label.textContent = "Page " + (index + 1) + " / " + cards.length;
+      card.appendChild(label);
+
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "print-page-download";
+      btn.title = "Download this page";
+      btn.innerHTML = '<span class="material-symbols-outlined">download</span>';
+      btn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        downloadCardAsImage(card, index + 1);
+      });
+      card.appendChild(btn);
+    });
+
+    var icon = document.getElementById("downloadBtnIcon");
+    var btn2 = document.getElementById("downloadBtn");
+    if (icon && btn2) {
+      icon.textContent = cards.length > 1 ? "folder_zip" : "download";
+      btn2.title = cards.length > 1 ? "تمام صفحات ZIP میں ڈاؤن لوڈ کریں" : "تصویر ڈاؤن لوڈ";
+    }
+  }
+
+  function renderPreview() {
+    if (!previewEl) return;
+    clearExtraPrintPages();
+
+    var sections = splitMarkdownOnPageBreaks(getMarkdown());
+    var dims = getPageTargetDimensions();
+    var paginateByHeight = !!(dims && (!paginateHeightToggle || paginateHeightToggle.checked));
+
+    var pagesHtml = [];
+    sections.forEach(function (sectionMarkdown) {
+      if (paginateByHeight) {
+        pagesHtml = pagesHtml.concat(paginateSectionByHeight(sectionMarkdown, dims));
+      } else {
+        pagesHtml.push(renderSectionHtml(sectionMarkdown));
+      }
+    });
+    if (!pagesHtml.length) pagesHtml = [""];
+
+    previewEl.innerHTML = pagesHtml[0];
+    var cards = [previewEl];
+    for (var i = 1; i < pagesHtml.length; i += 1) {
+      var card = createExtraPrintPage();
+      card.innerHTML = pagesHtml[i];
+      cards.push(card);
+    }
+
+    // Idempotent: paginateSectionByHeight() already rendered its own [sj]
+    // blocks (data-sj-rendered="true" makes ShakeebJustify skip them), so
+    // this only picks up sections that weren't height-paginated.
+    if (window.ShakeebJustify) {
+      try { ShakeebJustify.apply(); } catch (e) { /* ignore */ }
+    }
+
+    renderPageChrome(cards);
+    if (showCounterToggle && showCounterToggle.checked) applyPoetryCounters();
+  }
+
+  // Numbers each sher/stanza (a run of .sj-row elements between
+  // ShakeebJustify's .sj-spacer group boundaries) rather than each line,
+  // continuously across every [sj] block AND every page card -- this runs
+  // fresh after every renderPreview() (which rebuilds every card from
+  // scratch each time), so there's no accumulation/cleanup to worry about.
+  function applyPoetryCounters() {
+    var restartPerPage = counterModeSelect && counterModeSelect.value === "new";
+    var count = 0;
+    Array.prototype.forEach.call(document.querySelectorAll(".print-page"), function (page) {
+      if (restartPerPage) count = 0;
+      Array.prototype.forEach.call(page.querySelectorAll(".sj"), function (block) {
+        var inGroup = false;
+        Array.prototype.forEach.call(block.children, function (child) {
+          if (child.classList.contains("sj-spacer")) {
+            inGroup = false;
+            return;
+          }
+          if (!child.classList.contains("sj-row")) return;
+          if (inGroup) return;
+
+          inGroup = true;
+          count += 1;
+          var badge = document.createElement("span");
+          badge.className = "sj-counter";
+          var number = document.createElement("span");
+          number.className = "sj-counter-number";
+          number.textContent = count;
+          badge.appendChild(number);
+          child.insertBefore(badge, child.firstChild);
+        });
+      });
+    });
   }
 
   /* ----------------------------- Fonts ----------------------------- */
@@ -374,15 +582,34 @@ document.addEventListener("DOMContentLoaded", function () {
     if (bgEl && bgEl.value) s.push("background: " + bgEl.value);
     if (colorEl && colorEl.value) s.push("color: " + colorEl.value);
     s.push("font-family: " + fontStack(currentFont));
-    if (customCssInput && customCssInput.value.trim()) s.push(customCssInput.value.trim());
     return s.join("; ");
+  }
+
+  // The custom-CSS textarea holds real CSS -- selectors, :hover, :before/
+  // :after, the lot -- so it goes into an actual <style> element, not
+  // folded into #print-area's inline style attribute (which can only ever
+  // hold bare declarations and silently ignores anything selector-shaped).
+  var customStyleEl = null;
+  function applyCustomCss() {
+    if (!customCssInput) return;
+    if (!customStyleEl) {
+      customStyleEl = document.createElement("style");
+      customStyleEl.id = "previewCustomStyle";
+      document.head.appendChild(customStyleEl);
+    }
+    customStyleEl.textContent = customCssInput.value || "";
   }
 
   function applyPreviewStyles(save) {
     if (!previewEl) return;
-    // Re-apply page-size dimensions on top of user CSS.
-    previewEl.setAttribute("style", getPreviewCss());
-    applyPageSize(currentPageSize, false);
+    // Applies to every page card so background/color/font stay consistent
+    // across a multi-page document, not just #print-area.
+    var css = getPreviewCss();
+    Array.prototype.forEach.call(document.querySelectorAll(".print-page"), function (card) {
+      card.setAttribute("style", css);
+    });
+    applyPageSize(currentPageSize, false); // re-apply dimensions on top of the CSS just set
+    applyCustomCss();
     if (save !== false) autoSave();
   }
 
@@ -455,11 +682,16 @@ document.addEventListener("DOMContentLoaded", function () {
   function applyPageSize(value, save) {
     currentPageSize = value || "auto";
     if (!previewEl) return;
-    if (currentPageSize === "auto") {
-      previewEl.style.width = "100%";
-      previewEl.style.minHeight = "300px";
-      previewEl.style.maxWidth = "100%";
-    } else {
+    // Applies to every page card, not just #print-area -- otherwise cards
+    // created by an earlier renderPreview() would be left at a stale size.
+    Array.prototype.forEach.call(document.querySelectorAll(".print-page"), function (card) {
+      if (currentPageSize === "auto") {
+        card.style.width = "100%";
+        card.style.minHeight = "300px";
+        card.style.maxWidth = "100%";
+        return;
+      }
+
       var w, h;
       if (currentPageSize === "custom") {
         w = Number(document.getElementById("pageW").value) || 0;
@@ -469,17 +701,18 @@ document.addEventListener("DOMContentLoaded", function () {
         w = Number(parts[0]);
         h = Number(parts[1]);
       }
-      if (w) previewEl.style.width = w + "px";
-      if (h) previewEl.style.minHeight = h + "px";
+      if (w) card.style.width = w + "px";
+      if (h) card.style.minHeight = h + "px";
       // Render the true page width; the #previewHost wrapper scrolls if the
       // column is narrower. (Capping at 100% was squashing A4/Letter width.)
-      previewEl.style.maxWidth = "none";
-    }
+      card.style.maxWidth = "none";
+    });
     if (save !== false) autoSave();
   }
 
   window.applyCustomSize = function () {
     applyPageSize("custom", true);
+    renderPreview();
   };
 
   /* ----------------------------- Library ----------------------------- */
@@ -513,6 +746,9 @@ document.addEventListener("DOMContentLoaded", function () {
       fontUrl: fontUrlEl ? fontUrlEl.value.trim() : "",
       customCss: customCssInput ? customCssInput.value : "",
       pageSize: currentPageSize,
+      showCounter: showCounterToggle ? showCounterToggle.checked : false,
+      counterMode: counterModeSelect ? counterModeSelect.value : "continue",
+      paginateHeight: paginateHeightToggle ? paginateHeightToggle.checked : true,
       updatedAt: Date.now(),
     };
   }
@@ -576,6 +812,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (colorEl) colorEl.value = item.color || "";
     if (fontUrlEl) fontUrlEl.value = item.fontUrl || "";
     if (customCssInput) customCssInput.value = item.customCss || "";
+    if (showCounterToggle) showCounterToggle.checked = !!item.showCounter;
+    if (counterModeSelect) counterModeSelect.value = item.counterMode === "new" ? "new" : "continue";
+    if (paginateHeightToggle) paginateHeightToggle.checked = item.paginateHeight !== false;
     if (item.fontUrl && item.fontName) { registerCustomFont(item.fontName, item.fontUrl); rememberCustomFont(item.fontName, item.fontUrl); }
     if (fontSelector) { ensureFontOption(currentFont, currentFont); fontSelector.value = currentFont; }
     if (pageSizeSelect) pageSizeSelect.value = ["auto", "custom"].indexOf(currentPageSize) >= 0 || /^\d+x\d+$/.test(currentPageSize) ? currentPageSize : "auto";
@@ -602,6 +841,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (colorEl) colorEl.value = "";
     if (fontUrlEl) fontUrlEl.value = "";
     if (customCssInput) customCssInput.value = "";
+    if (showCounterToggle) showCounterToggle.checked = false;
+    if (counterModeSelect) counterModeSelect.value = "continue";
+    if (paginateHeightToggle) paginateHeightToggle.checked = true;
     if (fontSelector) fontSelector.value = "Payami";
     if (pageSizeSelect) pageSizeSelect.value = "auto";
     syncColorPickers();
@@ -677,18 +919,81 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /* ----------------------------- Export ----------------------------- */
 
-  window.downloadImage = function () {
-    if (!previewEl || !window.html2canvas) return;
-    html2canvas(previewEl, { scale: 2, useCORS: true, backgroundColor: null }).then(function (canvas) {
+  function cardToCanvas(card) {
+    return html2canvas(card, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: null,
+      // The page-number badge and per-card download button are editor
+      // chrome, not part of the poem -- never bake them into the export.
+      ignoreElements: function (el) {
+        return el.classList.contains("print-page-label") || el.classList.contains("print-page-download");
+      },
+    });
+  }
+
+  function downloadCardAsImage(card, pageNumber) {
+    if (!window.html2canvas) return;
+    cardToCanvas(card).then(function (canvas) {
       var suggested = (titleEl && titleEl.value.trim()) || defaultTitle(getMarkdown());
-      var name = prompt("فائل کا نام درج کریں", suggested);
-      if (name === null) return;
-      var safe = (name.trim() || suggested || "poetry").replace(/[\\/:*?"<>|]/g, "_");
+      var safe = suggested.replace(/[\\/:*?"<>|]/g, "_") || "poetry";
       var link = document.createElement("a");
-      link.download = safe.endsWith(".png") ? safe : safe + ".png";
+      link.download = pageNumber ? safe + "-page-" + pageNumber + ".png" : safe + ".png";
       link.href = canvas.toDataURL();
       link.click();
     });
+  }
+
+  // Single page: the original one-PNG-with-a-filename-prompt flow.
+  // Multiple pages: prompts once for a base name, then renders every page
+  // card to PNG and bundles them into one .zip.
+  window.downloadImage = function () {
+    if (!previewEl || !window.html2canvas) return;
+    var cards = Array.prototype.slice.call(document.querySelectorAll(".print-page"));
+    var suggested = (titleEl && titleEl.value.trim()) || defaultTitle(getMarkdown());
+
+    if (cards.length < 2) {
+      var name = prompt("فائل کا نام درج کریں", suggested);
+      if (name === null) return;
+      var safe = (name.trim() || suggested || "poetry").replace(/[\\/:*?"<>|]/g, "_");
+      cardToCanvas(previewEl).then(function (canvas) {
+        var link = document.createElement("a");
+        link.download = safe.endsWith(".png") ? safe : safe + ".png";
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+      return;
+    }
+
+    if (!window.JSZip) { alert("ZIP لائبریری لوڈ نہیں ہو سکی — JSZip failed to load"); return; }
+    var zipName = prompt("فائل کا نام درج کریں (ZIP)", suggested);
+    if (zipName === null) return;
+    var safeZip = (zipName.trim() || suggested || "poetry").replace(/[\\/:*?"<>|]/g, "_");
+
+    var zip = new JSZip();
+    var chain = Promise.resolve();
+    cards.forEach(function (card, index) {
+      chain = chain.then(function () {
+        return cardToCanvas(card).then(function (canvas) {
+          return new Promise(function (resolve) {
+            canvas.toBlob(function (blob) {
+              zip.file(safeZip + "-page-" + (index + 1) + ".png", blob);
+              resolve();
+            });
+          });
+        });
+      });
+    });
+
+    chain
+      .then(function () { return zip.generateAsync({ type: "blob" }); })
+      .then(function (blob) {
+        var link = document.createElement("a");
+        link.download = safeZip + ".zip";
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+      });
   };
 
   /* ----------------------------- Modals ----------------------------- */
@@ -742,6 +1047,15 @@ document.addEventListener("DOMContentLoaded", function () {
     renderPreview();
   };
 
+  window.insertPageBreak = function () {
+    if (!editor) return;
+    histRecord();
+    var snippet = "\n[page]\n";
+    if (editor.replaceSelection) editor.replaceSelection(snippet);
+    else editor.insertText(snippet);
+    renderPreview();
+  };
+
   /* --------------------- Alignment / direction --------------------- */
 
   function wrapSelection(makeHtml) {
@@ -769,20 +1083,80 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   };
 
+  /* --------------------- Per-selection font size --------------------- */
+  // Deliberately NOT built on wrapSelection() above -- that helper falls
+  // back to wrapping a placeholder ("متن") when nothing is selected, which
+  // is exactly the guessing-what-to-wrap problem we want to avoid here.
+  // The font-size input is instead a live inspector: it shows the size
+  // around the cursor (via Toast UI's caretChange event), and only ever
+  // mutates the markdown when the user changes it while text is selected.
+
+  function markdownOffsetFromPos(markdown, pos) {
+    // Toast UI's markdown-mode getSelection() returns 1-indexed [line, ch]
+    // pairs (CodeMirror-style); there's no built-in flat-offset API.
+    var lines = markdown.split("\n");
+    var offset = 0;
+    for (var i = 0; i < pos[0] - 1; i += 1) {
+      offset += lines[i].length + 1; // +1 for the newline
+    }
+    return offset + (pos[1] - 1);
+  }
+
+  function findEnclosingFontSize(markdown, offset) {
+    var before = markdown.slice(0, offset);
+    var openIdx = before.lastIndexOf('<span style="font-size:');
+    if (openIdx === -1) return null;
+
+    // If a </span> already closed that span before the cursor, it doesn't
+    // enclose the cursor anymore.
+    var closedBeforeCursor = before.indexOf("</span>", openIdx);
+    if (closedBeforeCursor !== -1 && closedBeforeCursor < offset) return null;
+
+    var tagEnd = markdown.indexOf(">", openIdx);
+    if (tagEnd === -1) return null;
+
+    var match = markdown.slice(openIdx, tagEnd).match(/font-size:\s*([\d.]+)px/);
+    return match ? match[1] : null;
+  }
+
+  function updateFontSizeInputFromCursor() {
+    if (!editor || !fontSizeInput || !editor.getSelection) return;
+    // Don't stomp on what the user is actively typing into the box.
+    if (document.activeElement === fontSizeInput) return;
+
+    var range = editor.getSelection();
+    var markdown = getMarkdown();
+    var offset = markdownOffsetFromPos(markdown, range[0]);
+    var size = findEnclosingFontSize(markdown, offset);
+    fontSizeInput.value = size || "";
+  }
+
+  window.onFontSizeInputChange = function (inputEl) {
+    if (!editor) return;
+    var sel = (editor.getSelectedText && editor.getSelectedText()) || "";
+    var size = parseFloat(inputEl.value);
+
+    if (!sel || !size || size <= 0) return; // no reliable target -> no-op
+
+    histRecord();
+    editor.replaceSelection('<span style="font-size:' + size + 'px">' + sel + "</span>");
+    renderPreview();
+    autoSave();
+  };
+
   /* --------------------------- Preview overlay --------------------------- */
 
   window.togglePreview = function (show) {
     var overlay = document.getElementById("previewOverlay");
     var body = document.getElementById("previewOverlayBody");
     var host = document.getElementById("previewHost");
-    if (!overlay || !body || !host || !previewEl) return;
-    if (show) {
-      body.appendChild(previewEl); // re-parent the single live preview node
-      overlay.classList.add("open");
-    } else {
-      host.appendChild(previewEl);
-      overlay.classList.remove("open");
-    }
+    if (!overlay || !body || !host) return;
+    // Re-parent every page card (there may be several now) as a block, not
+    // just the original #print-area.
+    var source = show ? host : body;
+    var target = show ? body : host;
+    while (source.firstChild) target.appendChild(source.firstChild);
+    overlay.classList.toggle("open", !!show);
   };
 
   /* ----------------------------- Unsplash ----------------------------- */
@@ -873,13 +1247,41 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (fontSelector) {
     fontSelector.addEventListener("change", function () {
-      currentFont = this.value;
+      var name = this.value;
+      var sel = (editor && editor.getSelectedText && editor.getSelectedText()) || "";
+
+      // Text selected -> style just that selection, same idea as font-size.
+      // Otherwise, unchanged: this dropdown sets the whole document's font.
+      if (sel) {
+        histRecord();
+        editor.replaceSelection('<span style="font-family:' + fontStack(name) + '">' + sel + "</span>");
+        renderPreview();
+        autoSave();
+        this.value = currentFont; // the global font didn't actually change
+        return;
+      }
+
+      currentFont = name;
       applyFont();
       applyPreviewStyles(false);
       autoSave();
     });
   }
   if (titleEl) titleEl.addEventListener("input", autoSave);
+
+  if (showCounterToggle) {
+    showCounterToggle.addEventListener("change", function () {
+      renderPreview();
+      autoSave();
+    });
+  }
+
+  if (counterModeSelect) {
+    counterModeSelect.addEventListener("change", function () {
+      renderPreview();
+      autoSave();
+    });
+  }
 
   [bgEl, colorEl].forEach(function (el) {
     if (!el) return;
@@ -898,7 +1300,14 @@ document.addEventListener("DOMContentLoaded", function () {
     pageSizeSelect.addEventListener("change", function () {
       var wrap = document.getElementById("customSizeWrap");
       if (this.value === "custom") { wrap.style.display = "inline-flex"; }
-      else { wrap.style.display = "none"; applyPageSize(this.value, true); }
+      else { wrap.style.display = "none"; applyPageSize(this.value, true); renderPreview(); }
+    });
+  }
+
+  if (paginateHeightToggle) {
+    paginateHeightToggle.addEventListener("change", function () {
+      renderPreview();
+      autoSave();
     });
   }
 
@@ -920,7 +1329,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var roundedToggle = document.getElementById("roundedToggle");
   if (roundedToggle) roundedToggle.addEventListener("change", function () {
-    if (previewEl) previewEl.classList.toggle("square-corners", !this.checked);
+    // Every existing page card, not just #print-area -- otherwise only the
+    // first page picks it up until the next renderPreview() (e.g. adding or
+    // removing a page break) clones the class list onto the rest.
+    var squareCorners = !this.checked;
+    Array.prototype.forEach.call(document.querySelectorAll(".print-page"), function (card) {
+      card.classList.toggle("square-corners", squareCorners);
+    });
   });
 
   var unsplashQuery = document.getElementById("unsplashQuery");
