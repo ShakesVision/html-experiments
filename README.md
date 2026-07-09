@@ -1,5 +1,11 @@
 # tools.shakeeb.in
 
+## License and Attribution
+
+This project is shared under the Apache License 2.0. Credit is required for any use, fork, embed, deployment, or derivative work: **Shakeeb Ahmad - https://shakeeb.in**.
+
+See [LICENSE](LICENSE), [NOTICE](NOTICE), and [ATTRIBUTION.md](ATTRIBUTION.md) for the full terms and attribution guidance.
+
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/shakesvision/html-experiments/pages%2Fpages-build-deployment?style=for-the-badge&logo=buddy&logoColor=%23F5C400)
 
 Welcome to my web experiments! This repository contains various web-based projects and experiments that I have worked on using HTML, CSS, and JavaScript. Usually they are aided with GPT and are for testing purposes as a prototype of something serious.
