@@ -1,8 +1,10 @@
-import { createLimiter } from "../src/shared.js";
+import { createLimiter, renderSelectorForm } from "../src/shared.js";
 import {
+  POETRY_SELECTOR_DEFS,
   collectListingLinks,
   discoverPoetCategories,
   fetchWorkContent,
+  poetrySelectors,
   searchPoets,
 } from "./src/scraper.js";
 
@@ -40,6 +42,13 @@ const elements = {
   searchSubmit: document.getElementById("search-submit"),
   searchStatus: document.getElementById("search-status"),
   searchResults: document.getElementById("search-results"),
+
+  settingsButton: document.getElementById("settings-button"),
+  settingsModal: document.getElementById("settings-modal"),
+  settingsClose: document.getElementById("settings-close"),
+  settingsFields: document.getElementById("settings-fields"),
+  settingsReset: document.getElementById("settings-reset"),
+  settingsDone: document.getElementById("settings-done"),
 
   readerModal: document.getElementById("reader-modal"),
   readerStage: document.querySelector(".reader-stage"),
@@ -90,6 +99,16 @@ elements.categoriesStart.addEventListener("click", onStartCategories);
 elements.manualForm.addEventListener("submit", onManualSubmit);
 elements.uploadForm.addEventListener("submit", onUploadSubmit);
 
+elements.settingsButton.addEventListener("click", openSettings);
+elements.settingsClose.addEventListener("click", closeSettings);
+elements.settingsDone.addEventListener("click", closeSettings);
+elements.settingsReset.addEventListener("click", onResetSelectors);
+elements.settingsModal.addEventListener("click", (event) => {
+  if (event.target === elements.settingsModal) {
+    closeSettings();
+  }
+});
+
 elements.readerClose.addEventListener("click", closeReader);
 elements.readerPrev.addEventListener("click", () => stepReader(-1));
 elements.readerNext.addEventListener("click", () => stepReader(1));
@@ -108,6 +127,10 @@ elements.readerModal.addEventListener("click", (event) => {
   }
 });
 document.addEventListener("keydown", (event) => {
+  if (!elements.settingsModal.classList.contains("hidden")) {
+    if (event.key === "Escape") closeSettings();
+    return;
+  }
   if (elements.readerModal.classList.contains("hidden")) {
     return;
   }
@@ -115,6 +138,25 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "ArrowLeft") stepReader(-1);
   if (event.key === "ArrowRight") stepReader(1);
 });
+
+// ---- Selector settings (user-editable Rekhta markup targets) ----
+
+function openSettings() {
+  renderSelectorForm(elements.settingsFields, POETRY_SELECTOR_DEFS, poetrySelectors);
+  elements.settingsModal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeSettings() {
+  elements.settingsModal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function onResetSelectors() {
+  poetrySelectors.reset();
+  renderSelectorForm(elements.settingsFields, POETRY_SELECTOR_DEFS, poetrySelectors);
+  setStatus("Selectors reset to defaults. Discover again to apply.", "muted");
+}
 
 setStatus("Paste a poet/author profile URL, or search for one, to see what's available.");
 renderJobs();

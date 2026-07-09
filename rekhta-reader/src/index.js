@@ -1,15 +1,45 @@
-import { applyProxyPrefix, createLimiter, getDeviceProfile } from "./shared.js";
+import {
+  applyProxyPrefix,
+  createLimiter,
+  createSelectorStore,
+  getDeviceProfile,
+} from "./shared.js";
 
 const DEFAULT_PROXY_PREFIX = "";
-const PAGE_KEY_ENDPOINT =
-  "https://ebooksapi.rekhta.org/api_getebookpagebyid_websiteapp/?wref=from-site&&pgid=";
 const DEFAULT_TILE_SIZE = 50;
 const DEFAULT_TILE_GAP = 16;
+
+// Everything the book reader reads out of Rekhta's page, in one editable
+// place. If Rekhta renames a class or a script variable and loading breaks,
+// a user can fix the matching value from the in-app selector settings —
+// no code change needed. The `end` tokens for markers stay in code (they're
+// generic terminators); only the fragile leading marker is user-editable.
+const BOOK_SELECTOR_DEFS = [
+  { key: "bookName", label: "Book title", description: "Element holding the book's title on the ebook page.", def: "span.c-book-name" },
+  { key: "author", label: "Author", description: "Element holding the author's name.", def: "span.faded" },
+  { key: "markerBookId", label: "Marker · book ID", description: "Text just before the book ID in the page script.", def: 'var bookId = "' },
+  { key: "markerPages", label: "Marker · page files", description: "Text just before the list of page image filenames.", def: "var pages = [" },
+  { key: "markerPageIds", label: "Marker · page IDs", description: "Text just before the list of page IDs.", def: "var pageIds = [" },
+  { key: "markerTotalPages", label: "Marker · total pages", description: "Text just before the total page count.", def: "var totalPageCount =" },
+  { key: "imageBase", label: "Page image base URL", description: "Prefix for a page image; the tool appends bookId/filename.", def: "https://ebooksapi.rekhta.org/images/" },
+  { key: "pageKeyEndpoint", label: "Page-key API endpoint", description: "Endpoint that returns the unscramble key; the tool appends the page ID.", def: "https://ebooksapi.rekhta.org/api_getebookpagebyid_websiteapp/?wref=from-site&&pgid=" },
+  { key: "searchCard", label: "Search · result card", description: "Each book card in search results.", def: ".bookContent" },
+  { key: "searchTitle", label: "Search · book title", description: "Title text inside a search result card.", def: ".bookTagline" },
+  { key: "searchAuthor", label: "Search · author", description: "Author text inside a search result card.", def: ".bookTitle" },
+  { key: "readerLink", label: "Detail → reader link", description: "Link to the readable ebook on a detail page.", def: 'a[href*="/ebooks/"]' },
+];
+
+const bookSelectors = createSelectorStore(
+  "rekhta_book_selectors_v1",
+  Object.fromEntries(BOOK_SELECTOR_DEFS.map((d) => [d.key, d.def])),
+);
 
 const memoryJsonCache = new Map();
 
 export {
+  BOOK_SELECTOR_DEFS,
   DEFAULT_PROXY_PREFIX,
+  bookSelectors,
   createBookClient,
   createLimiter,
   getDeviceProfile,
@@ -40,7 +70,7 @@ function createBookClient(options = {}) {
 
   async function getPageKey(pageId, fetchOptions = {}) {
     const keyUrl = applyProxyPrefix(
-      `${PAGE_KEY_ENDPOINT}${encodeURIComponent(pageId)}`,
+      `${bookSelectors.get("pageKeyEndpoint")}${encodeURIComponent(pageId)}`,
       proxyPrefix,
     );
     return getCachedJson(keyUrl, fetchOptions);
@@ -156,24 +186,28 @@ function normalizeManifest(bookUrl, html) {
   const parser = new DOMParser();
   const documentNode = parser.parseFromString(html, "text/html");
   const bookName =
-    documentNode.querySelector("span.c-book-name")?.textContent?.trim() ||
+    documentNode.querySelector(bookSelectors.get("bookName"))?.textContent?.trim() ||
     documentNode.querySelector("title")?.textContent?.trim() ||
     "Untitled book";
   const author =
     documentNode
-      .querySelector("span.faded")
+      .querySelector(bookSelectors.get("author"))
       ?.textContent?.replace(/\r?\n/g, "")
       .replace(/ +/g, " ")
       .replace("by ", "")
       .trim() || "Unknown author";
-  const bookId = findTextBetween(html, 'var bookId = "', '";');
-  const pages = stringToStringArray(findTextBetween(html, "var pages = [", "];"));
+  const bookId = findTextBetween(html, bookSelectors.get("markerBookId"), '";');
+  const pages = stringToStringArray(
+    findTextBetween(html, bookSelectors.get("markerPages"), "];"),
+  );
   const pageIds = stringToStringArray(
-    findTextBetween(html, "var pageIds = [", "];"),
+    findTextBetween(html, bookSelectors.get("markerPageIds"), "];"),
   );
   const pageCount =
-    Number(findTextBetween(html, "var totalPageCount =", ";")) ||
+    Number(findTextBetween(html, bookSelectors.get("markerTotalPages"), ";")) ||
     Math.max(pages.length, pageIds.length);
+  const imageBase = bookSelectors.get("imageBase");
+  const keyEndpoint = bookSelectors.get("pageKeyEndpoint");
   const fileName = `${bookName} by ${author}`
     .trim()
     .replace(/ +/g, " ")
@@ -181,9 +215,9 @@ function normalizeManifest(bookUrl, html) {
     .replace(/\s+/g, "-");
   const scrambleMap = pageIds.map((pageId, index) => ({
     imageName: pages[index] || "",
-    imgUrl: `https://ebooksapi.rekhta.org/images/${bookId}/${pages[index]}`,
+    imgUrl: `${imageBase}${bookId}/${pages[index]}`,
     index,
-    keyUrl: `${PAGE_KEY_ENDPOINT}${encodeURIComponent(pageId)}`,
+    keyUrl: `${keyEndpoint}${encodeURIComponent(pageId)}`,
     pageId,
   }));
 

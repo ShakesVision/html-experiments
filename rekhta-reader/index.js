@@ -1,9 +1,12 @@
 import {
+  BOOK_SELECTOR_DEFS,
   DEFAULT_PROXY_PREFIX,
+  bookSelectors,
   createBookClient,
   createLimiter,
   getDeviceProfile,
 } from "./src/index.js";
+import { renderSelectorForm } from "./src/shared.js";
 
 const { jsPDF } = window.jspdf;
 
@@ -48,6 +51,12 @@ const elements = {
   searchSelectionClear: document.getElementById("search-selection-clear"),
   searchStatus: document.getElementById("search-status"),
   searchSubmit: document.getElementById("search-submit"),
+  settingsButton: document.getElementById("settings-button"),
+  settingsModal: document.getElementById("settings-modal"),
+  settingsClose: document.getElementById("settings-close"),
+  settingsFields: document.getElementById("settings-fields"),
+  settingsReset: document.getElementById("settings-reset"),
+  settingsDone: document.getElementById("settings-done"),
   readerClose: document.getElementById("reader-close"),
   readerImage1: document.getElementById("reader-image-1"),
   readerImage2: document.getElementById("reader-image-2"),
@@ -124,6 +133,15 @@ elements.searchNext.addEventListener("click", () => changeSearchPage(1));
 elements.searchSelectionCopy.addEventListener("click", onCopySelection);
 elements.searchSelectionQueue.addEventListener("click", onQueueSelection);
 elements.searchSelectionClear.addEventListener("click", onClearSelection);
+elements.settingsButton.addEventListener("click", openSettings);
+elements.settingsClose.addEventListener("click", closeSettings);
+elements.settingsDone.addEventListener("click", closeSettings);
+elements.settingsReset.addEventListener("click", onResetSelectors);
+elements.settingsModal.addEventListener("click", (event) => {
+  if (event.target === elements.settingsModal) {
+    closeSettings();
+  }
+});
 elements.readerClose.addEventListener("click", closeReader);
 // Wire navigation buttons to visual-direction helpers so RTL/LTR behave the same visually
 elements.readerPrev.addEventListener("click", () => stepVisualLeft());
@@ -191,6 +209,9 @@ function syncBookUrlToLocation(bookUrl, historyMode) {
   } else {
     params.delete("lang");
   }
+  // The open page is owned by the reader (syncPageToLocation); clear any
+  // stale value left over from a previously-open book.
+  params.delete("page");
 
   const nextUrl = `${location.pathname}?${params.toString()}${location.hash}`;
   if (historyMode === "replace") {
@@ -198,6 +219,44 @@ function syncBookUrlToLocation(bookUrl, historyMode) {
   } else {
     history.pushState(null, "", nextUrl);
   }
+}
+
+// Reflect the currently-open reader page in the address bar (1-based) so a
+// link points at an exact book page. replaceState (not push) keeps Back
+// exiting the book instead of walking page-by-page, and avoids flooding
+// history as the reader flips.
+function syncPageToLocation(pageIndex) {
+  if (isReaderClosed()) {
+    return;
+  }
+  const params = new URLSearchParams(location.search);
+  if (!params.get("book")) {
+    return; // only track pages for a routed book
+  }
+  params.set("page", `${pageIndex + 1}`);
+  history.replaceState(
+    null,
+    "",
+    `${location.pathname}?${params.toString()}${location.hash}`,
+  );
+}
+
+function clearPageFromLocation() {
+  const params = new URLSearchParams(location.search);
+  if (!params.has("page")) {
+    return;
+  }
+  params.delete("page");
+  history.replaceState(
+    null,
+    "",
+    `${location.pathname}?${params.toString()}${location.hash}`,
+  );
+}
+
+function pageParamToIndex(rawValue) {
+  const page = parseInt(rawValue, 10);
+  return Number.isFinite(page) && page > 0 ? page - 1 : 0;
 }
 
 function bootstrapFromLocation() {
@@ -209,7 +268,11 @@ function bootstrapFromLocation() {
 
   const bookUrl = paramsToBookUrl(book, params.get("lang") || "");
   elements.urlInput.value = bookUrl;
-  loadBook(bookUrl, { openInReader: true, historyMode: "replace" });
+  loadBook(bookUrl, {
+    openInReader: true,
+    historyMode: "replace",
+    openAtPage: pageParamToIndex(params.get("page")),
+  });
 }
 
 function onLocationPopState() {
@@ -226,7 +289,11 @@ function onLocationPopState() {
 
   const bookUrl = paramsToBookUrl(book, params.get("lang") || "");
   elements.urlInput.value = bookUrl;
-  loadBook(bookUrl, { openInReader: true, historyMode: "none" });
+  loadBook(bookUrl, {
+    openInReader: true,
+    historyMode: "none",
+    openAtPage: pageParamToIndex(params.get("page")),
+  });
 }
 
 async function onLoadBook(event) {
@@ -241,7 +308,7 @@ async function onLoadBook(event) {
   await loadBook(bookUrl, { openInReader: false, historyMode: "push" });
 }
 
-async function loadBook(rawBookUrl, { openInReader = false, historyMode = "push" } = {}) {
+async function loadBook(rawBookUrl, { openInReader = false, historyMode = "push", openAtPage = 0 } = {}) {
   // Internal removal of /detail/ from the URL
   const bookUrl = rawBookUrl.replace(/\/detail\//i, "/");
   const proxyPrefix = elements.proxyInput.value.trim();
@@ -276,7 +343,8 @@ async function loadBook(rawBookUrl, { openInReader = false, historyMode = "push"
     syncBookUrlToLocation(bookUrl, historyMode);
 
     if (openInReader) {
-      openReader(0);
+      const lastIndex = Math.max(manifest.pageCount - 1, 0);
+      openReader(Math.min(Math.max(openAtPage, 0), lastIndex));
     }
   } catch (error) {
     handleError(
@@ -781,6 +849,14 @@ function getDirectionalDelta(direction) {
 }
 
 function onDocumentKeydown(event) {
+  if (!isSettingsClosed()) {
+    if (event.key === "Escape") {
+      closeSettings();
+    }
+
+    return;
+  }
+
   if (!isSearchClosed()) {
     if (event.key === "Escape") {
       closeSearch();
@@ -847,6 +923,7 @@ function openReader(pageIndex) {
 
 function closeReader() {
   elements.readerModal.classList.add("hidden");
+  clearPageFromLocation();
   elements.readerImage1.src = "";
   elements.readerImage2.src = "";
   elements.readerImage1.classList.add("hidden");
@@ -884,6 +961,29 @@ function onSearchBackdropClick(event) {
   if (event.target === elements.searchModal) {
     closeSearch();
   }
+}
+
+// ---- Selector settings (user-editable Rekhta markup targets) ----
+
+function openSettings() {
+  renderSelectorForm(elements.settingsFields, BOOK_SELECTOR_DEFS, bookSelectors);
+  elements.settingsModal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeSettings() {
+  elements.settingsModal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function isSettingsClosed() {
+  return elements.settingsModal.classList.contains("hidden");
+}
+
+function onResetSelectors() {
+  bookSelectors.reset();
+  renderSelectorForm(elements.settingsFields, BOOK_SELECTOR_DEFS, bookSelectors);
+  setStatus("Selectors reset to defaults. Reload the book to apply.", "muted");
 }
 
 function onSearchKeywordInput(event) {
@@ -1220,7 +1320,9 @@ function buildCollectionSearchUrl({ keyword, lang, pageIndex }) {
 function parseSearchResults(html) {
   const parser = new DOMParser();
   const documentNode = parser.parseFromString(html || "", "text/html");
-  const cards = Array.from(documentNode.querySelectorAll(".bookContent"));
+  const cards = Array.from(
+    documentNode.querySelectorAll(bookSelectors.get("searchCard")),
+  );
 
   return cards
     .map((card) => {
@@ -1230,12 +1332,12 @@ function parseSearchResults(html) {
       const imageUrl = parseBackgroundImageUrl(style);
       const title =
         card
-          .querySelector(".bookTagline")
+          .querySelector(bookSelectors.get("searchTitle"))
           ?.textContent?.trim()
           .replace(/ +/g, " ") || "";
       const author =
         card
-          .querySelector(".bookTitle")
+          .querySelector(bookSelectors.get("searchAuthor"))
           ?.textContent?.trim()
           .replace(/\s+/g, " ") || "";
 
@@ -1320,9 +1422,7 @@ async function resolveReaderUrl(href, { proxyPrefix, signal }) {
   const html = await response.text();
   const parser = new DOMParser();
   const documentNode = parser.parseFromString(html || "", "text/html");
-  const directReader =
-    documentNode.querySelector('a[href^="/ebooks/"]') ||
-    documentNode.querySelector('a[href*="/ebooks/"]');
+  const directReader = documentNode.querySelector(bookSelectors.get("readerLink"));
 
   const readerHref = directReader?.getAttribute("href")?.trim();
   if (!readerHref) {
@@ -1508,6 +1608,10 @@ async function renderReaderPages(pageIndex) {
   if (!state.manifest) {
     return;
   }
+
+  // Single choke point for "the visible page changed" — keep the URL's
+  // ?page= in step so the address bar always points at what's on screen.
+  syncPageToLocation(pageIndex);
 
   const requestToken = ++state.readerRequestToken;
   const pagesToRender = [];

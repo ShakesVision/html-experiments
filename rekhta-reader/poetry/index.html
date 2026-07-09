@@ -66,6 +66,14 @@
           <button id="search-button" type="button" class="hero-button">
             Search
           </button>
+          <button
+            id="settings-button"
+            type="button"
+            class="hero-button"
+            title="Advanced: edit the Rekhta selectors this tool uses"
+          >
+            <i class="fa-solid fa-gear"></i>
+          </button>
         </form>
       </section>
 
@@ -172,6 +180,48 @@
         </header>
 
         <div id="search-results" class="search-results poet-search-results" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div
+      id="settings-modal"
+      class="settings-modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Rekhta selector settings"
+    >
+      <div class="settings-shell">
+        <header class="settings-head">
+          <div>
+            <h2 class="settings-title">Rekhta selectors</h2>
+            <p class="settings-note">
+              If Rekhta changes its page structure and discovery, fetching, or
+              reading stops working, update the matching value here. Saved on
+              this device only, and applied the next time you discover or fetch.
+            </p>
+          </div>
+          <button
+            id="settings-close"
+            type="button"
+            class="search-close"
+            aria-label="Close settings"
+          >
+            &times;
+          </button>
+        </header>
+        <div id="settings-fields" class="settings-fields"></div>
+        <footer class="settings-foot">
+          <button id="settings-reset" type="button" class="hero-button">
+            Reset all to defaults
+          </button>
+          <button
+            id="settings-done"
+            type="button"
+            class="hero-button hero-button--accent"
+          >
+            Done
+          </button>
+        </footer>
       </div>
     </div>
 

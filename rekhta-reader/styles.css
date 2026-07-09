@@ -995,7 +995,8 @@ input {
   }
 }
 
-.search-modal {
+.search-modal,
+.settings-modal {
   position: fixed;
   inset: 0;
   z-index: 60;
@@ -1004,6 +1005,116 @@ input {
   padding: 16px;
   background: rgba(24, 15, 8, 0.72);
   backdrop-filter: blur(10px);
+}
+
+.settings-modal.hidden {
+  display: none;
+}
+
+.settings-shell {
+  width: min(100%, 760px);
+  max-height: min(100%, 92vh);
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.settings-head {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--card-border);
+  background: linear-gradient(135deg, rgba(160, 63, 36, 0.08), rgba(255, 252, 246, 0.9));
+}
+
+.settings-title {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+}
+
+.settings-note {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--muted);
+  max-width: 60ch;
+}
+
+.settings-head .search-close {
+  margin-left: auto;
+}
+
+.settings-fields {
+  padding: 8px 20px;
+  overflow-y: auto;
+  display: grid;
+  gap: 14px;
+}
+
+.selector-row {
+  display: grid;
+  gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--card-border);
+}
+
+.selector-row:last-child {
+  border-bottom: 0;
+}
+
+.selector-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selector-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.selector-flag {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.selector-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.selector-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.selector-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.settings-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--card-border);
 }
 
 .search-modal--hidden {

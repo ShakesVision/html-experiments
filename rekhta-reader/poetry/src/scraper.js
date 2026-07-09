@@ -1,9 +1,34 @@
 // Poetry/prose scraping engine — the dynamic replacement for dRekhta's
 // bookmarklet. Book-specific logic (manifest/unscramble/canvas) stays out of
 // here on purpose; only createLimiter/fetchHtml are shared with the book app.
-import { createLimiter, fetchHtml } from "../../src/shared.js";
+import { createLimiter, createSelectorStore, fetchHtml } from "../../src/shared.js";
 
 const REKHTA_ORIGIN = "https://www.rekhta.org";
+
+// Every CSS selector this scraper pulls from Rekhta, in one editable place.
+// If Rekhta renames a class and discovery/reading breaks, a user can fix the
+// matching value from the in-app selector settings — no code change needed.
+const POETRY_SELECTOR_DEFS = [
+  { key: "poetCard", label: "Search · poet card", description: "Each poet/author card in search results.", def: ".poetColumn" },
+  { key: "poetNameLink", label: "Search · name link", description: "The name link inside a poet card (its href is the profile).", def: ".poetDescColumn .poetNameDatePlace a[href]" },
+  { key: "poetImage", label: "Search · photo", description: "The poet's photo inside a search card.", def: ".poetListImg img" },
+  { key: "categoryLink", label: "Profile · category links", description: "Content-category links on a poet's profile (with counts).", def: "li h2 a[href]" },
+  { key: "listingPager", label: "Listing · page loader", description: "Hidden pagination markers that hold every listing page's URL.", def: ".contentLoadMorePaging[data-url]" },
+  { key: "listingItem", label: "Listing · item heading", description: "Each work's title heading in a listing (ghazals, nazms, stories…).", def: "h3.noPoetSubTtl" },
+  { key: "coupletSection", label: "Couplets · block", description: "Each inline couplet block on a couplets listing.", def: ".sherSection" },
+  { key: "coupletLines", label: "Couplets · lines", description: "The verse lines inside a couplet block.", def: ".sherLines .pMC p" },
+  { key: "coupletAuthor", label: "Couplets · author", description: "The author name inside a couplet block.", def: ".poetName" },
+  { key: "workTitle", label: "Work page · title", description: "The title heading on a single poem/story page.", def: "h1" },
+  { key: "workAuthor", label: "Work page · author", description: "The author link on a single poem/story page.", def: "a.ghazalAuthor" },
+  { key: "workBody", label: "Work page · body", description: "The text container on a single poem/story page (last match is the real one).", def: ".pMC" },
+];
+
+const poetrySelectors = createSelectorStore(
+  "rekhta_poetry_selectors_v1",
+  Object.fromEntries(POETRY_SELECTOR_DEFS.map((d) => [d.key, d.def])),
+);
+
+const S = (key) => poetrySelectors.get(key);
 
 // Profile-tab entries outside this set (profile, audio, video, blogs, t20,
 // imageshayari, other, ...) are curated/media pages, not plain-text content
@@ -26,10 +51,12 @@ const PROSE_SLUGS = new Set([
 
 export {
   KNOWN_CATEGORY_SLUGS,
+  POETRY_SELECTOR_DEFS,
   PROSE_SLUGS,
   collectListingLinks,
   discoverPoetCategories,
   fetchWorkContent,
+  poetrySelectors,
   searchPoets,
   toRekhtaAbsoluteUrl,
 };
@@ -63,12 +90,12 @@ async function searchPoets(keyword, lang, { proxyPrefix, signal } = {}) {
   const url = `${REKHTA_ORIGIN}/poets?keyword=${encodeURIComponent(keyword)}&lang=${encodeURIComponent(lang)}`;
   const doc = await fetchHtml(url, { proxyPrefix, signal });
 
-  return Array.from(doc.querySelectorAll(".poetColumn"))
+  return Array.from(doc.querySelectorAll(S("poetCard")))
     .map((card) => {
-      const anchor = card.querySelector(".poetDescColumn .poetNameDatePlace a[href]");
+      const anchor = card.querySelector(S("poetNameLink"));
       const href = anchor?.getAttribute("href")?.trim();
       const name = anchor?.querySelector("h2")?.textContent?.trim() || anchor?.textContent?.trim();
-      const image = card.querySelector(".poetListImg img")?.getAttribute("src") || "";
+      const image = card.querySelector(S("poetImage"))?.getAttribute("src") || "";
 
       if (!href || !name) {
         return null;
@@ -83,7 +110,7 @@ async function discoverPoetCategories(profileUrl, { proxyPrefix, signal } = {}) 
   const doc = await fetchHtml(profileUrl, { proxyPrefix, signal });
   const categories = [];
 
-  doc.querySelectorAll("li h2 a[href]").forEach((anchor) => {
+  doc.querySelectorAll(S("categoryLink")).forEach((anchor) => {
     const href = anchor.getAttribute("href")?.trim();
     if (!href) {
       return;
@@ -120,7 +147,7 @@ async function discoverPoetCategories(profileUrl, { proxyPrefix, signal } = {}) 
 async function collectListingLinks(categoryUrl, { proxyPrefix, signal, onProgress } = {}) {
   const firstPageDoc = await fetchHtml(categoryUrl, { proxyPrefix, signal });
   const extraPageUrls = Array.from(
-    firstPageDoc.querySelectorAll(".contentLoadMorePaging[data-url]"),
+    firstPageDoc.querySelectorAll(S("listingPager")),
   ).map((el) => toRekhtaAbsoluteUrl(el.getAttribute("data-url")));
 
   const limiter = createLimiter(3);
@@ -149,7 +176,7 @@ async function collectListingLinks(categoryUrl, { proxyPrefix, signal, onProgres
       return;
     }
 
-    doc.querySelectorAll("h3.noPoetSubTtl").forEach((heading) => {
+    doc.querySelectorAll(S("listingItem")).forEach((heading) => {
       const href = heading.closest("a[href]")?.getAttribute("href")?.trim();
       if (!href) {
         return;
@@ -169,9 +196,9 @@ async function collectListingLinks(categoryUrl, { proxyPrefix, signal, onProgres
 // Couplets ("sher") render fully inline in their own listing page — each
 // `.sherSection` already carries its own text, no per-item page fetch needed.
 function extractInlineCouplets(doc) {
-  return Array.from(doc.querySelectorAll(".sherSection"))
+  return Array.from(doc.querySelectorAll(S("coupletSection")))
     .map((section) => {
-      const lines = Array.from(section.querySelectorAll(".sherLines .pMC p"))
+      const lines = Array.from(section.querySelectorAll(S("coupletLines")))
         .map((p) => p.textContent.trim())
         .filter(Boolean);
 
@@ -179,7 +206,7 @@ function extractInlineCouplets(doc) {
         return null;
       }
 
-      const author = section.querySelector(".poetName")?.textContent?.trim() || "";
+      const author = section.querySelector(S("coupletAuthor"))?.textContent?.trim() || "";
       const sourceHref = section.getAttribute("data-content-url");
 
       return {
@@ -195,12 +222,12 @@ function extractInlineCouplets(doc) {
 
 async function fetchWorkContent(href, { proxyPrefix, signal } = {}) {
   const doc = await fetchHtml(href, { proxyPrefix, signal });
-  const title = doc.querySelector("h1")?.textContent?.trim() || "Untitled";
-  const author = doc.querySelector("a.ghazalAuthor")?.textContent?.trim() || "";
+  const title = doc.querySelector(S("workTitle"))?.textContent?.trim() || "Untitled";
+  const author = doc.querySelector(S("workAuthor"))?.textContent?.trim() || "";
 
-  // The real body is the LAST `.pMC` in the document — an earlier one is a
+  // The real body is the LAST match in the document — an earlier one is a
   // hidden "download as image" widget carrying decoy/placeholder text.
-  const pmcBlocks = doc.querySelectorAll(".pMC");
+  const pmcBlocks = doc.querySelectorAll(S("workBody"));
   const bodyBlock = pmcBlocks[pmcBlocks.length - 1];
   const text = bodyBlock
     ? Array.from(bodyBlock.querySelectorAll("p"))
