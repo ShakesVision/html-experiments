@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const EXCLUDED_DIRS = new Set([".git", "node_modules", ".vscode"]);
+const EXCLUDED_DIRS = new Set([".git", "node_modules", ".vscode", "extension", "fixtures"]);
 const URL_PATTERN = /https?:\/\/[^"'\s)<>]+/g;
 
 const APPROVED_REMOTE_HOSTS = new Set([

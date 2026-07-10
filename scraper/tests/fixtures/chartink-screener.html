@@ -1,0 +1,108 @@
+<!doctype html>
+<!--
+  Fixture: a faithful snapshot of chartink.com/screener/<name> AFTER the Vue
+  app has rendered the results (a raw fetch returns an empty shell — that is
+  the whole reason the extension's live-DOM path exists). Structure mirrors
+  chartink's jQuery-DataTables output: table#DataTables_Table_0 with columns
+  Sr. / Stock Name (link) / Symbol / Links / % Chg / Price / Volume.
+  Data is representative, not live. Replace by snapshotting a real rendered
+  page (see tests README) when validating against production.
+-->
+<html lang="en">
+<head><meta charset="utf-8"><title>Minervini Test, Screener - Chartink</title></head>
+<body>
+  <nav class="navbar"><a href="/">Chartink</a></nav>
+  <main>
+    <h1>Minervini Test</h1>
+    <div class="table-responsive">
+      <table id="DataTables_Table_0" class="table table-striped table-bordered dataTable no-footer" role="grid">
+        <thead>
+          <tr role="row">
+            <th>Sr.</th>
+            <th>Stock Name</th>
+            <th>Symbol</th>
+            <th>Links</th>
+            <th>% Chg</th>
+            <th>Price</th>
+            <th>Volume</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr role="row" class="odd">
+            <td>1</td>
+            <td><a href="https://chartink.com/stocks/RELIANCE.html">Reliance Industries Ltd</a></td>
+            <td>RELIANCE</td>
+            <td><a href="https://chartink.com/stocks/RELIANCE.html" class="chart-link">📈</a></td>
+            <td>2.34</td>
+            <td>2,910.50</td>
+            <td>1,23,45,678</td>
+          </tr>
+          <tr role="row" class="even">
+            <td>2</td>
+            <td><a href="https://chartink.com/stocks/TCS.html">Tata Consultancy Services Ltd</a></td>
+            <td>TCS</td>
+            <td><a href="https://chartink.com/stocks/TCS.html" class="chart-link">📈</a></td>
+            <td>1.02</td>
+            <td>3,845.15</td>
+            <td>21,34,567</td>
+          </tr>
+          <tr role="row" class="odd">
+            <td>3</td>
+            <td><a href="https://chartink.com/stocks/INFY.html">Infosys Ltd</a></td>
+            <td>INFY</td>
+            <td><a href="https://chartink.com/stocks/INFY.html" class="chart-link">📈</a></td>
+            <td>3.78</td>
+            <td>1,620.00</td>
+            <td>45,67,890</td>
+          </tr>
+          <tr role="row" class="even">
+            <td>4</td>
+            <td><a href="https://chartink.com/stocks/HDFCBANK.html">HDFC Bank Ltd</a></td>
+            <td>HDFCBANK</td>
+            <td><a href="https://chartink.com/stocks/HDFCBANK.html" class="chart-link">📈</a></td>
+            <td>0.85</td>
+            <td>1,712.30</td>
+            <td>98,76,543</td>
+          </tr>
+          <tr role="row" class="odd">
+            <td>5</td>
+            <td><a href="https://chartink.com/stocks/TATAMOTORS.html">Tata Motors Ltd</a></td>
+            <td>TATAMOTORS</td>
+            <td><a href="https://chartink.com/stocks/TATAMOTORS.html" class="chart-link">📈</a></td>
+            <td>4.51</td>
+            <td>987.65</td>
+            <td>3,21,45,000</td>
+          </tr>
+          <tr role="row" class="even">
+            <td>6</td>
+            <td><a href="https://chartink.com/stocks/SBIN.html">State Bank of India</a></td>
+            <td>SBIN</td>
+            <td><a href="https://chartink.com/stocks/SBIN.html" class="chart-link">📈</a></td>
+            <td>1.97</td>
+            <td>842.10</td>
+            <td>1,87,65,432</td>
+          </tr>
+          <tr role="row" class="odd">
+            <td>7</td>
+            <td><a href="https://chartink.com/stocks/WIPRO.html">Wipro Ltd</a></td>
+            <td>WIPRO</td>
+            <td><a href="https://chartink.com/stocks/WIPRO.html" class="chart-link">📈</a></td>
+            <td>2.10</td>
+            <td>545.80</td>
+            <td>67,89,012</td>
+          </tr>
+          <tr role="row" class="even">
+            <td>8</td>
+            <td><a href="https://chartink.com/stocks/ITC.html">ITC Ltd</a></td>
+            <td>ITC</td>
+            <td><a href="https://chartink.com/stocks/ITC.html" class="chart-link">📈</a></td>
+            <td>0.42</td>
+            <td>478.25</td>
+            <td>2,45,67,890</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "name": "scraper-suite",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run-scraper-tests.mjs"
+  }
+}

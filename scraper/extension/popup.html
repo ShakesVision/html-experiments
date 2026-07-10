@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <span class="mark">&lt;/&gt;</span>
+    <strong>Scrape</strong>
+    <span class="spacer"></span>
+    <button id="tierBadge" class="tier free" title="Manage plan">Free</button>
+  </header>
+
+  <main>
+    <p id="pageline" class="pageline">—</p>
+
+    <div class="seg" role="radiogroup" aria-label="Mode">
+      <label><input type="radio" name="mode" value="records" checked /> Records</label>
+      <label><input type="radio" name="mode" value="simple" /> Simple</label>
+    </div>
+
+    <div class="row">
+      <button id="pickBtn" class="btn ghost">🎯 Pick on page</button>
+      <button id="scrapeBtn" class="btn primary">Scrape page</button>
+    </div>
+
+    <div id="recordsMode">
+      <input id="containerInput" type="text" placeholder="row selector — or use Pick" />
+      <div id="fields" class="fields"></div>
+      <button id="addFieldBtn" class="btn ghost sm">+ column</button>
+    </div>
+    <div id="simpleMode" class="hidden">
+      <input id="selectorInput" type="text" placeholder="CSS selector — or use Pick" />
+    </div>
+
+    <p id="meta" class="meta">Open a page, Pick an element, then Scrape.</p>
+
+    <div id="resultWrap" class="result hidden">
+      <div class="result-head"><span id="count"></span>
+        <span class="spacer"></span>
+        <button id="csvBtn" class="btn ghost sm">CSV</button>
+        <button id="jsonBtn" class="btn ghost sm">JSON</button>
+        <button id="copyBtn" class="btn ghost sm">Copy</button>
+      </div>
+      <div id="tableWrap" class="table-scroll"></div>
+    </div>
+  </main>
+
+  <div id="licenseModal" class="modal hidden">
+    <div class="modal-card">
+      <h2>Scrape Pro</h2>
+      <p class="dim">Live scraping, the picker, pagination and unlimited rows are Pro.</p>
+      <input id="licenseInput" type="text" placeholder="SCR-XXXX-XXXX" />
+      <p id="licenseMsg" class="dim"></p>
+      <div class="row end">
+        <button id="licenseClose" class="btn ghost sm">Close</button>
+        <button id="licenseApply" class="btn primary sm">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

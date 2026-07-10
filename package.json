@@ -10,6 +10,8 @@
     "migrate:tailwind-local": "node scripts/migrate-tailwind-local.js",
     "check:tailwind-cdn": "node scripts/check-tailwind-cdn.js",
     "check": "npm run check:tailwind-cdn && node scripts/validate-site.js && node scripts/audit-third-party.js && node scripts/check-generated.js",
+    "test": "node scraper/tests/run-scraper-tests.mjs",
+    "sync:ext-engine": "node -e \"const fs=require('fs');fs.mkdirSync('scraper/extension/engine',{recursive:true});for(const f of fs.readdirSync('scraper/engine'))fs.copyFileSync('scraper/engine/'+f,'scraper/extension/engine/'+f);console.log('engine copied to extension')\"",
     "build:manifest": "node scripts/generate-tools-manifest.js",
     "build:site-assets": "node scripts/generate-site-assets.js",
     "sync:html-head": "node scripts/ensure-shared-head.js",
@@ -17,6 +19,7 @@
     "sync:all": "npm run sync:html-head && npm run build:tailwind && npm run build:manifest && npm run build:site-assets && npm run sync:readme"
   },
   "devDependencies": {
+    "linkedom": "^0.18.13",
     "tailwindcss": "^3.4.19"
   }
 }

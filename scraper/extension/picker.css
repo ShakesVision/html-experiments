@@ -1,0 +1,27 @@
+/* Injected into the page during picking. High z-index, namespaced so it can't
+   clash with the host page. */
+.scrape-hi {
+  outline: 2px solid #3b5bdb !important;
+  outline-offset: -1px !important;
+  background: rgba(59, 91, 219, 0.10) !important;
+  cursor: crosshair !important;
+}
+body.scrape-picking, body.scrape-picking * { cursor: crosshair !important; }
+
+.scrape-toast {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 24px !important;
+  transform: translateX(-50%) translateY(20px) !important;
+  z-index: 2147483647 !important;
+  background: #17120c !important;
+  color: #fff !important;
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  padding: 10px 16px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity .2s, transform .2s !important;
+}
+.scrape-toast.show { opacity: 1 !important; transform: translateX(-50%) translateY(0) !important; }

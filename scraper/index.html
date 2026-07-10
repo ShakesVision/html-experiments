@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
@@ -6,561 +6,176 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Web Scraper &amp; Data Extractor</title>
   <link rel="stylesheet" href="../assets/css/tailwind.css" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="module" src="./app.js"></script>
   <script defer src="../assets/js/shared-init.js"></script>
   <link rel="canonical" href="https://tools.shakeeb.in/scraper/index.html">
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#1b4965">
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #0f1420;
-      --panel: #ffffff;
-      --panel-2: #f4f6fb;
-      --ink: #1a2233;
-      --muted: #61708c;
-      --faint: #93a0b8;
-      --line: #e2e7f0;
-      --accent: #3b5bdb;
-      --accent-soft: #edf1ff;
-      --accent-ink: #2942a6;
-      --good: #2f8a5b;
-      --warn: #b7791f;
-      --danger: #c0392b;
-      --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
-      --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: var(--sans);
-      color: var(--ink);
-      background:
-        radial-gradient(120% 80% at 100% 0, rgba(59, 91, 219, 0.10), transparent 45%),
-        linear-gradient(180deg, #eef1f7, #e7ebf3);
-    }
-
-    button, input, select, textarea { font: inherit; }
-
-    /* ---------- Top bar ---------- */
-    .topbar {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px clamp(14px, 3vw, 28px);
-      background: rgba(15, 20, 32, 0.96);
-      color: #eaf0ff;
-      position: sticky;
-      top: 0;
-      z-index: 20;
-    }
-    .topbar .mark {
-      width: 30px; height: 30px; border-radius: 8px; flex: none;
-      display: grid; place-items: center;
-      background: linear-gradient(135deg, #4c6ef5, #3b5bdb);
-      color: #fff; font-family: var(--mono); font-weight: 700; font-size: 15px;
-    }
-    .topbar h1 { margin: 0; font-size: 1.02rem; font-weight: 650; letter-spacing: -0.01em; }
-    .topbar .beta {
-      font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.14em;
-      text-transform: uppercase; color: #9db0ff;
-      border: 1px solid rgba(157, 176, 255, 0.4); border-radius: 999px; padding: 2px 7px;
-    }
-    .topbar .spacer { flex: 1; }
-    .topbar a.proxy-doc {
-      color: #9db0ff; text-decoration: none; font-size: 0.8rem;
-      display: inline-flex; align-items: center; gap: 6px;
-    }
-    .topbar a.proxy-doc:hover { color: #eaf0ff; }
-    .icon-toggle {
-      background: rgba(255,255,255,0.08); border: 0; color: #eaf0ff;
-      width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: grid; place-items: center;
-    }
-    .icon-toggle:hover { background: rgba(255,255,255,0.16); }
-
-    /* ---------- Shell ---------- */
-    .shell {
-      display: grid;
-      grid-template-columns: 250px minmax(0, 1fr);
-      gap: 0;
-      min-height: calc(100vh - 58px);
-    }
-    .shell.collapsed { grid-template-columns: 0 minmax(0, 1fr); }
-
-    aside {
-      background: rgba(255, 255, 255, 0.55);
-      border-right: 1px solid var(--line);
-      padding: 18px 16px;
-      overflow: hidden;
-    }
-    aside h2 {
-      margin: 0 0 4px; font-size: 0.72rem; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--muted); font-weight: 600;
-    }
-    aside .hint { margin: 0 0 14px; font-size: 0.78rem; color: var(--faint); }
-    .preset-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-    .preset {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line);
-      background: var(--panel); transition: border-color .12s, transform .12s;
-    }
-    .preset:hover { border-color: #c3ccff; transform: translateX(2px); }
-    .preset .name {
-      font-size: 0.86rem; font-weight: 550; color: var(--accent-ink); cursor: pointer;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .preset .del {
-      border: 0; background: none; color: var(--faint); cursor: pointer;
-      font-size: 0.72rem; padding: 2px 4px; flex: none;
-    }
-    .preset .del:hover { color: var(--danger); }
-    .preset-empty { font-size: 0.8rem; color: var(--faint); padding: 6px 2px; }
-
-    main {
-      padding: clamp(18px, 3vw, 34px);
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 20px;
-      align-content: start;
-      max-width: 1100px;
-    }
-    @media (min-width: 1080px) {
-      main { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
-    }
-
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(23, 37, 84, 0.06);
-      overflow: hidden;
-    }
-    .card > header {
-      padding: 14px 18px; border-bottom: 1px solid var(--line);
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      background: var(--panel-2);
-    }
-    .card > header h3 { margin: 0; font-size: 0.95rem; font-weight: 650; }
-    .card > header .sub { font-size: 0.76rem; color: var(--faint); font-family: var(--mono); }
-    .card-body { padding: 18px; display: grid; gap: 16px; }
-
-    .field { display: grid; gap: 6px; }
-    .field > label { font-size: 0.82rem; font-weight: 600; color: var(--ink); }
-    .field .desc { font-size: 0.74rem; color: var(--faint); line-height: 1.5; }
-    .field .desc code {
-      font-family: var(--mono); background: var(--accent-soft);
-      color: var(--accent-ink); padding: 1px 5px; border-radius: 5px; font-size: 0.9em;
-    }
-
-    input[type="text"], input[type="url"], input[type="number"], textarea {
-      width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
-      background: #fbfcfe; color: var(--ink); transition: border-color .12s, box-shadow .12s;
-    }
-    input[type="text"], input[type="url"] { font-family: var(--mono); font-size: 0.88rem; }
-    input:focus, textarea:focus {
-      outline: none; border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(59, 91, 219, 0.14);
-    }
-
-    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fbfcfe; }
-    .seg label {
-      position: relative; cursor: pointer; padding: 8px 16px; font-size: 0.84rem;
-      color: var(--muted); display: inline-flex; align-items: center; gap: 7px;
-    }
-    .seg label + label { border-left: 1px solid var(--line); }
-    .seg input { position: absolute; opacity: 0; pointer-events: none; }
-    .seg label:has(input:checked) { background: var(--accent); color: #fff; font-weight: 600; }
-
-    .row { display: grid; gap: 16px; }
-    @media (min-width: 560px) { .row.two { grid-template-columns: 1fr 1fr; } }
-
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 18px; border-radius: 10px; border: 1px solid transparent;
-      font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: transform .1s, filter .12s;
-    }
-    .btn:active { transform: translateY(1px); }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { filter: brightness(1.07); }
-    .btn-ghost { background: var(--panel); color: var(--ink); border-color: var(--line); }
-    .btn-ghost:hover { border-color: #c3ccff; color: var(--accent-ink); }
-    .btn[disabled] { opacity: 0.55; cursor: not-allowed; }
-
-    .hidden { display: none !important; }
-
-    /* ---------- Result ---------- */
-    .result-card { align-self: start; }
-    .result-meta { font-family: var(--mono); font-size: 0.72rem; color: var(--faint); }
-    .result-meta.ok { color: var(--good); }
-    .result-meta.err { color: var(--danger); }
-    #resultArea {
-      font-family: var(--mono); font-size: 0.82rem; line-height: 1.6;
-      min-height: 260px; resize: vertical; direction: ltr; text-align: left;
-    }
-    .result-foot { display: flex; gap: 10px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--panel-2); }
-    .toast {
-      margin-left: auto; font-size: 0.78rem; color: var(--good); font-family: var(--mono);
-      opacity: 0; transition: opacity .2s;
-    }
-    .toast.show { opacity: 1; }
-
-    @media (prefers-reduced-motion: reduce) {
-      * { transition: none !important; }
-    }
-  </style>
 </head>
 
 <body>
   <div class="topbar">
-    <button id="toggleSidebarBtn" class="icon-toggle" title="Toggle presets" aria-label="Toggle presets">
+    <button id="toggleSidebarBtn" class="icon-toggle" title="Toggle recipes" aria-label="Toggle recipes">
       <svg width="16" height="16" viewBox="0 0 50 50" fill="currentColor" aria-hidden="true">
         <path d="M 0 9 L 0 11 L 50 11 L 50 9 Z M 0 24 L 0 26 L 50 26 L 50 24 Z M 0 39 L 0 41 L 50 41 L 50 39 Z" />
       </svg>
     </button>
     <span class="mark">&lt;/&gt;</span>
     <h1>Web Scraper &amp; Data Extractor</h1>
-    <span class="beta">Beta</span>
     <span class="spacer"></span>
-    <a class="proxy-doc" href="https://gist.github.com/ShakesVision/ba78d011e516aa0ebee1ee111a2717fb"
-      target="_blank" rel="noopener noreferrer">GAS proxy guide ↗</a>
+    <span id="connBadge" class="conn" title="Install the extension for live-page scraping and built-in CORS bypass">No extension</span>
+    <button id="tierBadge" class="tier-badge free" title="Manage your plan">Free</button>
   </div>
 
   <div id="shell" class="shell">
     <aside id="sidebar">
-      <h2>Saved presets</h2>
-      <p class="hint">Fetch or Save stores the current settings by name. Click one to reload it.</p>
-      <ul id="domainList" class="preset-list"></ul>
+      <h2>Saved recipes</h2>
+      <p class="hint">Extract or Save stores the current setup by name. Click one to reload it.</p>
+      <ul id="recipeList" class="preset-list"></ul>
     </aside>
 
     <main>
+      <!-- ---------------- Source + recipe ---------------- -->
       <form id="scraperForm" class="card">
         <header>
-          <h3>Extract</h3>
-          <span class="sub">DOMParser · client-side</span>
+          <h3>Source &amp; selection</h3>
+          <span class="sub" id="transportLabel">direct</span>
         </header>
         <div class="card-body">
-          <div class="field">
+          <div class="seg" role="radiogroup" aria-label="Source">
+            <label><input type="radio" name="source" value="url" checked /> Fetch a URL</label>
+            <label><input type="radio" name="source" value="paste" /> Paste HTML</label>
+          </div>
+
+          <div id="urlSource" class="field">
             <label for="urlInput">Page URL</label>
-            <input id="urlInput" type="url" placeholder="https://example.com/article" required />
-          </div>
-
-          <div class="field">
-            <label for="proxyInput">CORS proxy <span style="color:var(--faint);font-weight:400;">(optional)</span></label>
-            <input id="proxyInput" type="text" placeholder="empty = direct fetch  ·  or  https://corsproxy.io/?url={url}" />
-            <p class="desc">
-              Empty fetches the page directly (pair with a CORS-bypass extension). Or paste a proxy —
-              put <code>{url}</code> where the encoded URL goes, otherwise it's appended. Remembered on this device.
-            </p>
-          </div>
-
-          <div class="field">
-            <label for="selectorInput">CSS selector</label>
-            <input id="selectorInput" type="text" placeholder=".article-body  ·  h1  ·  a.title" required />
-          </div>
-
-          <div class="row two">
+            <input id="urlInput" type="url" placeholder="https://example.com/list" />
             <div class="field">
-              <label>Match</label>
-              <div class="seg" role="radiogroup" aria-label="Match">
-                <label><input type="radio" name="mode" value="one" checked /> One element</label>
-                <label><input type="radio" name="mode" value="all" /> All elements</label>
-              </div>
-            </div>
-            <div class="field">
-              <label>Extract as</label>
-              <div class="seg" role="radiogroup" aria-label="Extract as">
-                <label><input type="radio" name="extractType" value="plain" checked /> Text</label>
-                <label><input type="radio" name="extractType" value="html" /> HTML</label>
-              </div>
+              <label for="proxyInput" style="font-weight:500;font-size:0.78rem;color:var(--muted)">CORS proxy <span style="color:var(--faint)">(optional — the extension makes this unnecessary)</span></label>
+              <input id="proxyInput" type="text" placeholder="empty = direct · or https://corsproxy.io/?url={url}" />
             </div>
           </div>
 
-          <div id="oneElementOptions" class="field">
-            <label for="elementIndex">Element number <span style="color:var(--faint);font-weight:400;">(1 = first match)</span></label>
-            <input id="elementIndex" type="number" value="1" min="1" />
-          </div>
-          <div id="allElementsOptions" class="field hidden">
-            <label for="joiner">Joiner between matches</label>
-            <input id="joiner" type="text" placeholder="\n" value="\n" />
-            <p class="desc">Text placed between each matched element. Default is a newline.</p>
+          <div id="pasteSource" class="field hidden">
+            <label for="pasteInput">Paste page HTML</label>
+            <textarea id="pasteInput" rows="4" placeholder="Paste the page's HTML here (View Source, or copy an element's outerHTML)…"></textarea>
           </div>
 
           <div class="actions">
-            <button type="submit" class="btn btn-primary">
-              <span aria-hidden="true">▶</span> Fetch &amp; extract
+            <button type="button" id="loadBtn" class="btn btn-primary">Load</button>
+            <button type="button" id="pickBtn" class="btn btn-ghost" disabled>
+              Pick element <span class="lock-chip" data-feature="picker" hidden>Pro</span>
             </button>
-            <button type="button" id="saveSettingButton" class="btn btn-ghost">Save as preset</button>
+          </div>
+
+          <!-- Rendered preview for the point-and-click picker -->
+          <div id="previewWrap" class="preview-wrap hidden">
+            <div class="preview-bar">
+              <strong style="font-size:0.8rem">Preview</strong>
+              <span class="status" id="pickStatus">loaded</span>
+            </div>
+            <iframe id="previewFrame" class="preview" title="Page preview" sandbox="allow-same-origin"></iframe>
+          </div>
+
+          <!-- Recipe -->
+          <div class="seg" role="radiogroup" aria-label="Extraction mode">
+            <label><input type="radio" name="mode" value="records" checked /> Records (rows &amp; columns)</label>
+            <label><input type="radio" name="mode" value="simple" /> Simple (one selector)</label>
+          </div>
+
+          <div id="recordsMode" class="field">
+            <label for="containerInput">Row / item selector <span style="color:var(--faint);font-weight:400">(the repeating element)</span></label>
+            <input id="containerInput" type="text" placeholder="#DataTables_Table_0 tbody tr" />
+            <label style="margin-top:6px">Columns</label>
+            <div id="fields" class="fields"></div>
+            <button type="button" id="addFieldBtn" class="btn btn-ghost btn-sm" style="justify-self:start">+ Add column</button>
+          </div>
+
+          <div id="simpleMode" class="field hidden">
+            <label for="selectorInput">CSS selector</label>
+            <input id="selectorInput" type="text" placeholder=".article-body · h1 · a.title" />
+            <div class="inline-row">
+              <div class="seg" role="radiogroup" aria-label="Match">
+                <label><input type="radio" name="smode" value="one" checked /> One</label>
+                <label><input type="radio" name="smode" value="all" /> All</label>
+              </div>
+              <div class="seg" role="radiogroup" aria-label="Extract as">
+                <label><input type="radio" name="etype" value="text" checked /> Text</label>
+                <label><input type="radio" name="etype" value="html" /> HTML</label>
+                <label><input type="radio" name="etype" value="attr" /> Attr</label>
+              </div>
+              <input id="attrInput" class="grow hidden" type="text" placeholder="attribute (href)" value="href" />
+            </div>
+            <div class="inline-row">
+              <label style="font-size:0.78rem;color:var(--muted)">Element # <input id="indexInput" type="number" value="1" min="1" style="width:70px" /></label>
+            </div>
+          </div>
+
+          <!-- Pagination (Pro) -->
+          <details id="pagi" class="field">
+            <summary style="cursor:pointer;font-size:0.82rem;font-weight:600">
+              Auto-pagination <span class="lock-chip" data-feature="pagination">Pro</span>
+            </summary>
+            <div class="inline-row" style="margin-top:8px">
+              <input id="nextSelInput" class="grow" type="text" placeholder="Next-page link selector (blank = auto-detect)" />
+              <label style="font-size:0.78rem;color:var(--muted)">Max pages <input id="maxPagesInput" type="number" value="1" min="1" max="50" style="width:70px" /></label>
+            </div>
+          </details>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary">Extract</button>
+            <button type="button" id="saveRecipeBtn" class="btn btn-ghost">Save recipe</button>
           </div>
         </div>
       </form>
 
-      <section class="card result-card">
+      <!-- ---------------- Result ---------------- -->
+      <section class="card">
         <header>
           <h3>Result</h3>
           <span id="resultMeta" class="result-meta">idle</span>
         </header>
-        <div class="card-body" style="padding-bottom: 0;">
-          <textarea id="resultArea" placeholder="Extracted content appears here…" spellcheck="false"></textarea>
+        <div class="result-body">
+          <div id="resultTableWrap" class="table-scroll hidden"></div>
+          <textarea id="resultText" class="hidden" placeholder="Extracted content appears here…" spellcheck="false"></textarea>
+          <div id="resultEmpty" class="card-body" style="color:var(--faint);font-size:0.86rem">Load a page (or paste HTML), choose what to grab, then Extract.</div>
         </div>
         <div class="result-foot">
-          <button id="copyButton" class="btn btn-ghost" type="button">Copy</button>
+          <button id="copyBtn" class="btn btn-ghost btn-sm" type="button">Copy</button>
+          <button id="csvBtn" class="btn btn-ghost btn-sm" type="button">CSV</button>
+          <button id="jsonBtn" class="btn btn-ghost btn-sm" type="button">JSON</button>
+          <button id="ndjsonBtn" class="btn btn-ghost btn-sm" type="button">NDJSON <span class="lock-chip" data-feature="exportNdjson">Pro</span></button>
           <span id="copyToast" class="toast">Copied</span>
         </div>
       </section>
     </main>
   </div>
 
-  <script>
-    // Optional CORS proxy. Empty → fetch the target directly (works with a
-    // CORS-bypass browser extension). The proxy value is remembered.
-    const PROXY_KEY = "scraperProxyUrl";
-    const proxyInput = document.getElementById("proxyInput");
-    if (proxyInput) {
-      proxyInput.value = localStorage.getItem(PROXY_KEY) || "";
-      proxyInput.addEventListener("change", () =>
-        localStorage.setItem(PROXY_KEY, proxyInput.value.trim()),
-      );
-    }
-
-    function buildFetchUrl(targetUrl) {
-      const proxy = (proxyInput && proxyInput.value.trim()) || "";
-      if (!proxy) return targetUrl;
-      if (proxy.includes("{url}")) return proxy.replace("{url}", encodeURIComponent(targetUrl));
-      return proxy + encodeURIComponent(targetUrl);
-    }
-
-    // Fetch a page's HTML through the proxy (or directly). Handles common proxy
-    // shapes: raw HTML, or JSON with a `res`/`contents` field.
-    async function fetchHtml(targetUrl) {
-      const res = await fetch(buildFetchUrl(targetUrl));
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const text = await res.text();
-      try {
-        const j = JSON.parse(text);
-        if (j && typeof j === "object") {
-          if (j.error) throw new Error(j.error);
-          return j.res || j.contents || text;
-        }
-      } catch (e) {
-        if (e.message && !e.message.startsWith("Unexpected")) throw e;
-      }
-      return text;
-    }
-
-    // Form elements
-    const form = document.getElementById("scraperForm");
-    const urlInput = document.getElementById("urlInput");
-    const selectorInput = document.getElementById("selectorInput");
-    const elementIndexInput = document.getElementById("elementIndex");
-    const joinerInput = document.getElementById("joiner");
-    const resultArea = document.getElementById("resultArea");
-    const resultMeta = document.getElementById("resultMeta");
-    const copyButton = document.getElementById("copyButton");
-    const copyToast = document.getElementById("copyToast");
-    const oneElementOptions = document.getElementById("oneElementOptions");
-    const allElementsOptions = document.getElementById("allElementsOptions");
-    const saveSettingButton = document.getElementById("saveSettingButton");
-    const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
-    const shell = document.getElementById("shell");
-
-    // Toggle sidebar
-    toggleSidebarBtn.addEventListener("click", () => {
-      shell.classList.toggle("collapsed");
-    });
-
-    // Sidebar preset list
-    const domainListEl = document.getElementById("domainList");
-    const STORAGE_KEY = "scraperSettings";
-
-    function setMeta(text, kind) {
-      resultMeta.textContent = text;
-      resultMeta.className = "result-meta" + (kind ? " " + kind : "");
-    }
-
-    // Toggle options based on extraction mode
-    document.querySelectorAll('input[name="mode"]').forEach(radio => {
-      radio.addEventListener("change", () => {
-        const one = document.querySelector('input[name="mode"]:checked').value === "one";
-        oneElementOptions.classList.toggle("hidden", !one);
-        allElementsOptions.classList.toggle("hidden", one);
-      });
-    });
-
-    // Copy result button
-    copyButton.addEventListener("click", async () => {
-      if (!resultArea.value) return;
-      try {
-        await navigator.clipboard.writeText(resultArea.value);
-      } catch {
-        resultArea.select();
-        document.execCommand("copy");
-      }
-      copyToast.classList.add("show");
-      setTimeout(() => copyToast.classList.remove("show"), 1400);
-    });
-
-    // Save presets in localStorage (keyed by a user-given name)
-    function saveSettings(name, settings) {
-      const allSettings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-      allSettings[name] = settings;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(allSettings));
-      loadSavedSettings();
-    }
-
-    // Gather current form settings into an object
-    function gatherFormSettings() {
-      return {
-        url: urlInput.value.trim(),
-        selector: selectorInput.value.trim(),
-        mode: document.querySelector('input[name="mode"]:checked').value,
-        extractType: document.querySelector('input[name="extractType"]:checked').value,
-        index: parseInt(elementIndexInput.value, 10) || 1,
-        joiner: joinerInput.value || "\\n",
-      };
-    }
-
-    // Prompt for a preset name, then save
-    saveSettingButton.addEventListener("click", () => {
-      if (!urlInput.value.trim() || !selectorInput.value.trim()) {
-        setMeta("enter a URL and selector first", "err");
-        return;
-      }
-      const suggested = getDomain(urlInput.value.trim()) || "preset";
-      const name = prompt("Name this preset:", suggested);
-      if (!name) return;
-      const settings = gatherFormSettings();
-      settings.name = name;
-      saveSettings(name, settings);
-      setMeta(`saved preset “${name}”`, "ok");
-    });
-
-    // Load presets from localStorage and populate the sidebar
-    function loadSavedSettings() {
-      domainListEl.innerHTML = "";
-      const allSettings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-      const names = Object.keys(allSettings);
-      if (!names.length) {
-        const li = document.createElement("li");
-        li.className = "preset-empty";
-        li.textContent = "No presets yet.";
-        domainListEl.appendChild(li);
-        return;
-      }
-      names.forEach(name => {
-        const li = document.createElement("li");
-        li.className = "preset";
-        li.innerHTML =
-          `<span class="name" data-open="${encodeURIComponent(name)}" title="${name}">${name}</span>` +
-          `<button class="del" data-delete="${encodeURIComponent(name)}" aria-label="Delete preset">Delete</button>`;
-        domainListEl.appendChild(li);
-      });
-    }
-
-    // Click a preset to load it; Delete to remove it
-    domainListEl.addEventListener("click", (e) => {
-      const openKey = e.target.dataset.open;
-      const deleteKey = e.target.dataset.delete;
-      const allSettings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-
-      if (openKey) {
-        const settings = allSettings[decodeURIComponent(openKey)];
-        if (!settings) return;
-        urlInput.value = settings.url || "";
-        selectorInput.value = settings.selector || "";
-        const mode = settings.mode || "one";
-        document.querySelector(`input[name="mode"][value="${mode}"]`).checked = true;
-        oneElementOptions.classList.toggle("hidden", mode !== "one");
-        allElementsOptions.classList.toggle("hidden", mode === "one");
-        if (mode === "one") elementIndexInput.value = settings.index || 1;
-        else joinerInput.value = settings.joiner || "\\n";
-        document.querySelector(`input[name="extractType"][value="${settings.extractType || "plain"}"]`).checked = true;
-        setMeta(`loaded preset “${decodeURIComponent(openKey)}”`);
-      }
-
-      if (deleteKey) {
-        delete allSettings[decodeURIComponent(deleteKey)];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allSettings));
-        loadSavedSettings();
-      }
-    });
-
-    // Extract domain from URL
-    function getDomain(url) {
-      try {
-        return new URL(url).hostname;
-      } catch (err) {
-        return null;
-      }
-    }
-
-    // Process fetched HTML using DOMParser and querySelectorAll
-    function extractContent(html, selector, mode, extractType, index, joiner) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-      let elements;
-      try {
-        elements = doc.querySelectorAll(selector);
-      } catch (err) {
-        throw new Error("Invalid CSS selector");
-      }
-      if (!elements.length) return { text: "", count: 0 };
-      if (mode === "one") {
-        const el = elements[index - 1];
-        if (!el) return { text: "", count: elements.length };
-        return {
-          text: extractType === "plain" ? el.textContent.trim() : el.innerHTML.trim(),
-          count: elements.length,
-        };
-      }
-      const arr = [];
-      elements.forEach(el => {
-        arr.push(extractType === "plain" ? el.textContent.trim() : el.innerHTML.trim());
-      });
-      return { text: arr.join(joiner), count: elements.length };
-    }
-
-    // Handle form submission
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      setMeta("fetching…");
-      resultArea.value = "";
-      const url = urlInput.value.trim();
-      const selector = selectorInput.value.trim();
-      const mode = document.querySelector('input[name="mode"]:checked').value;
-      const extractType = document.querySelector('input[name="extractType"]:checked').value;
-      const index = mode === "one" ? parseInt(elementIndexInput.value, 10) || 1 : null;
-      const joiner = mode === "all" ? (joinerInput.value || "\\n") : "\\n";
-
-      // Auto-save this run under its domain
-      const domain = getDomain(url);
-      if (domain) saveSettings(domain, { url, selector, mode, index, joiner, extractType });
-
-      try {
-        const html = await fetchHtml(url);
-        if (!html) {
-          setMeta("no HTML returned", "err");
-          return;
-        }
-        const { text, count } = extractContent(html, selector, mode, extractType, index, joiner);
-        if (!text) {
-          setMeta(count ? `matched ${count}, but empty` : "no elements matched that selector", "err");
-          resultArea.value = "";
-          return;
-        }
-        resultArea.value = text;
-        setMeta(mode === "one" ? `matched ${count} · showing #${index}` : `matched ${count} · joined`, "ok");
-      } catch (error) {
-        setMeta("error: " + (error.message || error), "err");
-      }
-    });
-
-    // Initial load
-    loadSavedSettings();
-    setMeta("idle");
-  </script>
+  <!-- ---------------- License / Pro modal ---------------- -->
+  <div id="licenseModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Upgrade to Pro">
+    <div class="modal-card">
+      <header><h2>Scraper Pro</h2></header>
+      <div class="body">
+        <ul class="feat">
+          <li>Live-page scraping of JavaScript sites (via the extension)</li>
+          <li>Point-and-click picker &amp; “select similar”</li>
+          <li>Auto-pagination &amp; multi-page crawl</li>
+          <li>Unlimited rows, NDJSON / Excel export</li>
+          <li>Recipe health monitoring</li>
+        </ul>
+        <div class="field">
+          <label for="licenseInput">Have a license key?</label>
+          <input id="licenseInput" type="text" placeholder="SCR-XXXX-XXXX" />
+          <p id="licenseMsg" class="desc"></p>
+        </div>
+      </div>
+      <div class="foot">
+        <button id="licenseClose" class="btn btn-ghost" type="button">Close</button>
+        <button id="licenseApply" class="btn btn-primary" type="button">Unlock</button>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>

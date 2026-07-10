@@ -7,6 +7,8 @@ const DEFAULT_EXCLUDES = new Set([
   ".vscode",
   "%TEMP%",
   "rekhta-upstream-temp",
+  "extension", // browser-extension source (not a served site page)
+  "fixtures", // test HTML fixtures, not real tool pages
 ]);
 
 function toPosixPath(inputPath) {
