@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "name": "Sidebar photo layout",
+  "baseRenderer": "layout-json",
+  "layoutDesign": {
+    "version": 1,
+    "name": "Sidebar photo layout",
+    "root": {
+      "id": "root",
+      "type": "flex",
+      "direction": "row",
+      "gap": "20px",
+      "alignItems": "flex-start",
+      "children": [
+        {
+          "id": "sidebar",
+          "type": "stack",
+          "flex": "0 0 140px",
+          "gap": "12px",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "photo",
+              "type": "field",
+              "bind": "basics.picture",
+              "display": "image",
+              "style": {
+                "width": "120px",
+                "height": "120px",
+                "borderRadius": "12px",
+                "objectFit": "cover"
+              }
+            },
+            {
+              "id": "contact-stack",
+              "type": "stack",
+              "gap": "4px",
+              "style": { "fontSize": "10px", "color": "#475569", "textAlign": "center" },
+              "children": [
+                { "id": "email", "type": "field", "bind": "basics.email", "style": { "fontSize": "10px" } },
+                { "id": "phone", "type": "field", "bind": "basics.phone", "style": { "fontSize": "10px" } },
+                { "id": "loc", "type": "field", "bind": "basics.location", "style": { "fontSize": "10px" } }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "main",
+          "type": "stack",
+          "flex": "1",
+          "gap": "10px",
+          "children": [
+            {
+              "id": "name",
+              "type": "field",
+              "bind": "basics.name",
+              "style": { "fontSize": "28px", "fontWeight": "700", "fontFamily": "Georgia, serif", "color": "#0f172a" }
+            },
+            {
+              "id": "label",
+              "type": "field",
+              "bind": "basics.label",
+              "style": { "fontSize": "15px", "color": "#1b4965", "fontWeight": "500" }
+            },
+            {
+              "id": "summary-sec",
+              "type": "section",
+              "section": "profile",
+              "heading": "About",
+              "headingStyle": { "fontSize": "11px", "fontWeight": "700", "textTransform": "uppercase", "color": "#1b4965", "letterSpacing": "0.06em" },
+              "bodyStyle": { "fontSize": "12px", "lineHeight": "1.55", "color": "#334155" }
+            },
+            {
+              "id": "work-sec",
+              "type": "section",
+              "section": "work",
+              "heading": "Experience",
+              "headingStyle": { "fontSize": "11px", "fontWeight": "700", "textTransform": "uppercase", "color": "#1b4965" },
+              "titleStyle": { "fontSize": "13px", "fontWeight": "600" },
+              "dateStyle": { "fontSize": "10px", "color": "#64748b" },
+              "itemStyle": { "marginBottom": "10px", "paddingBottom": "8px", "borderBottom": "1px solid #e2e8f0" }
+            },
+            {
+              "id": "projects-sec",
+              "type": "section",
+              "section": "projects",
+              "heading": "Projects",
+              "headingStyle": { "fontSize": "11px", "fontWeight": "700", "textTransform": "uppercase", "color": "#1b4965" },
+              "titleStyle": { "fontSize": "13px", "fontWeight": "600", "color": "#0f172a" },
+              "bodyStyle": { "fontSize": "11px", "color": "#475569" }
+            },
+            {
+              "id": "skills-sec",
+              "type": "section",
+              "section": "skills",
+              "heading": "Skills",
+              "headingStyle": { "fontSize": "11px", "fontWeight": "700", "textTransform": "uppercase", "color": "#1b4965" },
+              "bodyStyle": { "fontSize": "11px" }
+            },
+            {
+              "id": "edu-sec",
+              "type": "section",
+              "section": "education",
+              "heading": "Education",
+              "headingStyle": { "fontSize": "11px", "fontWeight": "700", "textTransform": "uppercase", "color": "#1b4965" },
+              "titleStyle": { "fontSize": "13px", "fontWeight": "600" },
+              "dateStyle": { "fontSize": "10px", "color": "#64748b" }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

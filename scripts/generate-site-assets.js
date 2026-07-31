@@ -110,6 +110,21 @@ const EXTRA_ASSETS = [
   "/dhun/buhoor.json",
   "/interlocutor/app.js",
   "/editor/poetry-studio-app.js",
+  "/editor/resume-studio-app.js",
+  "/editor/resume-studio-extras.js",
+  "/editor/resume-schema.js",
+  "/editor/resume-templates/community/manifest.json",
+  "/editor/resume-templates/community/themes/elegant-band.js",
+  "/editor/resume-templates/community/themes/sidebar-pro.js",
+  "/editor/resume-templates/community/themes/compact-stack.js",
+  "/editor/resume-templates/community/themes/tech-lead.js",
+  "/editor/resume-templates/shared.js",
+  "/editor/resume-templates/onepage.js",
+  "/editor/resume-templates/modern.js",
+  "/editor/resume-templates/minimal.js",
+  "/editor/resume-templates/builtins.js",
+  "/editor/resume-templates/external-theme-sample.js",
+  "/editor/samples/shakeeb-resume.json",
 ];
 
 function buildServiceWorkerManifest(projects, pages) {

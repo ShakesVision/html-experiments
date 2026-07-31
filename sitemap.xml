@@ -81,6 +81,11 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://tools.shakeeb.in/editor/resume-studio.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://tools.shakeeb.in/editor/try.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>

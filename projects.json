@@ -272,6 +272,22 @@
     "link": "editor/poetry-studio.html"
   },
   {
+    "id": 42,
+    "slug": "resume-studio",
+    "title": "Resume Studio",
+    "description": "Build, style, and export JSON Resume files with live preview, dynamic forms, themes, and PNG/PDF/ZIP export.",
+    "desc": "Build, style, and export JSON Resume files with live preview, dynamic forms, themes, and PNG/PDF/ZIP export.",
+    "category": "Readers & data",
+    "status": "alpha",
+    "tags": ["resume", "json", "career"],
+    "offlineSupport": "full",
+    "external": false,
+    "featured": true,
+    "lastReviewed": "2026-07-31",
+    "img": "assets/images/project.png",
+    "link": "editor/resume-studio.html"
+  },
+  {
     "id": 18,
     "slug": "inpage",
     "title": "Naseem PDF Texter",

@@ -1,0 +1,176 @@
+{
+  "headings": {
+    "education": "Education",
+    "skills": "Technical Skills",
+    "awards": "Awards",
+    "work": "Experience",
+    "projects": "Projects"
+  },
+  "basics": {
+    "name": "Shakeeb Ahmad",
+    "email": "shakes.ahmad@gmail.com",
+    "phone": "+918956704184",
+    "label": "Senior Full-Stack Software Engineer",
+    "picture": "",
+    "summary": "Full-stack Software Engineer with 6+ years shipping production web and mobile products — from Node.js/Express APIs to pixel-perfect Angular/TypeScript interfaces, with working knowledge of React and a track record of picking up new stacks fast. Currently a Senior Software Engineer on Cohesity's platform UI team (via MSys Technologies), driving Angular migrations and UI modernization across a 50+ engineer org. Independently designed, built, and published several Node.js/Ionic hybrid Android apps with 30,000+ downloads, and co-authored a peer-reviewed AI/NLP paper on neural poetry generation (ICDMAI 2022, Springer). Daily user of AI-assisted development tooling (GitHub Copilot, Cursor, Claude) and hands-on with local LLM deployment (Hugging Face) and applied ML workflows (Google Colab). Comfortable owning a feature end-to-end — API design, data layer, UI, and automated test coverage (Cypress, Jasmine, pytest). Outside of work: indie app builder and published Urdu/Hindi poet.",
+    "location": {
+      "city": "Nagpur",
+      "countryCode": "IN"
+    },
+    "profiles": [
+      {
+        "network": "GitHub",
+        "username": "shakesvision",
+        "url": "https://github.com/shakesvision"
+      },
+      {
+        "network": "Portfolio",
+        "url": "https://www.shakeeb.in"
+      }
+    ]
+  },
+  "education": [
+    {
+      "institution": "Vishwakarma Institute of Technology",
+      "location": "Pune, India",
+      "area": "Computer Science & Engineering",
+      "studyType": "Masters",
+      "startDate": "July, 2019",
+      "endDate": "July, 2021"
+    },
+    {
+      "institution": "Priyadarshini Indira Gandhi College of Engineering",
+      "location": "Nagpur, India",
+      "area": "Computer Science & Engineering",
+      "startDate": "August, 2013",
+      "endDate": "May, 2017",
+      "studyType": "Bachelors"
+    }
+  ],
+  "work": [
+    {
+      "highlights": [
+        "Own end-to-end delivery of UI features and epics — from UX mocks to pixel-perfect, production Angular components — for Cohesity's data-security and management platform",
+        "Led migration of legacy AngularJS modules to modern Angular with zero regressions, cutting long-term maintenance burden",
+        "Built E2E (Cypress) and unit (Jasmine) test suites to prevent regressions and raise release confidence",
+        "Refactored legacy code to modern standards and safeguarded rollouts with feature flags, gflags, and router state guards",
+        "Proactively identify and drive improvements end-to-end, from filing tickets through shipping the fix; built internal bookmarklets and scripts to automate recurring engineering workflows",
+        "Collaborate daily with 50+ engineers, PMs, UX designers, and QA across a distributed org"
+      ],
+      "company": "Cohesity (via MSys Technologies)",
+      "position": "Senior Software Engineer",
+      "location": "Remote (Pune, India)",
+      "startDate": "August, 2022",
+      "endDate": ""
+    },
+    {
+      "highlights": [
+        "Owned a full-stack revamp of the Admin app to modern UI standards in under a month, including dynamic nested navigation, breadcrumbs, and lazy-loaded modules",
+        "Improved rendering performance 200-500% on low-spec devices by eliminating unnecessary Angular change detection cycles",
+        "Extended the C#/.NET Core backend with new REST API endpoints and fixed backend bugs to streamline API consumption",
+        "Modularized and refactored legacy code; built reusable, spec-driven UI components consumed across the app"
+      ],
+      "company": "Simplified Automation",
+      "position": "Software Engineer",
+      "location": "Remote (Toronto, Canada)",
+      "startDate": "September, 2021",
+      "endDate": "June, 2022"
+    },
+    {
+      "highlights": [
+        "Designed and shipped Node.js/Express REST APIs powering real-time scraped data to 7,000+ active users",
+        "Built and maintained 12+ full-stack apps (Node.js backends with Ionic/Angular hybrid front-ends) with i18n support for LTR/RTL audiences (English, Urdu, Hindi)",
+        "Shipped push notifications, hot updates, and CI/CD pipelines that lifted user engagement 60%",
+        "Boosted user retention 200% via virtual scroll, infinite scroll, pull-to-refresh, and gesture-based UX"
+      ],
+      "company": "Sarbakaf Group",
+      "position": "Full-Stack Developer (Freelance)",
+      "location": "Remote (Nagpur, India)",
+      "startDate": "August, 2018",
+      "endDate": "September, 2021"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Languages",
+      "level": "",
+      "keywords": ["JavaScript", "TypeScript", "C#", "Python", "SQL", "C", "C++"]
+    },
+    {
+      "name": "Backend & APIs",
+      "keywords": ["Node.js", "Express.js", "REST APIs", ".NET Core", "Web Scraping"]
+    },
+    {
+      "name": "Frontend",
+      "keywords": ["Angular", "AngularJS", "React", "HTML5", "CSS3", "SCSS", "Material UI", "Responsive Design", "PWA"]
+    },
+    {
+      "name": "Mobile",
+      "keywords": ["Ionic", "Cordova", "Android", "Hybrid Apps"]
+    },
+    {
+      "name": "Databases",
+      "keywords": ["MongoDB", "Firebase", "Firestore", "Oracle", "SQLite"]
+    },
+    {
+      "name": "DevOps, Testing & Tools",
+      "keywords": ["Azure", "GitHub Actions", "CI/CD", "Netlify", "Heroku", "Git", "Cypress", "Jasmine", "pytest", "Agile", "Jira"]
+    },
+    {
+      "name": "AI Tools & LLMs",
+      "keywords": ["GitHub Copilot", "Cursor", "Claude", "ChatGPT", "Hugging Face", "Local LLM Deployment", "Google Colab"]
+    }
+  ],
+  "projects": [
+    {
+      "name": "HyperDict.js — Browser-Native Dictionary Engine",
+      "description": "Zero-dependency TypeScript library for GoldenDict-style StarDict dictionary lookups directly in the browser: bloom-filter/binary-search indexing, HTTP Range-request random access, offline caching, and a Chrome (Manifest V3) extension. Published to npm with CI (GitHub Actions) and Vitest coverage.",
+      "keywords": ["TypeScript", "Node.js", "npm", "Chrome Extension (MV3)", "CI/CD", "Vitest"],
+      "url": "https://github.com/shakesvision/hyperdict"
+    },
+    {
+      "name": "dicapi — Reusable Web-Scraping REST API",
+      "description": "Node.js/Express API that wraps reusable web-scraping logic so it isn't rewritten per project; deployed as both a standalone service and as Netlify Functions.",
+      "keywords": ["Node.js", "Express", "REST API", "Web Scraping", "Netlify Functions"],
+      "url": "https://github.com/shakesvision/dicapi"
+    },
+    {
+      "name": "Sarbakaf Group — Hybrid Android Apps",
+      "description": "Independently designed, built, and published a suite of Ionic/Angular/Firebase Android apps (Qaafiyah Expert, Quran: Hifz Helper, OneSignal Push Manager, dRekhta); one app has surpassed 30,000+ downloads.",
+      "keywords": ["Ionic", "Angular", "Cordova", "Firebase", "PWA", "Android"],
+      "url": "https://play.google.com/store/apps/dev?id=8917194327395382081"
+    },
+    {
+      "name": "Urdu & Hindi Poetry Generation using Neural Networks",
+      "description": "MTech research project: a neural system that helps poets past writer's block by generating rhyme- and meter-aware Urdu & Hindi poetry suggestions, with a cleaned poetry corpus released for other researchers. Presented at ICDMAI 2022 (2nd place, AI track) and published as a Springer LNDECT book chapter.",
+      "keywords": ["Python", "Deep Learning", "NLP", "Node.js", "Ionic"],
+      "url": "https://arxiv.org/abs/2107.14587"
+    },
+    {
+      "name": "AnalyseIt — Opinion Mining of Product Reviews",
+      "description": "Desktop tool to classify product reviews as positive, negative, or neutral with a batch-import pipeline. Won 1st position among 43 projects (TechnoMission, undergraduate capstone).",
+      "keywords": ["C#", "MetroFramework UI", "Sentiment Analysis"]
+    }
+  ],
+  "awards": [
+    {
+      "title": "2nd position among 64 papers in the AI track",
+      "date": "January, 2022",
+      "awarder": "ICDMAI"
+    },
+    {
+      "title": "1st position among 43 Projects",
+      "date": "January, 2017",
+      "awarder": "TechnoMission"
+    }
+  ],
+  "sections": [
+    "templates",
+    "profile",
+    "skills",
+    "work",
+    "projects",
+    "education",
+    "awards"
+  ]
+}

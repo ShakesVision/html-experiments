@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "name": "Resume Studio Themes",
+  "cdnBase": "https://cdn.jsdelivr.net/gh/shakesvision/resume-studio-themes@master",
+  "themes": [
+    {
+      "id": "elegant-band",
+      "name": "Elegant Band",
+      "file": "themes/elegant-band.js",
+      "description": "Serif header band with gold accent rule"
+    },
+    {
+      "id": "sidebar-pro",
+      "name": "Sidebar Pro",
+      "file": "themes/sidebar-pro.js",
+      "description": "Dark sidebar with contact stack"
+    },
+    {
+      "id": "compact-stack",
+      "name": "Compact Stack",
+      "file": "themes/compact-stack.js",
+      "description": "Dense single-column for 1-page fits"
+    },
+    {
+      "id": "tech-lead",
+      "name": "Tech Lead",
+      "file": "themes/tech-lead.js",
+      "description": "Monospace accents for engineering resumes"
+    }
+  ]
+}
