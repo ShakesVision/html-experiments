@@ -1,26 +1,107 @@
-<div style="font-family: system-ui, sans-serif; color: #1e293b; line-height: 1.45; padding: 4px;">
-  <header style="display: flex; gap: 20px; align-items: center; margin-bottom: 16px; border-bottom: 2px solid #1b4965; padding-bottom: 12px;">
-  <img src="{{basics.picture}}" alt="" style="width: 88px; height: 88px; object-fit: cover; border-radius: 12px;" onerror="this.style.display='none'" />
-  <div style="flex: 1;">
-    <h1 style="margin: 0; font-size: 26px; color: #1b4965;">{{basics.name}}</h1>
-    <p style="margin: 4px 0 0; font-size: 14px; color: #64748b;">{{basics.label}}</p>
-    <p style="margin: 6px 0 0; font-size: 11px;">{{basics.email}} · {{basics.phone}}</p>
-  </div>
-  </header>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Template</title>
+    <script defer src="../assets/js/shared-init.js"></script>
+  </head>
+  <body>
+    <div
+      style="
+        font-family: system-ui, sans-serif;
+        color: #1e293b;
+        line-height: 1.45;
+        padding: 4px;
+      "
+    >
+      <header
+        style="
+          display: flex;
+          gap: 20px;
+          align-items: center;
+          margin-bottom: 16px;
+          border-bottom: 2px solid #1b4965;
+          padding-bottom: 12px;
+        "
+      >
+        <img
+          src="{{basics.picture}}"
+          alt=""
+          style="
+            width: 88px;
+            height: 88px;
+            object-fit: cover;
+            border-radius: 12px;
+          "
+          onerror="this.style.display = 'none'"
+        />
+        <div style="flex: 1">
+          <h1 style="margin: 0; font-size: 26px; color: #1b4965">
+            {{basics.name}}
+          </h1>
+          <p style="margin: 4px 0 0; font-size: 14px; color: #64748b">
+            {{basics.label}}
+          </p>
+          <p style="margin: 6px 0 0; font-size: 11px">
+            {{basics.email}} · {{basics.phone}}
+          </p>
+        </div>
+      </header>
 
-  <section style="margin-bottom: 14px;">
-    <h2 style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #1b4965; margin: 0 0 6px;">Summary</h2>
-    <p style="margin: 0; font-size: 12px;">{{basics.summary}}</p>
-  </section>
+      <section style="margin-bottom: 14px">
+        <h2
+          style="
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #1b4965;
+            margin: 0 0 6px;
+          "
+        >
+          Summary
+        </h2>
+        <p style="margin: 0; font-size: 12px">{{basics.summary}}</p>
+      </section>
 
-  <section style="margin-bottom: 14px;">
-    <h2 style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #1b4965; margin: 0 0 6px;">Experience</h2>
-    <p style="margin: 0; font-size: 12px;"><strong>{{work[0].position}}</strong> at {{work[0].company}} ({{work[0].startDate}} – {{work[0].endDate}})</p>
-    <p style="margin: 4px 0 0; font-size: 11px; color: #475569;">Add more roles in the Form tab, or switch to <em>Visual Layout (JSON)</em> theme to loop all work entries.</p>
-  </section>
+      <section style="margin-bottom: 14px">
+        <h2
+          style="
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #1b4965;
+            margin: 0 0 6px;
+          "
+        >
+          Experience
+        </h2>
+        <p style="margin: 0; font-size: 12px">
+          <strong>{{work[0].position}}</strong> at {{work[0].company}}
+          ({{work[0].startDate}} – {{work[0].endDate}})
+        </p>
+        <p style="margin: 4px 0 0; font-size: 11px; color: #475569">
+          Add more roles in the Form tab, or switch to
+          <em>Visual Layout (JSON)</em> theme to loop all work entries.
+        </p>
+      </section>
 
-  <section>
-    <h2 style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #1b4965; margin: 0 0 6px;">Skills</h2>
-    <p style="margin: 0; font-size: 12px;">{{skills[0].name}}: use Form tab for full skill groups.</p>
-  </section>
-</div>
+      <section>
+        <h2
+          style="
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #1b4965;
+            margin: 0 0 6px;
+          "
+        >
+          Skills
+        </h2>
+        <p style="margin: 0; font-size: 12px">
+          {{skills[0].name}}: use Form tab for full skill groups.
+        </p>
+      </section>
+    </div>
+  </body>
+</html>

@@ -272,7 +272,7 @@
     "link": "editor/poetry-studio.html"
   },
   {
-    "id": 42,
+    "id": 43,
     "slug": "resume-studio",
     "title": "Resume Studio",
     "description": "Build, style, and export JSON Resume files with live preview, dynamic forms, themes, and PNG/PDF/ZIP export.",
