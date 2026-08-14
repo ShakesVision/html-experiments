@@ -2,7 +2,13 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = process.cwd();
-const EXCLUDED_DIRS = new Set([".git", "node_modules", ".vscode", "extension", "fixtures"]);
+const EXCLUDED_DIRS = new Set([
+  ".git",
+  "node_modules",
+  ".vscode",
+  "extension",
+  "fixtures",
+]);
 const URL_PATTERN = /https?:\/\/[^"'\s)<>]+/g;
 
 const APPROVED_REMOTE_HOSTS = new Set([
@@ -38,12 +44,14 @@ const APPROVED_REMOTE_HOSTS = new Set([
   "example.com",
   "ebooksapi.rekhta.org",
   "esm.sh",
+  "linkedin.com",
   "pagead2.googlesyndication.com",
   "play-lh.googleusercontent.com",
   "purl.org",
   "quran.shakeeb.in",
   "quran.com",
   "qaafiyah.sarbakaf.com",
+  "rekhta.org",
   "romannurik.github.io",
   "s3.tradingview.com",
   "shakeeb.in",
@@ -93,7 +101,11 @@ function main() {
     const content = fs.readFileSync(file, "utf8");
     const matches = content.match(URL_PATTERN) || [];
     matches.forEach((rawUrl) => {
-      if (rawUrl.includes("${") || rawUrl.includes("...") || rawUrl.includes("localhost")) {
+      if (
+        rawUrl.includes("${") ||
+        rawUrl.includes("...") ||
+        rawUrl.includes("localhost")
+      ) {
         return;
       }
       try {
