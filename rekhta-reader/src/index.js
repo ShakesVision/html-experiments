@@ -15,18 +15,79 @@ const DEFAULT_TILE_GAP = 16;
 // no code change needed. The `end` tokens for markers stay in code (they're
 // generic terminators); only the fragile leading marker is user-editable.
 const BOOK_SELECTOR_DEFS = [
-  { key: "bookName", label: "Book title", description: "Element holding the book's title on the ebook page.", def: "span.c-book-name" },
-  { key: "author", label: "Author", description: "Element holding the author's name.", def: "span.faded" },
-  { key: "markerBookId", label: "Marker · book ID", description: "Text just before the book ID in the page script.", def: 'var bookId = "' },
-  { key: "markerPages", label: "Marker · page files", description: "Text just before the list of page image filenames.", def: "var pages = [" },
-  { key: "markerPageIds", label: "Marker · page IDs", description: "Text just before the list of page IDs.", def: "var pageIds = [" },
-  { key: "markerTotalPages", label: "Marker · total pages", description: "Text just before the total page count.", def: "var totalPageCount =" },
-  { key: "imageBase", label: "Page image base URL", description: "Prefix for a page image; the tool appends bookId/filename.", def: "https://ebooksapi.rekhta.org/images/" },
-  { key: "pageKeyEndpoint", label: "Page-key API endpoint", description: "Endpoint that returns the unscramble key; the tool appends the page ID.", def: "https://ebooksapi.rekhta.org/api_getebookpagebyid_websiteapp/?wref=from-site&&pgid=" },
-  { key: "searchCard", label: "Search · result card", description: "Each book card in search results.", def: ".bookContent" },
-  { key: "searchTitle", label: "Search · book title", description: "Title text inside a search result card.", def: ".bookTagline" },
-  { key: "searchAuthor", label: "Search · author", description: "Author text inside a search result card.", def: ".bookTitle" },
-  { key: "readerLink", label: "Detail → reader link", description: "Link to the readable ebook on a detail page.", def: 'a[href*="/ebooks/"]' },
+  {
+    key: "bookName",
+    label: "Book title",
+    description: "Element holding the book's title on the ebook page.",
+    def: "span.c-book-name",
+  },
+  {
+    key: "author",
+    label: "Author",
+    description: "Element holding the author's name.",
+    def: "span.faded",
+  },
+  {
+    key: "markerBookId",
+    label: "Marker · book ID",
+    description: "Text just before the book ID in the page script.",
+    def: 'var bookId = "',
+  },
+  {
+    key: "markerPages",
+    label: "Marker · page files",
+    description: "Text just before the list of page image filenames.",
+    def: "var pages = [",
+  },
+  {
+    key: "markerPageIds",
+    label: "Marker · page IDs",
+    description: "Text just before the list of page IDs.",
+    def: "var pageIds = [",
+  },
+  {
+    key: "markerTotalPages",
+    label: "Marker · total pages",
+    description: "Text just before the total page count.",
+    def: "var totalPageCount =",
+  },
+  {
+    key: "imageBase",
+    label: "Page image base URL",
+    description: "Prefix for a page image; the tool appends bookId/filename.",
+    def: "https://ebooksapi.rekhta.org/images/",
+  },
+  {
+    key: "pageKeyEndpoint",
+    label: "Page-key API endpoint",
+    description:
+      "Endpoint that returns the unscramble key; the tool appends the page ID.",
+    def: "https://ebooksapi.rekhta.org/api_getebookpagebyid_websiteapp/?wref=from-site&&pgid=",
+  },
+  {
+    key: "searchCard",
+    label: "Search · result card",
+    description: "Each book card in search results.",
+    def: ".bookContent",
+  },
+  {
+    key: "searchTitle",
+    label: "Search · book title",
+    description: "Title text inside a search result card.",
+    def: ".bookTagline",
+  },
+  {
+    key: "searchAuthor",
+    label: "Search · author",
+    description: "Author text inside a search result card.",
+    def: ".bookTitle",
+  },
+  {
+    key: "readerLink",
+    label: "Detail → reader link",
+    description: "Link to the readable ebook on a detail page.",
+    def: 'a[href*="/ebooks/"]',
+  },
 ];
 
 const bookSelectors = createSelectorStore(
@@ -77,11 +138,10 @@ function createBookClient(options = {}) {
   }
 
   async function fetchImageBlob(imageUrl, fetchOptions = {}) {
-    const response = await fetchImpl(applyProxyPrefix(imageUrl, proxyPrefix), {
+    const response = await fetch(applyProxyPrefix(imageUrl, proxyPrefix), {
       method: "GET",
-      mode: "cors",
-      cache: "force-cache",
-      signal: fetchOptions.signal,
+      origin: "https://rekhta.org",
+      referrer: "https://rekhta.org",
     });
 
     if (!response.ok) {
@@ -134,11 +194,11 @@ function createBookClient(options = {}) {
 
     const response = await fetchImpl(url, {
       method: "GET",
+      origin: "https://rekhta.org",
+      referrer: "https://rekhta.org",
       headers: {
         Accept: "application/json",
       },
-      mode: "cors",
-      signal: fetchOptions.signal,
     });
 
     if (!response.ok) {
@@ -160,8 +220,8 @@ function createBookClient(options = {}) {
 
     const response = await fetchImpl(applyProxyPrefix(url, proxyPrefix), {
       method: "GET",
-      mode: "cors",
-      signal: fetchOptions.signal,
+      origin: "https://rekhta.org",
+      referrer: "https://rekhta.org",
     });
 
     if (!response.ok) {
@@ -186,7 +246,9 @@ function normalizeManifest(bookUrl, html) {
   const parser = new DOMParser();
   const documentNode = parser.parseFromString(html, "text/html");
   const bookName =
-    documentNode.querySelector(bookSelectors.get("bookName"))?.textContent?.trim() ||
+    documentNode
+      .querySelector(bookSelectors.get("bookName"))
+      ?.textContent?.trim() ||
     documentNode.querySelector("title")?.textContent?.trim() ||
     "Untitled book";
   const author =
@@ -294,14 +356,18 @@ function releaseImageSource(source) {
 
 function canvasToBlob(canvas, type, quality) {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        reject(new Error("Unable to encode canvas output."));
-        return;
-      }
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error("Unable to encode canvas output."));
+          return;
+        }
 
-      resolve(blob);
-    }, type, quality);
+        resolve(blob);
+      },
+      type,
+      quality,
+    );
   });
 }
 
@@ -371,4 +437,3 @@ function stringToStringArray(input) {
 
   return input.split(",").map((item) => item.replace(/"/g, "").trim());
 }
-
