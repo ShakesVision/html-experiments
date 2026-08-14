@@ -138,10 +138,8 @@ function createBookClient(options = {}) {
   }
 
   async function fetchImageBlob(imageUrl, fetchOptions = {}) {
-    const response = await fetch(applyProxyPrefix(imageUrl, proxyPrefix), {
+    const response = await fetch(imageUrl, {
       method: "GET",
-      origin: "https://rekhta.org",
-      referrer: "https://rekhta.org",
     });
 
     if (!response.ok) {
