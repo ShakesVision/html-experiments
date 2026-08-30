@@ -16,11 +16,14 @@
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
     <script src="./index.js" type="module"></script>
     <script defer src="../assets/js/shared-init.js"></script>
-      <link rel="canonical" href="https://tools.shakeeb.in/rekhta-reader/index.html">
-    <link rel="manifest" href="../manifest.webmanifest">
-    <meta name="theme-color" content="#1b4965">
+    <link
+      rel="canonical"
+      href="https://tools.shakeeb.in/rekhta-reader/index.html"
+    />
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <meta name="theme-color" content="#1b4965" />
     <link rel="stylesheet" href="../assets/css/tailwind.css" />
-</head>
+  </head>
   <body>
     <main class="app-shell">
       <section class="hero hero--compact">
@@ -36,6 +39,23 @@
             <i class="fa-solid fa-arrow-up-right-from-square"></i>
           </a>
         </p>
+
+        <div class="proxy-help">
+          <h2>Having API access problems?</h2>
+
+          <p>
+            <strong>Windows users:</strong>
+            <a href="./proxy/proxy.zip" download>Download the Local Proxy</a>
+            and run it. Then enter
+            <code>http://localhost:6789?url=</code>
+            in the Proxy URL field.
+          </p>
+
+          <p>
+            <strong>Other users:</strong>
+            Use a remote proxy URL if you have one.
+          </p>
+        </div>
 
         <div class="status-strip">
           <span class="badge" id="cache-badge">No manifest cached yet</span>
@@ -137,8 +157,8 @@
         <h2><i class="fa-solid fa-download"></i> Download queue</h2>
         <p class="queue-hint">
           Queue several books at once. Pages render straight to PDF in the
-          background &mdash; no previews are shown here, and books download
-          with overlapping progress instead of waiting in a strict line.
+          background &mdash; no previews are shown here, and books download with
+          overlapping progress instead of waiting in a strict line.
         </p>
 
         <form id="queue-add-form" class="queue-add-form">
@@ -231,13 +251,25 @@
         <div id="search-selection-bar" class="search-selection-bar hidden">
           <span id="search-selection-count">0 selected</span>
           <div class="search-selection-actions">
-            <button id="search-selection-copy" type="button" class="hero-button">
+            <button
+              id="search-selection-copy"
+              type="button"
+              class="hero-button"
+            >
               <i class="fa-solid fa-copy"></i> Copy links
             </button>
-            <button id="search-selection-queue" type="button" class="hero-button hero-button--accent">
+            <button
+              id="search-selection-queue"
+              type="button"
+              class="hero-button hero-button--accent"
+            >
               <i class="fa-solid fa-layer-group"></i> Add to queue
             </button>
-            <button id="search-selection-clear" type="button" class="hero-button">
+            <button
+              id="search-selection-clear"
+              type="button"
+              class="hero-button"
+            >
               Clear
             </button>
           </div>
@@ -263,9 +295,9 @@
           <div>
             <h2 class="settings-title">Rekhta selectors</h2>
             <p class="settings-note">
-              If Rekhta changes its page structure and loading or search
-              stops working, update the matching value here. Saved on this
-              device only, and applied the next time you load or search.
+              If Rekhta changes its page structure and loading or search stops
+              working, update the matching value here. Saved on this device
+              only, and applied the next time you load or search.
             </p>
           </div>
           <button
