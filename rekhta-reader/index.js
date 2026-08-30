@@ -330,8 +330,7 @@ async function onLoadBook(event) {
 }
 
 async function loadBook(rawBookUrl, { openInReader = false, historyMode = "push", openAtPage = 0, openView = null } = {}) {
-  // Internal removal of /detail/ from the URL
-  const bookUrl = rawBookUrl.replace(/\/detail\//i, "/");
+  const bookUrl = normalizeRekhtaEbookUrl(toRekhtaAbsoluteUrl(rawBookUrl.trim()));
   const proxyPrefix = elements.proxyInput.value.trim();
 
   localStorage.setItem(PROXY_STORAGE_KEY, proxyPrefix);
@@ -360,7 +359,7 @@ async function loadBook(rawBookUrl, { openInReader = false, historyMode = "push"
       `Loaded ${manifest.bookName}. Rekhta is fetched through the configured proxy.`,
       "success",
     );
-    elements.urlInput.value = bookUrl;
+    elements.urlInput.value = bookUrl; // always show the normalized canonical URL
     syncBookUrlToLocation(bookUrl, historyMode);
 
     if (openInReader) {
@@ -491,7 +490,7 @@ function onQueueAddSubmit(event) {
   event.preventDefault();
   const urls = elements.queueUrlsInput.value
     .split("\n")
-    .map((line) => line.trim())
+    .map((line) => normalizeRekhtaEbookUrl(toRekhtaAbsoluteUrl(line.trim())))
     .filter((line) => /^https?:\/\//i.test(line));
 
   if (!urls.length) {
@@ -1377,7 +1376,7 @@ function parseSearchResults(html) {
 
       return {
         author,
-        href: toRekhtaAbsoluteUrl(href),
+        href: normalizeRekhtaEbookUrl(toRekhtaAbsoluteUrl(href)),
         imageUrl,
         title,
       };
@@ -1414,6 +1413,45 @@ function toRekhtaAbsoluteUrl(href) {
   return `https://www.rekhta.org/${href}`;
 }
 
+// Canonical normalizer — collapses every known Rekhta ebook URL variant
+// into the clean https://www.rekhta.org/ebooks/{slug}[?lang=xx] form.
+//
+//   /ebooks/detail/{slug}   → /ebooks/{slug}
+//   /ebook-detail/{slug}    → /ebooks/{slug}
+//   /ebooks/{slug}          → unchanged (already canonical)
+//
+// Query-string params (especially ?lang=xx) are preserved throughout.
+function normalizeRekhtaEbookUrl(rawUrl) {
+  if (!rawUrl) {
+    return rawUrl;
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    return rawUrl; // not a URL at all — pass through
+  }
+
+  const p = parsed.pathname;
+
+  // /ebooks/detail/{slug} → /ebooks/{slug}
+  const m1 = p.match(/^\/ebooks\/detail\/(.+)$/i);
+  if (m1) {
+    parsed.pathname = `/ebooks/${m1[1]}`;
+    return parsed.toString();
+  }
+
+  // /ebook-detail/{slug} → /ebooks/{slug}
+  const m2 = p.match(/^\/ebook-detail\/(.+)$/i);
+  if (m2) {
+    parsed.pathname = `/ebooks/${m2[1]}`;
+    return parsed.toString();
+  }
+
+  return parsed.toString();
+}
+
 function applyProxyPrefix(url, proxyPrefix) {
   if (!proxyPrefix) {
     return url;
@@ -1427,18 +1465,14 @@ function applyProxyPrefix(url, proxyPrefix) {
 }
 
 async function resolveReaderUrl(href, { proxyPrefix, signal }) {
-  let absolute = toRekhtaAbsoluteUrl(href);
-  // Remove /detail/ from the URL if present
-  absolute = absolute.replace(/\/detail\//i, "/");
+  const absolute = normalizeRekhtaEbookUrl(toRekhtaAbsoluteUrl(href));
 
-  if (/\/ebooks\//i.test(absolute)) {
+  // Already a clean /ebooks/{slug} URL — use it directly, no network trip needed.
+  if (/\/ebooks\/[^/]+/i.test(new URL(absolute).pathname)) {
     return absolute;
   }
 
-  if (!/\/ebook-detail\//i.test(absolute)) {
-    return absolute;
-  }
-
+  // Unknown URL shape — try fetching it and looking for an ebook link inside.
   const response = await fetch(applyProxyPrefix(absolute, proxyPrefix), {
     method: "GET",
     mode: "cors",
@@ -1459,7 +1493,7 @@ async function resolveReaderUrl(href, { proxyPrefix, signal }) {
     return absolute;
   }
 
-  const resolved = toRekhtaAbsoluteUrl(readerHref);
+  const resolved = normalizeRekhtaEbookUrl(toRekhtaAbsoluteUrl(readerHref));
   const detailLang = new URL(absolute).searchParams.get("lang");
   if (!detailLang) {
     return resolved;

@@ -96,6 +96,11 @@ const bookSelectors = createSelectorStore(
 );
 
 const memoryJsonCache = new Map();
+const requestInFlight = new Map(); // Deduplication: key -> Promise
+const failedRequests = new Map(); // Track failures: key -> { count, timestamp }
+const FAILURE_CACHE_TTL = 60000; // Cache failures for 1 minute
+const MAX_RETRIES = 3;
+const RETRY_DELAYS = [500, 1500, 3000]; // Exponential backoff in ms
 
 export {
   BOOK_SELECTOR_DEFS,
@@ -134,13 +139,17 @@ function createBookClient(options = {}) {
       `${bookSelectors.get("pageKeyEndpoint")}${encodeURIComponent(pageId)}`,
       proxyPrefix,
     );
-    return getCachedJson(keyUrl, fetchOptions);
+    return getCachedJsonWithRetry(keyUrl, fetchOptions);
   }
 
   async function fetchImageBlob(imageUrl, fetchOptions = {}) {
-    const response = await fetch(imageUrl, {
-      method: "GET",
-    });
+    // Images must also go through the proxy — without it canvas drawImage()
+    // will throw a tainted-canvas security error on CORS-restricted servers.
+    const proxiedUrl = applyProxyPrefix(imageUrl, proxyPrefix);
+    const response = await fetchWithRetry(
+      () => fetchImpl(proxiedUrl, { method: "GET" }),
+      { signal: fetchOptions.signal }
+    );
 
     if (!response.ok) {
       throw new Error(`Image fetch failed with status ${response.status}`);
@@ -182,7 +191,7 @@ function createBookClient(options = {}) {
     };
   }
 
-  async function getCachedJson(url, fetchOptions = {}) {
+  async function getCachedJsonWithRetry(url, fetchOptions = {}) {
     if (!fetchOptions.forceRefresh) {
       const cachedValue = await jsonCache.match(url);
       if (cachedValue) {
@@ -190,22 +199,31 @@ function createBookClient(options = {}) {
       }
     }
 
-    const response = await fetchImpl(url, {
-      method: "GET",
-      origin: "https://rekhta.org",
-      referrer: "https://rekhta.org",
-      headers: {
-        Accept: "application/json",
+    return getCachedJson(url, fetchOptions);
+  }
+
+  async function getCachedJson(url, fetchOptions = {}) {
+    return fetchWithRetry(
+      async () => {
+        const response = await fetchImpl(url, {
+          method: "GET",
+          origin: "https://rekhta.org",
+          referrer: "https://rekhta.org",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        const payload = await response.json();
+        await jsonCache.put(url, payload);
+        return payload;
       },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    const payload = await response.json();
-    await jsonCache.put(url, payload);
-    return payload;
+      { signal: fetchOptions.signal }
+    );
   }
 
   async function getCachedText(url, fetchOptions = {}) {
@@ -216,24 +234,81 @@ function createBookClient(options = {}) {
       }
     }
 
-    const response = await fetchImpl(applyProxyPrefix(url, proxyPrefix), {
-      method: "GET",
-      origin: "https://rekhta.org",
-      referrer: "https://rekhta.org",
-    });
+    return fetchWithRetry(
+      async () => {
+        const response = await fetchImpl(applyProxyPrefix(url, proxyPrefix), {
+          method: "GET",
+          origin: "https://rekhta.org",
+          referrer: "https://rekhta.org",
+        });
 
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
 
-    const payload = await response.text();
-    await jsonCache.put(url, payload);
-    return payload;
+        const payload = await response.text();
+        await jsonCache.put(url, payload);
+        return payload;
+      },
+      { signal: fetchOptions.signal }
+    );
   }
 }
 
 function buildManifestUrl(bookUrl) {
   return bookUrl;
+}
+
+// Retry logic with exponential backoff and request deduplication
+async function fetchWithRetry(fetchFn, options = {}) {
+  const { signal } = options;
+  let lastError;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
+    }
+
+    try {
+      return await fetchFn();
+    } catch (error) {
+      lastError = error;
+
+      // Don't retry on abort or 403 (permission denied)
+      if (error.name === "AbortError") {
+        throw error;
+      }
+
+      // 403 Forbidden likely means the domain is blocked; don't waste retries
+      const is403 =
+        error.message?.includes("403") || error.message?.includes("Forbidden");
+      if (is403 && attempt === 0) {
+        console.warn("Request returned 403 Forbidden. Proxy may be needed.");
+        throw error;
+      }
+
+      // Don't retry on 4xx client errors (except 429 rate limit)
+      if (
+        error.message?.match(/^Request failed with status 4\d\d/) &&
+        !error.message?.includes("429")
+      ) {
+        throw error;
+      }
+
+      // Wait before retrying
+      if (attempt < MAX_RETRIES) {
+        const delayMs = RETRY_DELAYS[attempt] || 5000;
+        await new Promise((resolve) =>
+          setTimeout(resolve, delayMs)
+        );
+        console.debug(
+          `Request retry ${attempt + 1}/${MAX_RETRIES} after ${delayMs}ms`
+        );
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 function normalizeManifest(bookUrl, html) {

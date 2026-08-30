@@ -1,0 +1,31 @@
+========================================
+LOCAL REVERSE PROXY SETUP FOR WINDOWS
+========================================
+
+Since tools.shakeeb.in is blocked from accessing ebooksapi.rekhta.org,
+you need to run a local reverse proxy on your Windows machine.
+
+QUICK START (2 steps):
+1. Extract proxy.zip in this folder
+2. Run: start-proxy.bat
+
+That's it! Your local proxy will run on http://localhost:8888
+
+USING WITH THE WEBAPP:
+1. Open the Rekhta Reader in your browser
+2. In the "Proxy prefix" field, enter:
+   http://localhost:8888/?url={url}
+3. Load a book URL as usual
+
+HOW IT WORKS:
+- The proxy forwards API requests from your browser to Rekhta's servers
+- This bypasses the 403 CORS block on tools.shakeeb.in
+- Your requests appear to come from localhost, not the blocked domain
+
+TROUBLESHOOTING:
+- If port 8888 is in use, edit start-proxy.bat to use a different port
+- Make sure the proxy keeps running while using the reader
+- If it stops, just run start-proxy.bat again
+
+ADVANCED:
+For technical details about how Caddy is configured, see: Caddyfile
