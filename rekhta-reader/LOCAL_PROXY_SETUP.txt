@@ -29,3 +29,22 @@ TROUBLESHOOTING:
 
 ADVANCED:
 For technical details about how Caddy is configured, see: Caddyfile
+---
+
+copiolot on Caddy
+The root issue: Caddy cannot use a query-parameter value as a dynamic upstream — it requires a static upstream host known at config time. The ?url={encoded-url} format only works in a scripted proxy (Node.js, Python). The fix is to switch to a path-based format (http://localhost:8888/{hostpath}) that Caddy CAN route statically, and update both the Node.js proxy and the webapp to support it — while keeping backward compat with the old ?url={url} format.
+
+Changes needed:
+
+shared.js — add {hostpath} to applyProxyPrefix
+proxy-server.js — accept both formats
+Caddyfile — path-based static routing (actually works)
+Start_Proxy.bat — show correct prefix, fix order
+shared.js+15-0
+Note: index.js also has a local copy of applyProxyPrefix. Update it too:
+
+index.js+14-0
+Now rewrite the Node proxy to accept both formats, and the path-based format cleanly:
+
+proxy-server.js+158-0
+You've exhausted your premium model quota. Please reach out to your organization's Copilot admin to enable additional paid premium requests or wait for your allowance to renew.

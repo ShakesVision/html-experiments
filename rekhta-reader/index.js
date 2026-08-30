@@ -1461,6 +1461,20 @@ function applyProxyPrefix(url, proxyPrefix) {
     return proxyPrefix.replace("{url}", encodeURIComponent(url));
   }
 
+  // {hostpath} → host + path + query, no scheme (Caddy static-route compatible).
+  // e.g. prefix "http://localhost:8888/{hostpath}"
+  //      url    "https://ebooksapi.rekhta.org/api?pgid=abc"
+  //      result "http://localhost:8888/ebooksapi.rekhta.org/api?pgid=abc"
+  if (proxyPrefix.includes("{hostpath}")) {
+    try {
+      const t = new URL(url);
+      const hostpath = t.host + t.pathname + t.search + t.hash;
+      return proxyPrefix.replace("{hostpath}", hostpath);
+    } catch {
+      return proxyPrefix.replace("{hostpath}", url);
+    }
+  }
+
   return `${proxyPrefix}${encodeURIComponent(url)}`;
 }
 
