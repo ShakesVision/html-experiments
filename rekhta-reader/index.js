@@ -338,11 +338,8 @@ function validateLoadedManifest(manifest, bookUrl) {
   }
 
   const pageNumber = Number(manifest.pageCount ?? 0);
-  const pageIds = Array.isArray(manifest.pageIds)
-    ? manifest.pageIds.filter(Boolean)
-    : [];
   const scrambleMap = Array.isArray(manifest.scrambleMap)
-    ? manifest.scrambleMap.filter((pageRef) => pageRef?.pageId)
+    ? manifest.scrambleMap.filter((pageRef) => pageRef)
     : [];
   const title = String(manifest.bookName || "").trim();
   const author = String(manifest.author || "").trim();
@@ -359,18 +356,143 @@ function validateLoadedManifest(manifest, bookUrl) {
     );
   }
 
-  if (
-    !Number.isFinite(pageNumber) ||
-    pageNumber <= 0 ||
-    !pageIds.length ||
-    !scrambleMap.length
-  ) {
+  if (!Number.isFinite(pageNumber) || pageNumber <= 0 || !scrambleMap.length) {
     throw new Error(
       "The manifest is missing page data. The upstream Rekhta response may be empty, blocked, or served by an old proxy response.",
     );
   }
 
   return manifest;
+}
+
+function buildManifestPageReference(manifest, pageIndex) {
+  const bookId = manifest.bookId || "";
+  const pageId = manifest.pageIds?.[pageIndex] || "";
+  const imageName = manifest.pages?.[pageIndex] || "";
+  const imageBase = bookSelectors.get("imageBase");
+
+  return {
+    bookId,
+    imageName,
+    imgUrl: imageName
+      ? `${imageBase}${bookId}/${imageName}`.replace(/\/$/, "")
+      : "",
+    index: pageIndex,
+    keyUrl: bookClient ? bookClient.buildManifestUrl(manifest.bookUrl) : "",
+    pageId,
+    pageIndex: pageIndex + 1,
+  };
+}
+
+async function fetchPageIdWindow({ pageIndex, count = 20 } = {}) {
+  const manifest = state.manifest;
+  if (!manifest || !manifest.bookUrl) {
+    return [];
+  }
+
+  const proxyPrefix = elements.proxyInput.value.trim();
+  const bookUrl = new URL(manifest.bookUrl);
+  const slug = bookUrl.pathname.replace(/^\/ebooks\//i, "").split("/")[0];
+  const lang = bookUrl.searchParams.get("lang") || "1";
+  const normalizedIndex = Math.max(0, Number(pageIndex) || 0);
+  const from = Math.max(1, normalizedIndex + 1 - Math.floor(count / 2));
+  const endpoint = `https://www.rekhta.org/EbookData/GetEbookPageIds/?slug=${encodeURIComponent(slug)}&lang=${encodeURIComponent(lang)}&from=${from}&count=${count}`;
+
+  const response = await fetch(applyProxyPrefix(endpoint, proxyPrefix), {
+    method: "GET",
+    mode: "cors",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Page ID window fetch failed with status ${response.status}`,
+    );
+  }
+
+  const payload = await response.json();
+  const ids = Array.isArray(payload?.ids) ? payload.ids : [];
+  const startFrom = Number(payload?.from ?? from);
+
+  if (!ids.length) {
+    return [];
+  }
+
+  for (let offset = 0; offset < ids.length; offset += 1) {
+    const arrayIndex = startFrom + offset - 1;
+    if (arrayIndex < 0 || arrayIndex >= manifest.pageCount) {
+      continue;
+    }
+
+    const pageId = ids[offset];
+    manifest.pageIds[arrayIndex] = pageId;
+    if (
+      !manifest.scrambleMap[arrayIndex] ||
+      !manifest.scrambleMap[arrayIndex].pageId
+    ) {
+      manifest.scrambleMap[arrayIndex] = {
+        ...buildManifestPageReference(manifest, arrayIndex),
+        pageId,
+      };
+    }
+    manifest.scrambleMap[arrayIndex].pageId = pageId;
+    manifest.scrambleMap[arrayIndex].pageIndex = arrayIndex + 1;
+    manifest.scrambleMap[arrayIndex].keyUrl = buildPageKeyUrl({
+      bookId: manifest.bookId,
+      pageId,
+      pageIndex: arrayIndex + 1,
+    });
+  }
+
+  return ids;
+}
+
+async function ensurePageReference(pageIndex) {
+  const manifest = state.manifest;
+  if (!manifest || !Number.isInteger(pageIndex)) {
+    return null;
+  }
+
+  if (pageIndex < 0 || pageIndex >= manifest.pageCount) {
+    return null;
+  }
+
+  const pageRef = manifest.scrambleMap?.[pageIndex];
+  if (pageRef?.pageId) {
+    return pageRef;
+  }
+
+  const existingId = manifest.pageIds?.[pageIndex];
+  if (existingId) {
+    manifest.scrambleMap[pageIndex] = {
+      ...manifest.scrambleMap[pageIndex],
+      ...buildManifestPageReference(manifest, pageIndex),
+      pageId: existingId,
+      pageIndex: pageIndex + 1,
+    };
+    manifest.scrambleMap[pageIndex].keyUrl = buildPageKeyUrl({
+      bookId: manifest.bookId,
+      pageId: existingId,
+      pageIndex: pageIndex + 1,
+    });
+    return manifest.scrambleMap[pageIndex];
+  }
+
+  const windowSize = 20;
+  const nextPageRef = await fetchPageIdWindow({
+    pageIndex,
+    count: windowSize,
+  });
+
+  if (!nextPageRef.length) {
+    throw new Error(
+      `Page ${pageIndex + 1} could not be resolved from Rekhta's lazy page index.`,
+    );
+  }
+
+  return manifest.scrambleMap?.[pageIndex] ?? null;
 }
 
 async function loadBook(
@@ -787,10 +909,19 @@ function schedulePreview(pageIndex) {
 
   const request = previewLimiter(async () => {
     const node = state.pageNodes[pageIndex];
+    if (!node) {
+      return;
+    }
+
+    const resolvedPageRef = await ensurePageReference(pageIndex);
+    if (!resolvedPageRef) {
+      throw new Error(`Page ${pageIndex + 1} could not be resolved.`);
+    }
+
     node.status.textContent = "Decoding preview...";
 
     const { blob, canvas } = await bookClient.renderPageToBlob(
-      state.manifest.scrambleMap[pageIndex],
+      resolvedPageRef,
       {
         quality: 0.78,
         signal: state.abortController?.signal,
@@ -1913,6 +2044,11 @@ async function ensurePagePreview(pageIndex) {
   if (inflight) {
     await inflight;
     return state.previewUrls.get(pageIndex);
+  }
+
+  const resolvedPageRef = await ensurePageReference(pageIndex);
+  if (!resolvedPageRef) {
+    throw new Error(`Preview for page ${pageIndex + 1} is unavailable.`);
   }
 
   await schedulePreview(pageIndex);

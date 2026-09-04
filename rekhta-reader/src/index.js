@@ -25,7 +25,7 @@ const BOOK_SELECTOR_DEFS = [
     key: "author",
     label: "Author",
     description: "Element holding the author's name.",
-    def: "meta[property='og:description']",
+    def: "meta[property='og:description'], meta[name='description']",
   },
   {
     key: "markerBookId",
@@ -388,6 +388,8 @@ function normalizeManifest(bookUrl, html) {
     readTextNode(documentNode, [
       bookSelectors.get("author"),
       "meta[property='og:description']",
+      "meta[name='description']",
+      "meta[name='twitter:description']",
       "span.faded",
       ".faded",
     ]),
@@ -412,24 +414,34 @@ function normalizeManifest(bookUrl, html) {
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-");
 
-  const usablePageIds = pageIds.length
-    ? pageIds
-    : Array.from({ length: pageCount }, (_, index) => `page-${index + 1}`);
+  const resolvedPageIds = Array.from({ length: pageCount }, (_, index) => {
+    if (typeof pageIds[index] === "string" && pageIds[index].trim()) {
+      return pageIds[index].trim();
+    }
+    return "";
+  });
 
-  const scrambleMap = usablePageIds.map((pageId, index) => ({
-    bookId,
-    imageName: pages[index] || "",
-    imgUrl: `${imageBase}${bookId}/${pages[index] || ""}`.replace(/\/$/, ""),
-    index,
-    keyUrl: buildPageKeyUrl({
+  const scrambleMap = Array.from({ length: pageCount }, (_, index) => {
+    const pageId = resolvedPageIds[index] || "";
+    const imageName = pages[index] || "";
+
+    return {
       bookId,
+      imageName,
+      imgUrl: imageName
+        ? `${imageBase}${bookId}/${imageName}`.replace(/\/$/, "")
+        : "",
+      index,
+      keyUrl: buildPageKeyUrl({
+        bookId,
+        pageId,
+        pageIndex: index + 1,
+        template: keyEndpoint,
+      }),
       pageId,
       pageIndex: index + 1,
-      template: keyEndpoint,
-    }),
-    pageId,
-    pageIndex: index + 1,
-  }));
+    };
+  });
 
   return {
     actualUrl: bookUrl,
@@ -439,7 +451,7 @@ function normalizeManifest(bookUrl, html) {
     bookUrl,
     fileName: fileName || "rekhta-book",
     pageCount,
-    pageIds: usablePageIds,
+    pageIds: resolvedPageIds,
     pages,
     scrambleMap,
   };
@@ -679,6 +691,13 @@ function parseScriptArray(source, name) {
     return stringToStringArray(literalMatch[1]);
   }
 
+  const arrayCtorPattern = new RegExp(
+    `var\\s+${name}\\s*=\\s*new\\s+Array\\((\\d+)\\)\\s*;`,
+    "is",
+  );
+  const arrayCtorMatch = source.match(arrayCtorPattern);
+  const declaredLength = Number(arrayCtorMatch?.[1] ?? 0);
+
   const sparsePattern = new RegExp(
     `${name}\\[(\\d+)\\]\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^,;\\s]+))`,
     "gi",
@@ -691,12 +710,16 @@ function parseScriptArray(source, name) {
     values.set(index, value);
   }
 
-  if (values.size) {
-    const lastIndex = Math.max(...values.keys());
-    return Array.from(
-      { length: lastIndex + 1 },
-      (_, index) => values.get(index) || "",
+  if (values.size || declaredLength > 0) {
+    const targetLength = Math.max(
+      declaredLength,
+      values.size ? Math.max(...values.keys()) + 1 : 0,
     );
+
+    return Array.from({ length: targetLength }, (_, index) => {
+      const value = values.get(index) || "";
+      return value;
+    });
   }
 
   return [];
