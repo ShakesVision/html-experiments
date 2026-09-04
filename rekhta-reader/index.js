@@ -176,7 +176,8 @@ bootstrapFromLocation();
 // resolveReaderUrl()), so links use the short `?book={slug}&lang=xx` form.
 // Anything that doesn't fit that shape (proxy quirks, a future URL layout)
 // is still supported by storing the full absolute URL in `book` instead.
-const REKHTA_EBOOK_PATTERN = /^https?:\/\/(?:www\.)?rekhta\.org\/ebooks\/([^/?#]+)/i;
+const REKHTA_EBOOK_PATTERN =
+  /^https?:\/\/(?:www\.)?rekhta\.org\/ebooks\/([^/?#]+)/i;
 
 function bookUrlToParams(bookUrl) {
   const match = bookUrl.match(REKHTA_EBOOK_PATTERN);
@@ -302,7 +303,9 @@ function onLocationPopState() {
   if (!book) {
     cancelActiveWork();
     resetPreviewState();
-    setStatus("Paste a Rekhta URL or use the sample book to load the manifest.");
+    setStatus(
+      "Paste a Rekhta URL or use the sample book to load the manifest.",
+    );
     setProgress(0, "Idle");
     return;
   }
@@ -329,8 +332,59 @@ async function onLoadBook(event) {
   await loadBook(bookUrl, { openInReader: false, historyMode: "push" });
 }
 
-async function loadBook(rawBookUrl, { openInReader = false, historyMode = "push", openAtPage = 0, openView = null } = {}) {
-  const bookUrl = normalizeRekhtaEbookUrl(toRekhtaAbsoluteUrl(rawBookUrl.trim()));
+function validateLoadedManifest(manifest, bookUrl) {
+  if (!manifest || typeof manifest !== "object") {
+    throw new Error("The manifest did not load.");
+  }
+
+  const pageNumber = Number(manifest.pageCount ?? 0);
+  const pageIds = Array.isArray(manifest.pageIds)
+    ? manifest.pageIds.filter(Boolean)
+    : [];
+  const scrambleMap = Array.isArray(manifest.scrambleMap)
+    ? manifest.scrambleMap.filter((pageRef) => pageRef?.pageId)
+    : [];
+  const title = String(manifest.bookName || "").trim();
+  const author = String(manifest.author || "").trim();
+
+  if (!title || title === "Untitled book") {
+    throw new Error(
+      `The proxy returned a non-book or stale response for ${bookUrl}. Check that the reverse proxy is running and that the proxy prefix is set to http://localhost:8888/?url={url}.`,
+    );
+  }
+
+  if (!author || author === "Unknown author") {
+    throw new Error(
+      `The proxy returned a book page without usable author metadata for ${bookUrl}. Check the proxy prefix and try again.`,
+    );
+  }
+
+  if (
+    !Number.isFinite(pageNumber) ||
+    pageNumber <= 0 ||
+    !pageIds.length ||
+    !scrambleMap.length
+  ) {
+    throw new Error(
+      "The manifest is missing page data. The upstream Rekhta response may be empty, blocked, or served by an old proxy response.",
+    );
+  }
+
+  return manifest;
+}
+
+async function loadBook(
+  rawBookUrl,
+  {
+    openInReader = false,
+    historyMode = "push",
+    openAtPage = 0,
+    openView = null,
+  } = {},
+) {
+  const bookUrl = normalizeRekhtaEbookUrl(
+    toRekhtaAbsoluteUrl(rawBookUrl.trim()),
+  );
   const proxyPrefix = elements.proxyInput.value.trim();
 
   localStorage.setItem(PROXY_STORAGE_KEY, proxyPrefix);
@@ -348,15 +402,16 @@ async function loadBook(rawBookUrl, { openInReader = false, historyMode = "push"
     const manifest = await bookClient.getManifest(bookUrl, {
       signal: abortController.signal,
     });
+    const validManifest = validateLoadedManifest(manifest, bookUrl);
 
-    state.manifest = manifest;
+    state.manifest = validManifest;
     state.isUrduBook = /\?lang=ur\b/i.test(bookUrl);
     console.log("Book URL:", bookUrl, "| isUrduBook:", state.isUrduBook);
-    renderManifest(manifest);
+    renderManifest(validManifest);
     setBusy(false);
     setProgress(100, "Manifest cached");
     setStatus(
-      `Loaded ${manifest.bookName}. Rekhta is fetched through the configured proxy.`,
+      `Loaded ${validManifest.bookName}. Rekhta is fetched through the configured proxy.`,
       "success",
     );
     elements.urlInput.value = bookUrl; // always show the normalized canonical URL
@@ -399,7 +454,11 @@ function generatePdfFilename({ title, author, pageCount }) {
 }
 
 // Shared by the "PDF" button (current book) and every queued download below.
-async function downloadBookToPdf(client, manifest, { limiter, onProgress, signal } = {}) {
+async function downloadBookToPdf(
+  client,
+  manifest,
+  { limiter, onProgress, signal } = {},
+) {
   const renderJobs = manifest.scrambleMap.map((pageRef) =>
     limiter(() => client.renderPageToCanvas(pageRef, { signal })),
   );
@@ -459,7 +518,10 @@ async function onDownloadPdf() {
       limiter: sharedDownloadLimiter,
       signal: abortController.signal,
       onProgress: (done, total) => {
-        setProgress(Math.round((done / total) * 100), `Building PDF ${done}/${total}`);
+        setProgress(
+          Math.round((done / total) * 100),
+          `Building PDF ${done}/${total}`,
+        );
       },
     });
 
@@ -995,7 +1057,11 @@ function onSearchBackdropClick(event) {
 // ---- Selector settings (user-editable Rekhta markup targets) ----
 
 function openSettings() {
-  renderSelectorForm(elements.settingsFields, BOOK_SELECTOR_DEFS, bookSelectors);
+  renderSelectorForm(
+    elements.settingsFields,
+    BOOK_SELECTOR_DEFS,
+    bookSelectors,
+  );
   elements.settingsModal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
 }
@@ -1011,7 +1077,11 @@ function isSettingsClosed() {
 
 function onResetSelectors() {
   bookSelectors.reset();
-  renderSelectorForm(elements.settingsFields, BOOK_SELECTOR_DEFS, bookSelectors);
+  renderSelectorForm(
+    elements.settingsFields,
+    BOOK_SELECTOR_DEFS,
+    bookSelectors,
+  );
   setStatus("Selectors reset to defaults. Reload the book to apply.", "muted");
 }
 
@@ -1260,7 +1330,10 @@ async function onCopySelection() {
 
   try {
     await navigator.clipboard.writeText(hrefs.join("\n"));
-    setSearchStatus(`Copied ${hrefs.length} link${hrefs.length === 1 ? "" : "s"}.`, "success");
+    setSearchStatus(
+      `Copied ${hrefs.length} link${hrefs.length === 1 ? "" : "s"}.`,
+      "success",
+    );
   } catch {
     setSearchStatus(
       "Couldn't copy automatically. Select the links and copy manually.",
@@ -1276,7 +1349,10 @@ async function onQueueSelection() {
   }
 
   const proxyPrefix = elements.proxyInput.value.trim();
-  setSearchStatus(`Resolving ${selected.length} book URL${selected.length === 1 ? "" : "s"}...`, "muted");
+  setSearchStatus(
+    `Resolving ${selected.length} book URL${selected.length === 1 ? "" : "s"}...`,
+    "muted",
+  );
 
   const resolutions = await Promise.allSettled(
     selected.map((result) => resolveReaderUrl(result.href, { proxyPrefix })),
@@ -1486,7 +1562,9 @@ async function resolveReaderUrl(href, { proxyPrefix, signal }) {
   const html = await response.text();
   const parser = new DOMParser();
   const documentNode = parser.parseFromString(html || "", "text/html");
-  const directReader = documentNode.querySelector(bookSelectors.get("readerLink"));
+  const directReader = documentNode.querySelector(
+    bookSelectors.get("readerLink"),
+  );
 
   const readerHref = directReader?.getAttribute("href")?.trim();
   if (!readerHref) {

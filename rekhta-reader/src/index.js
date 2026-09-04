@@ -19,13 +19,13 @@ const BOOK_SELECTOR_DEFS = [
     key: "bookName",
     label: "Book title",
     description: "Element holding the book's title on the ebook page.",
-    def: "span.c-book-name",
+    def: "meta[property='og:title']",
   },
   {
     key: "author",
     label: "Author",
     description: "Element holding the author's name.",
-    def: "span.faded",
+    def: "meta[property='og:description']",
   },
   {
     key: "markerBookId",
@@ -61,8 +61,8 @@ const BOOK_SELECTOR_DEFS = [
     key: "pageKeyEndpoint",
     label: "Page-key API endpoint",
     description:
-      "Endpoint that returns the unscramble key; the tool appends the page ID.",
-    def: "https://ebooksapi.rekhta.org/api_getebookpagebyid_websiteapp/?wref=from-site&&pgid=",
+      "Endpoint template for the page-key JSON; it supports {bookId}, {pageIndex}, and {pageId} placeholders.",
+    def: "https://www.rekhta.org/EbookData/GetEbookFromApi/?bkId={bookId}&pgIdx={pageIndex}&pgid={pageId}",
   },
   {
     key: "searchCard",
@@ -109,6 +109,9 @@ export {
   createBookClient,
   createLimiter,
   getDeviceProfile,
+  getNumericValue,
+  getTilePosition,
+  normalizePageKeyTiles,
 };
 
 function createBookClient(options = {}) {
@@ -130,13 +133,43 @@ function createBookClient(options = {}) {
 
   async function getManifest(bookUrl, fetchOptions = {}) {
     const manifestUrl = buildManifestUrl(bookUrl);
+    console.debug("[reader] getManifest start", {
+      bookUrl,
+      proxyPrefix,
+      manifestUrl,
+    });
     const html = await getCachedText(manifestUrl, fetchOptions);
+    console.debug("[reader] getManifest received html", {
+      bookUrl,
+      length: html?.length ?? 0,
+      hasBookId: /var\s+bookId\s*=/.test(html || ""),
+      hasOgTitle: /og:title/i.test(html || ""),
+      startsWith: (html || "").slice(0, 180),
+    });
     return normalizeManifest(bookUrl, html);
   }
 
-  async function getPageKey(pageId, fetchOptions = {}) {
+  async function getPageKey(requestOrPageId, fetchOptions = {}) {
+    const request =
+      typeof requestOrPageId === "string"
+        ? {
+            bookId: fetchOptions.bookId,
+            pageId: requestOrPageId,
+            pageIndex: fetchOptions.pageIndex,
+          }
+        : requestOrPageId || {};
+
+    const pageId = request.pageId;
+    if (!pageId) {
+      throw new Error("Page ID is required to fetch the page key.");
+    }
+
     const keyUrl = applyProxyPrefix(
-      `${bookSelectors.get("pageKeyEndpoint")}${encodeURIComponent(pageId)}`,
+      buildPageKeyUrl({
+        bookId: request.bookId || fetchOptions.bookId,
+        pageId,
+        pageIndex: request.pageIndex ?? fetchOptions.pageIndex,
+      }),
       proxyPrefix,
     );
     return getCachedJsonWithRetry(keyUrl, fetchOptions);
@@ -148,7 +181,7 @@ function createBookClient(options = {}) {
     const proxiedUrl = applyProxyPrefix(imageUrl, proxyPrefix);
     const response = await fetchWithRetry(
       () => fetchImpl(proxiedUrl, { method: "GET" }),
-      { signal: fetchOptions.signal }
+      { signal: fetchOptions.signal },
     );
 
     if (!response.ok) {
@@ -164,7 +197,14 @@ function createBookClient(options = {}) {
     }
 
     const [pageKey, imageBlob] = await Promise.all([
-      getPageKey(pageReference.pageId, fetchOptions),
+      getPageKey(
+        {
+          bookId: pageReference.bookId,
+          pageId: pageReference.pageId,
+          pageIndex: pageReference.pageIndex ?? pageReference.index + 1,
+        },
+        fetchOptions,
+      ),
       fetchImageBlob(pageReference.imgUrl, fetchOptions),
     ]);
 
@@ -222,7 +262,7 @@ function createBookClient(options = {}) {
         await jsonCache.put(url, payload);
         return payload;
       },
-      { signal: fetchOptions.signal }
+      { signal: fetchOptions.signal },
     );
   }
 
@@ -236,10 +276,24 @@ function createBookClient(options = {}) {
 
     return fetchWithRetry(
       async () => {
-        const response = await fetchImpl(applyProxyPrefix(url, proxyPrefix), {
+        const proxiedUrl = applyProxyPrefix(url, proxyPrefix);
+        console.debug("[reader] fetch text", {
+          originalUrl: url,
+          proxyPrefix,
+          proxiedUrl,
+        });
+
+        const response = await fetchImpl(proxiedUrl, {
           method: "GET",
           origin: "https://rekhta.org",
           referrer: "https://rekhta.org",
+        });
+
+        console.debug("[reader] fetch text response", {
+          url,
+          proxiedUrl,
+          status: response?.status,
+          contentType: response?.headers?.get?.("content-type"),
         });
 
         if (!response.ok) {
@@ -247,10 +301,14 @@ function createBookClient(options = {}) {
         }
 
         const payload = await response.text();
+        console.debug("[reader] fetch text payload preview", {
+          url,
+          preview: (payload || "").slice(0, 220),
+        });
         await jsonCache.put(url, payload);
         return payload;
       },
-      { signal: fetchOptions.signal }
+      { signal: fetchOptions.signal },
     );
   }
 }
@@ -298,11 +356,9 @@ async function fetchWithRetry(fetchFn, options = {}) {
       // Wait before retrying
       if (attempt < MAX_RETRIES) {
         const delayMs = RETRY_DELAYS[attempt] || 5000;
-        await new Promise((resolve) =>
-          setTimeout(resolve, delayMs)
-        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
         console.debug(
-          `Request retry ${attempt + 1}/${MAX_RETRIES} after ${delayMs}ms`
+          `Request retry ${attempt + 1}/${MAX_RETRIES} after ${delayMs}ms`,
         );
       }
     }
@@ -318,29 +374,36 @@ function normalizeManifest(bookUrl, html) {
 
   const parser = new DOMParser();
   const documentNode = parser.parseFromString(html, "text/html");
-  const bookName =
-    documentNode
-      .querySelector(bookSelectors.get("bookName"))
-      ?.textContent?.trim() ||
-    documentNode.querySelector("title")?.textContent?.trim() ||
-    "Untitled book";
-  const author =
-    documentNode
-      .querySelector(bookSelectors.get("author"))
-      ?.textContent?.replace(/\r?\n/g, "")
-      .replace(/ +/g, " ")
-      .replace("by ", "")
-      .trim() || "Unknown author";
-  const bookId = findTextBetween(html, bookSelectors.get("markerBookId"), '";');
-  const pages = stringToStringArray(
-    findTextBetween(html, bookSelectors.get("markerPages"), "];"),
+
+  const bookName = normalizeManifestTitle(
+    readTextNode(documentNode, [
+      bookSelectors.get("bookName"),
+      "meta[property='og:title']",
+      ".c-book-name",
+      "title",
+    ]),
   );
-  const pageIds = stringToStringArray(
-    findTextBetween(html, bookSelectors.get("markerPageIds"), "];"),
+
+  const author = normalizeManifestAuthor(
+    readTextNode(documentNode, [
+      bookSelectors.get("author"),
+      "meta[property='og:description']",
+      "span.faded",
+      ".faded",
+    ]),
   );
-  const pageCount =
-    Number(findTextBetween(html, bookSelectors.get("markerTotalPages"), ";")) ||
+
+  const bookId =
+    readScriptValue(html, "bookId") ||
+    extractUrlSegment(bookUrl, "/ebooks/") ||
+    "";
+  const pages = parseScriptArray(html, "pages");
+  const pageIds = parseScriptArray(html, "pageIds");
+  const totalPageCount =
+    readScriptValue(html, "totalPageCount") ||
     Math.max(pages.length, pageIds.length);
+  const pageCount =
+    Number(totalPageCount) || Math.max(pages.length, pageIds.length);
   const imageBase = bookSelectors.get("imageBase");
   const keyEndpoint = bookSelectors.get("pageKeyEndpoint");
   const fileName = `${bookName} by ${author}`
@@ -348,12 +411,24 @@ function normalizeManifest(bookUrl, html) {
     .replace(/ +/g, " ")
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-");
-  const scrambleMap = pageIds.map((pageId, index) => ({
+
+  const usablePageIds = pageIds.length
+    ? pageIds
+    : Array.from({ length: pageCount }, (_, index) => `page-${index + 1}`);
+
+  const scrambleMap = usablePageIds.map((pageId, index) => ({
+    bookId,
     imageName: pages[index] || "",
-    imgUrl: `${imageBase}${bookId}/${pages[index]}`,
+    imgUrl: `${imageBase}${bookId}/${pages[index] || ""}`.replace(/\/$/, ""),
     index,
-    keyUrl: `${keyEndpoint}${encodeURIComponent(pageId)}`,
+    keyUrl: buildPageKeyUrl({
+      bookId,
+      pageId,
+      pageIndex: index + 1,
+      template: keyEndpoint,
+    }),
     pageId,
+    pageIndex: index + 1,
   }));
 
   return {
@@ -364,23 +439,83 @@ function normalizeManifest(bookUrl, html) {
     bookUrl,
     fileName: fileName || "rekhta-book",
     pageCount,
-    pageIds,
+    pageIds: usablePageIds,
     pages,
     scrambleMap,
   };
+}
+
+function getNumericValue(value, fallback = 0) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : fallback;
+}
+
+function getTilePosition(tile, fallbackIndex = 0) {
+  if (!tile || typeof tile !== "object") {
+    return { X1: 0, X2: 0, Y1: 0, Y2: 0, index: fallbackIndex };
+  }
+
+  return {
+    index: getNumericValue(tile.index, fallbackIndex),
+    X1: getNumericValue(tile.X1, 0),
+    X2: getNumericValue(tile.X2, 0),
+    Y1: getNumericValue(tile.Y1, 0),
+    Y2: getNumericValue(tile.Y2, 0),
+  };
+}
+
+function normalizePageKeyTiles(pageKey) {
+  const rawTiles = Array.isArray(pageKey?.Sub) ? pageKey.Sub : [];
+  if (!rawTiles.length) {
+    return [];
+  }
+
+  const hasIndex = rawTiles.some(
+    (tile) =>
+      tile &&
+      typeof tile === "object" &&
+      Object.prototype.hasOwnProperty.call(tile, "index"),
+  );
+
+  return rawTiles
+    .map((tile, order) => getTilePosition(tile, order))
+    .sort((leftTile, rightTile) => {
+      if (hasIndex) {
+        const orderedByIndex = leftTile.index - rightTile.index;
+        if (orderedByIndex !== 0) {
+          return orderedByIndex;
+        }
+      }
+
+      return (
+        leftTile.Y1 - rightTile.Y1 ||
+        leftTile.X1 - rightTile.X1 ||
+        leftTile.Y2 - rightTile.Y2 ||
+        leftTile.X2 - rightTile.X2
+      );
+    });
 }
 
 async function unscramblePage(options) {
   const { imageBlob, pageKey, tileGap, tileSize } = options;
   const source = await loadImageSource(imageBlob);
   const canvas = document.createElement("canvas");
-  canvas.width = pageKey.PageWidth || tileSize * (pageKey.X || 1);
-  canvas.height = pageKey.PageHeight || tileSize * (pageKey.Y || 1);
+  const pageWidth = getNumericValue(
+    pageKey?.PageWidth,
+    getNumericValue(pageKey?.Width, tileSize * getNumericValue(pageKey?.X, 1)),
+  );
+  const pageHeight = getNumericValue(
+    pageKey?.PageHeight,
+    getNumericValue(pageKey?.Y, 1) * tileSize,
+  );
+
+  canvas.width = pageWidth;
+  canvas.height = pageHeight;
 
   const ctx = canvas.getContext("2d", { alpha: false });
   const tileStride = tileSize + tileGap;
 
-  pageKey.Sub.forEach((sub) => {
+  normalizePageKeyTiles(pageKey).forEach((sub) => {
     ctx.drawImage(
       source,
       sub.X1 * tileStride,
@@ -488,6 +623,118 @@ function createJsonCache() {
   }
 }
 
+function buildPageKeyUrl({ bookId, pageId, pageIndex, template } = {}) {
+  if (!pageId) {
+    return "";
+  }
+
+  const endpointTemplate = template || bookSelectors.get("pageKeyEndpoint");
+  return endpointTemplate
+    .replace("{bookId}", encodeURIComponent(bookId || ""))
+    .replace("{pageIndex}", encodeURIComponent(String(pageIndex ?? 1)))
+    .replace("{pageId}", encodeURIComponent(pageId));
+}
+
+function readTextNode(documentNode, selectors = []) {
+  for (const selector of selectors) {
+    if (!selector) {
+      continue;
+    }
+
+    const element = documentNode.querySelector(selector);
+    if (!element) {
+      continue;
+    }
+
+    const textValue =
+      element.textContent?.trim() || element.getAttribute("content")?.trim();
+    if (textValue) {
+      return textValue;
+    }
+  }
+
+  return "";
+}
+
+function readScriptValue(source, variableName) {
+  const pattern = new RegExp(
+    `var\\s+${variableName}\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^;\n]+))`,
+    "i",
+  );
+  const match = source.match(pattern);
+  if (!match) {
+    return "";
+  }
+
+  return (match[1] || match[2] || match[3] || "").trim();
+}
+
+function parseScriptArray(source, name) {
+  const literalPattern = new RegExp(
+    `var\\s+${name}\\s*=\\s*\\[(.*?)\\]\\s*;`,
+    "is",
+  );
+  const literalMatch = source.match(literalPattern);
+  if (literalMatch) {
+    return stringToStringArray(literalMatch[1]);
+  }
+
+  const sparsePattern = new RegExp(
+    `${name}\\[(\\d+)\\]\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^,;\\s]+))`,
+    "gi",
+  );
+
+  const values = new Map();
+  for (const match of source.matchAll(sparsePattern)) {
+    const index = Number(match[1]);
+    const value = (match[2] || match[3] || match[4] || "").trim();
+    values.set(index, value);
+  }
+
+  if (values.size) {
+    const lastIndex = Math.max(...values.keys());
+    return Array.from(
+      { length: lastIndex + 1 },
+      (_, index) => values.get(index) || "",
+    );
+  }
+
+  return [];
+}
+
+function normalizeManifestTitle(titleText) {
+  const cleaned = (titleText || "").replace(/\s*\|\s*Rekhta\s*$/i, "").trim();
+  return cleaned || "Untitled book";
+}
+
+function normalizeManifestAuthor(authorText) {
+  const content = (authorText || "")
+    .replace(/\r?\n/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!content) {
+    return "Unknown author";
+  }
+
+  const byMatch = content.match(/\bby\s+(.+?)(?:\s+on\s+Rekhta|$)/i);
+  if (byMatch?.[1]) {
+    return byMatch[1].trim();
+  }
+
+  return content.replace(/^by\s+/i, "").trim() || "Unknown author";
+}
+
+function extractUrlSegment(url, prefix) {
+  const normalized = url || "";
+  const index = normalized.indexOf(prefix);
+  if (index === -1) {
+    return "";
+  }
+
+  return normalized.slice(index + prefix.length).split(/[/?#]/)[0] || "";
+}
+
 function findTextBetween(source, start, end) {
   const startIndex = source.indexOf(start);
   if (startIndex === -1) {
@@ -508,5 +755,8 @@ function stringToStringArray(input) {
     return [];
   }
 
-  return input.split(",").map((item) => item.replace(/"/g, "").trim());
+  return input
+    .split(",")
+    .map((item) => item.replace(/['"]/g, "").trim())
+    .filter(Boolean);
 }

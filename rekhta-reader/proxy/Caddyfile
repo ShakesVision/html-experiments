@@ -1,0 +1,64 @@
+{
+    # Disable HTTPS auto-redirect for localhost
+    auto_https off
+}
+
+:8888 {
+    # -----------------------------------------------------------------
+    # Caddy-based reverse proxy for Rekhta Reader (fallback to Node.js)
+    #
+    # Expects requests like:
+    #   GET /?url=https%3A%2F%2Febooksapi.rekhta.org%2F...
+    #
+    # Strategy:
+    #   1) Match on ?url= pointing to ebooksapi.rekhta.org  -> forward there
+    #   2) Match on ?url= pointing to www.rekhta.org        -> forward there
+    #   3) Health check
+    # -----------------------------------------------------------------
+
+    @ebooksapi {
+        query url=https://ebooksapi.rekhta.org*
+    }
+    @ebooksapi_http {
+        query url=http://ebooksapi.rekhta.org*
+    }
+    @rekhta {
+        query url=https://www.rekhta.org*
+    }
+    @rekhta_http {
+        query url=http://www.rekhta.org*
+    }
+
+    handle @ebooksapi {
+        # Rewrite: drop the "/?url=https://ebooksapi.rekhta.org" part,
+        # keep the rest of the path + query of the upstream URL.
+        rewrite * {query.url_path}
+        reverse_proxy https://ebooksapi.rekhta.org {
+            header_up Host            ebooksapi.rekhta.org
+            header_up Origin          "https://www.rekhta.org"
+            header_up Referer         "https://www.rekhta.org/"
+            header_down Access-Control-Allow-Origin  "*"
+            header_down Access-Control-Allow-Methods "GET, OPTIONS"
+        }
+    }
+
+    handle @rekhta {
+        rewrite * {query.url_path}
+        reverse_proxy https://www.rekhta.org {
+            header_up Host            www.rekhta.org
+            header_up Origin          "https://www.rekhta.org"
+            header_up Referer         "https://www.rekhta.org/"
+            header_down Access-Control-Allow-Origin  "*"
+            header_down Access-Control-Allow-Methods "GET, OPTIONS"
+        }
+    }
+
+    handle {
+        respond "Rekhta Reader local proxy (Caddy). Use: http://localhost:8888/?url={encoded-url}" 200
+    }
+
+    log {
+        output stdout
+        format console
+    }
+}
