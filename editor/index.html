@@ -1,374 +1,495 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WYSIWYG Editor with Urdu Keyboard</title>
+    <link rel="icon" type="image/x-icon" href="./urdu-editor.png" />
     <link rel="stylesheet" href="../assets/css/tailwind.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
     <script src="ur-phonetic.js"></script>
     <!-- shakeeb-justify: turns selected poetry into justified, stanza-aware layout -->
     <script src="https://cdn.jsdelivr.net/npm/shakeeb-justify@2.0.0/dist/shakeeb-justify.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=Gulzar&display=swap');
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=Gulzar&display=swap");
 
-        .editor {
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 10px;
-            min-height: 200px;
-            outline: none;
-        }
+      .editor {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        min-height: 200px;
+        outline: none;
+      }
 
-        .urdu-active {
-            font-family: 'Noto Nastaliq Urdu', 'Gulzar', serif;
-        }
+      .urdu-active {
+        font-family: "Noto Nastaliq Urdu", "Gulzar", serif;
+      }
     </style>
     <script defer src="../assets/js/shared-init.js"></script>
-    <link rel="canonical" href="https://tools.shakeeb.in/editor/index.html">
-    <link rel="manifest" href="../manifest.webmanifest">
-    <meta name="theme-color" content="#1b4965">
-</head>
+    <link rel="canonical" href="https://tools.shakeeb.in/editor/index.html" />
+    <link rel="manifest" href="../manifest.webmanifest" />
+    <meta name="theme-color" content="#1b4965" />
+  </head>
 
-<body
-    class="bg-gray-100 text-black dark:bg-gray-900 dark:text-white min-h-screen flex items-center justify-center transition-colors duration-300">
+  <body
+    class="bg-gray-100 text-black dark:bg-gray-900 dark:text-white min-h-screen flex items-center justify-center transition-colors duration-300"
+  >
     <!-- Poetry Editor -->
-    <a href="poetry-studio.html"
-        class="absolute top-4 left-4 px-3 py-2 text-sm rounded bg-green-600 text-white dark:bg-green-200 dark:text-black shadow-md">
-        🖋️ Poetry Studio
+    <a
+      href="poetry-studio.html"
+      class="absolute top-4 left-4 px-3 py-2 text-sm rounded bg-green-600 text-white dark:bg-green-200 dark:text-black shadow-md"
+    >
+      🖋️ Poetry Studio
     </a>
-    <a href="resume-studio.html"
-        class="absolute top-4 left-36 px-3 py-2 text-sm rounded bg-blue-700 text-white shadow-md">
-        📄 Resume Studio
+    <a
+      href="resume-studio.html"
+      class="absolute top-4 left-36 px-3 py-2 text-sm rounded bg-blue-700 text-white shadow-md"
+    >
+      📄 Resume Studio
     </a>
     <!-- Dark Toggle -->
-    <button id="toggleDark"
-        class="absolute top-4 right-16 px-3 py-2 text-sm rounded bg-gray-800 text-white dark:bg-gray-200 dark:text-black shadow-md">
-        🌓
+    <button
+      id="toggleDark"
+      class="absolute top-4 right-16 px-3 py-2 text-sm rounded bg-gray-800 text-white dark:bg-gray-200 dark:text-black shadow-md"
+    >
+      🌓
     </button>
 
     <!-- Help Button -->
-    <button id="toggleHelp"
-        class="absolute top-4 right-4 px-3 py-2 text-sm rounded bg-blue-600 text-white dark:bg-blue-300 dark:text-black shadow-md">
-        ❔
+    <button
+      id="toggleHelp"
+      class="absolute top-4 right-4 px-3 py-2 text-sm rounded bg-blue-600 text-white dark:bg-blue-300 dark:text-black shadow-md"
+    >
+      ❔
     </button>
 
+    <div
+      class="w-11/12 max-w-2xl bg-white dark:bg-gray-800 dark:text-white rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700"
+    >
+      <div
+        class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-700"
+      >
+        <h1
+          class="text-xl font-bold tracking-tight text-gray-900 dark:text-white"
+        >
+          WYSIWYG Editor
+        </h1>
+        <label
+          class="flex items-center space-x-2 cursor-pointer bg-pink-50 dark:bg-pink-950/40 px-3 py-1.5 rounded-full transition hover:opacity-90"
+        >
+          <input
+            type="checkbox"
+            checked
+            id="urduToggle"
+            class="w-4 h-4 text-pink-600 focus:ring-pink-500 rounded border-gray-300"
+          />
+          <span class="text-sm font-medium text-pink-800 dark:text-pink-300"
+            >Urdu Keyboard</span
+          >
+        </label>
+      </div>
 
-    <div class="w-11/12 max-w-2xl bg-white dark:bg-gray-800 dark:text-white rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
-        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-700">
-            <h1 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">WYSIWYG Editor</h1>
-            <label class="flex items-center space-x-2 cursor-pointer bg-pink-50 dark:bg-pink-950/40 px-3 py-1.5 rounded-full transition hover:opacity-90">
-                <input type="checkbox" checked id="urduToggle" class="w-4 h-4 text-pink-600 focus:ring-pink-500 rounded border-gray-300">
-                <span class="text-sm font-medium text-pink-800 dark:text-pink-300">Urdu Keyboard</span>
-            </label>
-        </div>
+      <!-- Formatting Toolbar -->
+      <div
+        class="flex flex-wrap items-center gap-1.5 bg-gray-50 dark:bg-gray-900 p-2 rounded-xl mb-3 border border-gray-200/60 dark:border-gray-700/60"
+      >
+        <button
+          type="button"
+          class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+          onclick="document.execCommand('bold')"
+          title="Bold"
+        >
+          <span class="material-symbols-outlined text-xl">format_bold</span>
+        </button>
+        <button
+          type="button"
+          class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+          onclick="document.execCommand('italic')"
+          title="Italic"
+        >
+          <span class="material-symbols-outlined text-xl">format_italic</span>
+        </button>
+        <button
+          type="button"
+          class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+          onclick="document.execCommand('underline')"
+          title="Underline"
+        >
+          <span class="material-symbols-outlined text-xl"
+            >format_underlined</span
+          >
+        </button>
+        <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+        <button
+          type="button"
+          class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+          onclick="document.execCommand('justifyLeft')"
+          title="Align Left"
+        >
+          <span class="material-symbols-outlined text-xl"
+            >format_align_left</span
+          >
+        </button>
+        <button
+          type="button"
+          class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+          onclick="document.execCommand('justifyCenter')"
+          title="Align Center"
+        >
+          <span class="material-symbols-outlined text-xl"
+            >format_align_center</span
+          >
+        </button>
+        <button
+          type="button"
+          class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+          onclick="document.execCommand('justifyRight')"
+          title="Align Right"
+        >
+          <span class="material-symbols-outlined text-xl"
+            >format_align_right</span
+          >
+        </button>
+        <button
+          type="button"
+          class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+          onclick="document.execCommand('justifyFull')"
+          title="Justify"
+        >
+          <span class="material-symbols-outlined text-xl"
+            >format_align_justify</span
+          >
+        </button>
+        <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+        <select
+          id="fontSizeSelect"
+          class="bg-transparent text-sm border-none outline-none cursor-pointer py-1 px-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+          title="Font Size"
+        >
+          <option value="3">Size: Normal</option>
+          <option value="1">Size: Small</option>
+          <option value="5">Size: Large</option>
+          <option value="7">Size: Huge</option>
+        </select>
+        <select
+          id="poetryFormatSelect"
+          class="bg-transparent text-sm border-none outline-none cursor-pointer py-1 px-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+          title="Justify poetry (shakeeb-justify) — applies to selection, or all text if nothing is selected"
+        >
+          <option value="">Poetry ▾</option>
+          <option value="sher">Sher · 1 column</option>
+          <option value="sher2">Sher · 2 columns</option>
+          <option value="pattern-4">Qat'a / Rubai (4)</option>
+          <option value="mukhammas">Mukhammas (5)</option>
+          <option value="mukhammas-3-2">Mukhammas 3+2</option>
+          <option value="mukhammas-mixed">Mukhammas mixed</option>
+          <option value="musaddas">Musaddas (6)</option>
+          <option value="musaddas-6">Musaddas all-6</option>
+          <option value="musaddas-mixed">Musaddas mixed</option>
+          <option value="custom">Custom pattern…</option>
+        </select>
+        <button
+          type="button"
+          class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition ml-auto"
+          onclick="copyEditorText()"
+          title="Copy Text"
+        >
+          <span class="material-symbols-outlined text-xl">content_copy</span>
+        </button>
+      </div>
 
-        <!-- Formatting Toolbar -->
-        <div class="flex flex-wrap items-center gap-1.5 bg-gray-50 dark:bg-gray-900 p-2 rounded-xl mb-3 border border-gray-200/60 dark:border-gray-700/60">
-            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('bold')" title="Bold">
-                <span class="material-symbols-outlined text-xl">format_bold</span>
-            </button>
-            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('italic')" title="Italic">
-                <span class="material-symbols-outlined text-xl">format_italic</span>
-            </button>
-            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('underline')" title="Underline">
-                <span class="material-symbols-outlined text-xl">format_underlined</span>
-            </button>
-            <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
-            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('justifyLeft')" title="Align Left">
-                <span class="material-symbols-outlined text-xl">format_align_left</span>
-            </button>
-            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('justifyCenter')" title="Align Center">
-                <span class="material-symbols-outlined text-xl">format_align_center</span>
-            </button>
-            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('justifyRight')" title="Align Right">
-                <span class="material-symbols-outlined text-xl">format_align_right</span>
-            </button>
-            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" onclick="document.execCommand('justifyFull')" title="Justify">
-                <span class="material-symbols-outlined text-xl">format_align_justify</span>
-            </button>
-            <div class="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
-            <select id="fontSizeSelect" class="bg-transparent text-sm border-none outline-none cursor-pointer py-1 px-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700" title="Font Size">
-                <option value="3">Size: Normal</option>
-                <option value="1">Size: Small</option>
-                <option value="5">Size: Large</option>
-                <option value="7">Size: Huge</option>
-            </select>
-            <select id="poetryFormatSelect" class="bg-transparent text-sm border-none outline-none cursor-pointer py-1 px-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700" title="Justify poetry (shakeeb-justify) — applies to selection, or all text if nothing is selected">
-                <option value="">Poetry ▾</option>
-                <option value="sher">Sher · 1 column</option>
-                <option value="sher2">Sher · 2 columns</option>
-                <option value="pattern-4">Qat'a / Rubai (4)</option>
-                <option value="mukhammas">Mukhammas (5)</option>
-                <option value="mukhammas-3-2">Mukhammas 3+2</option>
-                <option value="mukhammas-mixed">Mukhammas mixed</option>
-                <option value="musaddas">Musaddas (6)</option>
-                <option value="musaddas-6">Musaddas all-6</option>
-                <option value="musaddas-mixed">Musaddas mixed</option>
-                <option value="custom">Custom pattern…</option>
-            </select>
-            <button type="button" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition ml-auto" onclick="copyEditorText()" title="Copy Text">
-                <span class="material-symbols-outlined text-xl">content_copy</span>
-            </button>
-        </div>
-
-        <div contenteditable="true" id="urduTextarea"
-            class="editor bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white p-4 rounded-xl border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-pink-300 dark:focus:ring-pink-800 outline-none text-xl leading-loose min-h-[250px]"></div>
+      <div
+        contenteditable="true"
+        id="urduTextarea"
+        class="editor bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-white p-4 rounded-xl border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-pink-300 dark:focus:ring-pink-800 outline-none text-xl leading-loose min-h-[250px]"
+      ></div>
     </div>
 
     <!-- Help Modal -->
-    <div id="helpModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div
-            class="bg-white dark:bg-gray-800 text-black dark:text-white p-6 rounded shadow-lg max-w-3xl w-full relative">
-            <button id="closeHelp" class="absolute top-2 right-4 text-xl font-bold hover:text-red-500">×</button>
-            <h2 class="text-2xl font-semibold mb-4">Keyboard Map</h2>
-            <table class="w-full text-left border border-collapse border-gray-400 dark:border-gray-600">
-                <thead>
-                    <tr>
-                        <!-- Dynamically add column headers if needed -->
-                        <th class="border px-3 py-1">Key 1</th>
-                        <th class="border px-3 py-1">Key 2</th>
-                        <th class="border px-3 py-1">Key 3</th>
-                        <th class="border px-3 py-1">Key 4</th>
-                        <!-- Add more headers as necessary -->
-                    </tr>
-                </thead>
-                <tbody id="keyboardTableBody" class="text-sm">
-                    <!-- JS will populate this -->
-                </tbody>
-            </table>
-        </div>
+    <div
+      id="helpModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 text-black dark:text-white p-6 rounded shadow-lg max-w-3xl w-full relative"
+      >
+        <button
+          id="closeHelp"
+          class="absolute top-2 right-4 text-xl font-bold hover:text-red-500"
+        >
+          ×
+        </button>
+        <h2 class="text-2xl font-semibold mb-4">Keyboard Map</h2>
+        <table
+          class="w-full text-left border border-collapse border-gray-400 dark:border-gray-600"
+        >
+          <thead>
+            <tr>
+              <!-- Dynamically add column headers if needed -->
+              <th class="border px-3 py-1">Key 1</th>
+              <th class="border px-3 py-1">Key 2</th>
+              <th class="border px-3 py-1">Key 3</th>
+              <th class="border px-3 py-1">Key 4</th>
+              <!-- Add more headers as necessary -->
+            </tr>
+          </thead>
+          <tbody id="keyboardTableBody" class="text-sm">
+            <!-- JS will populate this -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
-
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const textarea = document.getElementById('urduTextarea');
-            const urduToggle = document.getElementById('urduToggle');
+      document.addEventListener("DOMContentLoaded", function () {
+        const textarea = document.getElementById("urduTextarea");
+        const urduToggle = document.getElementById("urduToggle");
 
-            // By default - Urdu is checked, make style changes accordingly.
-            textarea.style.direction = 'rtl';
-            textarea.style.lineHeight = '2em';
-            textarea.classList.add('urdu-active');
+        // By default - Urdu is checked, make style changes accordingly.
+        textarea.style.direction = "rtl";
+        textarea.style.lineHeight = "2em";
+        textarea.classList.add("urdu-active");
 
-            // Function to map English keystrokes to Urdu characters
-            function mapToUrdu(event) {
-                if (!urduToggle.checked) return; // Only apply mapping if toggle is on
+        // Function to map English keystrokes to Urdu characters
+        function mapToUrdu(event) {
+          if (!urduToggle.checked) return; // Only apply mapping if toggle is on
 
-                const key = event.key;
+          const key = event.key;
 
-                for (let i = 0; i < keyboardMap.length; i++) {
-                    if (keyboardMap[i][0] === key) {
-                        event.preventDefault();
-                        insertAtCursor(textarea, keyboardMap[i][1]);
-                        break;
-                    }
-                }
+          for (let i = 0; i < keyboardMap.length; i++) {
+            if (keyboardMap[i][0] === key) {
+              event.preventDefault();
+              insertAtCursor(textarea, keyboardMap[i][1]);
+              break;
             }
-
-            // Function to insert character at cursor position
-            function insertAtCursor(field, char) {
-                if (document.queryCommandSupported('insertText')) {
-                    document.execCommand('insertText', false, char);
-                } else {
-                    const selection = window.getSelection();
-                    const range = selection.getRangeAt(0);
-                    range.deleteContents();
-                    const textNode = document.createTextNode(char);
-                    range.insertNode(textNode);
-                    range.setStartAfter(textNode);
-                    range.setEndAfter(textNode);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                }
-            }
-
-            // Toggle direction and font on checkbox change
-            urduToggle.addEventListener('change', () => {
-                if (urduToggle.checked) {
-                    textarea.style.direction = 'rtl';
-                    textarea.style.lineHeight = '2em';
-                    textarea.classList.add('urdu-active');
-                } else {
-                    textarea.style.direction = 'ltr';
-                    textarea.classList.remove('urdu-active');
-                }
-            });
-
-            // Attach the event listener to the editor
-            textarea.addEventListener('keypress', mapToUrdu);
-
-            // Enable rich-text formatting with commands
-            textarea.addEventListener('keydown', (event) => {
-                if (event.ctrlKey || event.metaKey) {
-                    switch (event.key.toLowerCase()) {
-                        case 'b':
-                            event.preventDefault();
-                            document.execCommand('bold');
-                            break;
-                        case 'i':
-                            event.preventDefault();
-                            document.execCommand('italic');
-                            break;
-                        case 'u':
-                            event.preventDefault();
-                            document.execCommand('underline');
-                            break;
-                        case 'l':
-                            event.preventDefault();
-                            document.execCommand('insertUnorderedList');
-                            break;
-                        case 'o':
-                            event.preventDefault();
-                            document.execCommand('insertOrderedList');
-                            break;
-                    }
-                }
-            });
-
-            // Font size change handler
-            const fontSizeSelect = document.getElementById('fontSizeSelect');
-            if (fontSizeSelect) {
-                fontSizeSelect.addEventListener('change', (e) => {
-                    document.execCommand('fontSize', false, e.target.value);
-                });
-            }
-
-            // Poetry formatting via shakeeb-justify. Mirrors the other toolbar
-            // controls: it acts on the current selection (or the whole editor
-            // when nothing is selected), wrapping the text in a `.sj` block and
-            // letting the library justify it in place.
-            function escapeHtml(s) {
-                return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            }
-
-            function buildPoetryHtml(format, customPattern, text) {
-                const body = escapeHtml(text).replace(/\r?\n/g, '<br>');
-                let cls = 'sj';
-                let attr = '';
-                if (format === 'custom') {
-                    cls = 'sj sher';
-                    if (customPattern) attr = ` data-sj-pattern="${customPattern.replace(/"/g, '&quot;')}"`;
-                } else if (format.startsWith('pattern-')) {
-                    cls = 'sj sher';
-                    attr = ` data-sj-pattern="${format.slice('pattern-'.length)}"`;
-                } else {
-                    cls = 'sj ' + format;
-                }
-                return `<div class="${cls}"${attr}>${body}</div>`;
-            }
-
-            function applyPoetryFormat(format) {
-                let customPattern = '';
-                if (format === 'custom') {
-                    customPattern = (window.prompt('shakeeb-justify pattern (e.g. 4, or 3+2):', '') || '').trim();
-                    if (!customPattern) return;
-                }
-                const selection = window.getSelection();
-                const hasSelection =
-                    selection && selection.rangeCount && !selection.isCollapsed &&
-                    textarea.contains(selection.anchorNode);
-                const text = hasSelection ? selection.toString() : (textarea.innerText || '');
-                if (!text.trim()) return;
-
-                const html = buildPoetryHtml(format, customPattern, text);
-                textarea.focus();
-                if (hasSelection) {
-                    document.execCommand('insertHTML', false, html);
-                } else {
-                    textarea.innerHTML = html;
-                }
-                if (window.ShakeebJustify) {
-                    try { ShakeebJustify.apply(); } catch (err) { /* ignore */ }
-                }
-            }
-
-            const poetryFormatSelect = document.getElementById('poetryFormatSelect');
-            if (poetryFormatSelect) {
-                poetryFormatSelect.addEventListener('change', (e) => {
-                    const value = e.target.value;
-                    if (value) applyPoetryFormat(value);
-                    e.target.selectedIndex = 0; // reset to the "Poetry ▾" label
-                });
-            }
-
-            // Copy editor text helper
-            window.copyEditorText = function() {
-                const text = textarea.innerText || textarea.textContent;
-                navigator.clipboard.writeText(text).then(() => {
-                    alert('متن کامیابی سے کاپی ہو گیا!');
-                }).catch(err => {
-                    console.error('Failed to copy:', err);
-                });
-            };
-        });
-
-        /*
-        * Theme toggle
-        */
-        const root = document.documentElement;
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-        // Initialize theme
-        if (localStorage.theme === 'dark') {
-            root.classList.add('dark');
-        } else if (localStorage.theme === 'light') {
-            root.classList.remove('dark');
-        } else {
-            // Default to light mode unless system prefers dark
-            localStorage.theme = prefersDark ? 'dark' : 'light';
-            root.classList.toggle('dark', prefersDark);
+          }
         }
 
-        // Add toggle listener
-        document.getElementById('toggleDark')?.addEventListener('click', () => {
-            const isDark = root.classList.toggle('dark');
-            localStorage.theme = isDark ? 'dark' : 'light';
-            console.log('Dark mode:', isDark);
-        });
-
-        /*
-        * Modal help logic
-        */
-
-        // Fill table in multiple columns
-        const tbody = document.getElementById('keyboardTableBody');
-
-        // Define how many columns you want (4 for example)
-        const numColumns = 4;
-
-        // Loop through keyboardMap and add them to the table
-        for (let i = 0; i < keyboardMap.length; i++) {
-            if (i % numColumns === 0) {
-                const row = document.createElement('tr');
-                tbody.appendChild(row);
-            }
-
-            const currentRow = tbody.lastElementChild;
-            const cell = document.createElement('td');
-            cell.classList.add('border', 'px-3', 'py-1', 'font-mono');
-            cell.textContent = `${keyboardMap[i][0]} - ${keyboardMap[i][1]}`;
-            currentRow.appendChild(cell);
+        // Function to insert character at cursor position
+        function insertAtCursor(field, char) {
+          if (document.queryCommandSupported("insertText")) {
+            document.execCommand("insertText", false, char);
+          } else {
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+            const textNode = document.createTextNode(char);
+            range.insertNode(textNode);
+            range.setStartAfter(textNode);
+            range.setEndAfter(textNode);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
         }
 
-        // Modal show/hide logic
-        const helpModal = document.getElementById('helpModal');
-        document.getElementById('toggleHelp').addEventListener('click', () => {
-            helpModal.classList.remove('hidden');
+        // Toggle direction and font on checkbox change
+        urduToggle.addEventListener("change", () => {
+          if (urduToggle.checked) {
+            textarea.style.direction = "rtl";
+            textarea.style.lineHeight = "2em";
+            textarea.classList.add("urdu-active");
+          } else {
+            textarea.style.direction = "ltr";
+            textarea.classList.remove("urdu-active");
+          }
         });
 
-        document.getElementById('closeHelp').addEventListener('click', () => {
-            helpModal.classList.add('hidden');
-        });
+        // Attach the event listener to the editor
+        textarea.addEventListener("keypress", mapToUrdu);
 
-        // Optional: Click outside to close
-        helpModal.addEventListener('click', (e) => {
-            if (e.target === helpModal) {
-                helpModal.classList.add('hidden');
+        // Enable rich-text formatting with commands
+        textarea.addEventListener("keydown", (event) => {
+          if (event.ctrlKey || event.metaKey) {
+            switch (event.key.toLowerCase()) {
+              case "b":
+                event.preventDefault();
+                document.execCommand("bold");
+                break;
+              case "i":
+                event.preventDefault();
+                document.execCommand("italic");
+                break;
+              case "u":
+                event.preventDefault();
+                document.execCommand("underline");
+                break;
+              case "l":
+                event.preventDefault();
+                document.execCommand("insertUnorderedList");
+                break;
+              case "o":
+                event.preventDefault();
+                document.execCommand("insertOrderedList");
+                break;
             }
+          }
         });
+
+        // Font size change handler
+        const fontSizeSelect = document.getElementById("fontSizeSelect");
+        if (fontSizeSelect) {
+          fontSizeSelect.addEventListener("change", (e) => {
+            document.execCommand("fontSize", false, e.target.value);
+          });
+        }
+
+        // Poetry formatting via shakeeb-justify. Mirrors the other toolbar
+        // controls: it acts on the current selection (or the whole editor
+        // when nothing is selected), wrapping the text in a `.sj` block and
+        // letting the library justify it in place.
+        function escapeHtml(s) {
+          return s
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        }
+
+        function buildPoetryHtml(format, customPattern, text) {
+          const body = escapeHtml(text).replace(/\r?\n/g, "<br>");
+          let cls = "sj";
+          let attr = "";
+          if (format === "custom") {
+            cls = "sj sher";
+            if (customPattern)
+              attr = ` data-sj-pattern="${customPattern.replace(/"/g, "&quot;")}"`;
+          } else if (format.startsWith("pattern-")) {
+            cls = "sj sher";
+            attr = ` data-sj-pattern="${format.slice("pattern-".length)}"`;
+          } else {
+            cls = "sj " + format;
+          }
+          return `<div class="${cls}"${attr}>${body}</div>`;
+        }
+
+        function applyPoetryFormat(format) {
+          let customPattern = "";
+          if (format === "custom") {
+            customPattern = (
+              window.prompt("shakeeb-justify pattern (e.g. 4, or 3+2):", "") ||
+              ""
+            ).trim();
+            if (!customPattern) return;
+          }
+          const selection = window.getSelection();
+          const hasSelection =
+            selection &&
+            selection.rangeCount &&
+            !selection.isCollapsed &&
+            textarea.contains(selection.anchorNode);
+          const text = hasSelection
+            ? selection.toString()
+            : textarea.innerText || "";
+          if (!text.trim()) return;
+
+          const html = buildPoetryHtml(format, customPattern, text);
+          textarea.focus();
+          if (hasSelection) {
+            document.execCommand("insertHTML", false, html);
+          } else {
+            textarea.innerHTML = html;
+          }
+          if (window.ShakeebJustify) {
+            try {
+              ShakeebJustify.apply();
+            } catch (err) {
+              /* ignore */
+            }
+          }
+        }
+
+        const poetryFormatSelect =
+          document.getElementById("poetryFormatSelect");
+        if (poetryFormatSelect) {
+          poetryFormatSelect.addEventListener("change", (e) => {
+            const value = e.target.value;
+            if (value) applyPoetryFormat(value);
+            e.target.selectedIndex = 0; // reset to the "Poetry ▾" label
+          });
+        }
+
+        // Copy editor text helper
+        window.copyEditorText = function () {
+          const text = textarea.innerText || textarea.textContent;
+          navigator.clipboard
+            .writeText(text)
+            .then(() => {
+              alert("متن کامیابی سے کاپی ہو گیا!");
+            })
+            .catch((err) => {
+              console.error("Failed to copy:", err);
+            });
+        };
+      });
+
+      /*
+       * Theme toggle
+       */
+      const root = document.documentElement;
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
+
+      // Initialize theme
+      if (localStorage.theme === "dark") {
+        root.classList.add("dark");
+      } else if (localStorage.theme === "light") {
+        root.classList.remove("dark");
+      } else {
+        // Default to light mode unless system prefers dark
+        localStorage.theme = prefersDark ? "dark" : "light";
+        root.classList.toggle("dark", prefersDark);
+      }
+
+      // Add toggle listener
+      document.getElementById("toggleDark")?.addEventListener("click", () => {
+        const isDark = root.classList.toggle("dark");
+        localStorage.theme = isDark ? "dark" : "light";
+        console.log("Dark mode:", isDark);
+      });
+
+      /*
+       * Modal help logic
+       */
+
+      // Fill table in multiple columns
+      const tbody = document.getElementById("keyboardTableBody");
+
+      // Define how many columns you want (4 for example)
+      const numColumns = 4;
+
+      // Loop through keyboardMap and add them to the table
+      for (let i = 0; i < keyboardMap.length; i++) {
+        if (i % numColumns === 0) {
+          const row = document.createElement("tr");
+          tbody.appendChild(row);
+        }
+
+        const currentRow = tbody.lastElementChild;
+        const cell = document.createElement("td");
+        cell.classList.add("border", "px-3", "py-1", "font-mono");
+        cell.textContent = `${keyboardMap[i][0]} - ${keyboardMap[i][1]}`;
+        currentRow.appendChild(cell);
+      }
+
+      // Modal show/hide logic
+      const helpModal = document.getElementById("helpModal");
+      document.getElementById("toggleHelp").addEventListener("click", () => {
+        helpModal.classList.remove("hidden");
+      });
+
+      document.getElementById("closeHelp").addEventListener("click", () => {
+        helpModal.classList.add("hidden");
+      });
+
+      // Optional: Click outside to close
+      helpModal.addEventListener("click", (e) => {
+        if (e.target === helpModal) {
+          helpModal.classList.add("hidden");
+        }
+      });
     </script>
-</body>
-
+  </body>
 </html>
