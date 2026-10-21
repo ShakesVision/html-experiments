@@ -1054,20 +1054,7 @@ function renderReaderViewMode() {
   }
 }
 
-function getDirectionalDelta(direction) {
-  let delta = 0;
-  if (state.isTwoPageMode) {
-    delta = 2; // Two pages at a time
-  } else {
-    delta = 1; // One page at a time
-  }
 
-  if (state.isUrduBook) {
-    return direction === "prev" ? delta : -delta;
-  }
-
-  return direction === "prev" ? -delta : delta;
-}
 
 function onDocumentKeydown(event) {
   if (!isSettingsClosed()) {

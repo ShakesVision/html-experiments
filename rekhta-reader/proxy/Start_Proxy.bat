@@ -28,9 +28,27 @@ if %ERRORLEVEL% == 0 (
 )
 
 REM Fallback: Caddy
-if exist caddy.exe (
-    echo  Node.js not found, trying Caddy...
-    caddy.exe run --config Caddyfile
+REM Fallback: Caddy
+if defined CADDY_PATH if exist "%CADDY_PATH%" (
+    echo  Node.js not found, using CADDY_PATH %CADDY_PATH%...
+    set "CADDY_BIN=%CADDY_PATH%"
+) else if exist "%~dp0caddy.exe" (
+    echo  Node.js not found, using local caddy.exe in proxy folder...
+    set "CADDY_BIN=%~dp0caddy.exe"
+) else (
+    where caddy >nul 2>&1
+    if %ERRORLEVEL% == 0 (
+        echo  Node.js not found, using caddy from PATH...
+        set "CADDY_BIN=caddy"
+    ) else (
+        set "CADDY_BIN="
+    )
+)
+
+if defined CADDY_BIN (
+    echo  Starting Caddy: %CADDY_BIN%
+    set "PORT=%PORT%"
+    %CADDY_BIN% run --config Caddyfile
     goto :done
 )
 

@@ -3,7 +3,7 @@
     auto_https off
 }
 
-:8888 {
+:{env.PORT} {
     # -----------------------------------------------------------------
     # Caddy-based reverse proxy for Rekhta Reader (fallback to Node.js)
     #

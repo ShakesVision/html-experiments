@@ -129,6 +129,7 @@ function createBookClient(options = {}) {
     proxyPrefix,
     renderPageToCanvas,
     renderPageToBlob,
+    renderPageDirect,
   };
 
   async function getManifest(bookUrl, fetchOptions = {}) {
@@ -511,6 +512,11 @@ function normalizePageKeyTiles(pageKey) {
 async function unscramblePage(options) {
   const { imageBlob, pageKey, tileGap, tileSize } = options;
   const source = await loadImageSource(imageBlob);
+  const tiles = normalizePageKeyTiles(pageKey);
+  if (!tiles.length) {
+    releaseImageSource(source);
+    throw new Error("Page-key response contains no tile mappings.");
+  }
   const canvas = document.createElement("canvas");
   const pageWidth = getNumericValue(
     pageKey?.PageWidth,
@@ -521,13 +527,18 @@ async function unscramblePage(options) {
     getNumericValue(pageKey?.Y, 1) * tileSize,
   );
 
+  if (pageWidth <= 0 || pageHeight <= 0) {
+    releaseImageSource(source);
+    throw new Error("Page-key response contains invalid page dimensions.");
+  }
+
   canvas.width = pageWidth;
   canvas.height = pageHeight;
 
   const ctx = canvas.getContext("2d", { alpha: false });
   const tileStride = tileSize + tileGap;
 
-  normalizePageKeyTiles(pageKey).forEach((sub) => {
+  tiles.forEach((sub) => {
     ctx.drawImage(
       source,
       sub.X1 * tileStride,
@@ -782,4 +793,95 @@ function stringToStringArray(input) {
     .split(",")
     .map((item) => item.replace(/['"]/g, "").trim())
     .filter(Boolean);
+}
+
+async function renderPageDirect(pageReference, fetchOptions = {}) {
+  console.log("[direct-page] reference:", pageReference);
+
+  if (!pageReference?.pageId) {
+    throw new Error("Direct page load: missing pageId");
+  }
+
+  if (!pageReference?.imgUrl) {
+    throw new Error("Direct page load: missing imgUrl");
+  }
+
+  console.log("[direct-page] page:", pageReference.pageIndex);
+  console.log("[direct-page] pageId:", pageReference.pageId);
+  console.log("[direct-page] image:", pageReference.imgUrl);
+
+  const result = await renderPageToBlob(pageReference, {
+    ...fetchOptions,
+    forceRefresh: true,
+  });
+
+  console.log("[direct-page] UNSCRAMBLED:", {
+    page: pageReference.pageIndex,
+    pageId: result.pageId,
+    width: result.width,
+    height: result.height,
+    blobSize: result.blob.size,
+  });
+
+  return result;
+}
+
+export async function forceRenderPage({ client, manifest, pageNumber }) {
+  const pageIndex = Number(pageNumber);
+
+  if (!Number.isInteger(pageIndex) || pageIndex < 1) {
+    throw new Error(`Invalid page number: ${pageNumber}`);
+  }
+
+  if (pageIndex > manifest.pageCount) {
+    throw new Error(
+      `Page ${pageIndex} is outside the book (${manifest.pageCount} pages).`,
+    );
+  }
+
+  const page = manifest.scrambleMap[pageIndex - 1];
+
+  if (!page) {
+    throw new Error(`No manifest entry for page ${pageIndex}`);
+  }
+
+  console.log(`%c[FORCE] PAGE ${pageIndex}`, "color:#00ff00;font-weight:bold");
+
+  console.log("[FORCE] page reference:", {
+    pageIndex: page.pageIndex,
+    pageId: page.pageId,
+    imgUrl: page.imgUrl,
+    bookId: page.bookId,
+  });
+
+  if (!page.pageId) {
+    throw new Error(`Page ${pageIndex} has no pageId`);
+  }
+
+  if (!page.imgUrl) {
+    throw new Error(`Page ${pageIndex} has no image URL`);
+  }
+
+  const result = await client.renderPageToBlob(page, {
+    forceRefresh: true,
+    type: "image/jpeg",
+    quality: 0.95,
+  });
+
+  console.log(
+    `%c[FORCE] ✓ UNSCRAMBLED PAGE ${pageIndex}`,
+    "color:#00ff00;font-weight:bold",
+  );
+
+  console.log("[FORCE] output:", {
+    width: result.width,
+    height: result.height,
+    bytes: result.blob.size,
+    pageId: result.pageId,
+  });
+
+  return {
+    page,
+    ...result,
+  };
 }

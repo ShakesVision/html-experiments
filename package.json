@@ -21,5 +21,8 @@
   "devDependencies": {
     "linkedom": "^0.18.13",
     "tailwindcss": "^3.4.19"
+  },
+  "dependencies": {
+    "canvas": "^3.2.3"
   }
 }
