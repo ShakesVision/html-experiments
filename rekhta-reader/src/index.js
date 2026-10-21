@@ -61,7 +61,7 @@ const BOOK_SELECTOR_DEFS = [
     key: "pageKeyEndpoint",
     label: "Page-key API endpoint",
     description:
-      "Endpoint template for the page-key JSON; it supports {bookId}, {pageIndex}, and {pageId} placeholders.",
+      "Endpoint template for page-key JSON; {pageIndex} is Rekhta's zero-based pgIdx and the other placeholders are {bookId} and {pageId}.",
     def: "https://www.rekhta.org/EbookData/GetEbookFromApi/?bkId={bookId}&pgIdx={pageIndex}&pgid={pageId}",
   },
   {
@@ -101,6 +101,9 @@ const failedRequests = new Map(); // Track failures: key -> { count, timestamp }
 const FAILURE_CACHE_TTL = 60000; // Cache failures for 1 minute
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [500, 1500, 3000]; // Exponential backoff in ms
+const REKHTA_API_MIN_INTERVAL_MS = 1500;
+let nextRekhtaApiRequestAt = 0;
+let rekhtaApiRequestQueue = Promise.resolve();
 
 export {
   BOOK_SELECTOR_DEFS,
@@ -125,6 +128,7 @@ function createBookClient(options = {}) {
     buildManifestUrl: (bookUrl) => buildManifestUrl(bookUrl),
     getManifest,
     getPageKey,
+    getPageIds,
     fetchImageBlob,
     proxyPrefix,
     renderPageToCanvas,
@@ -173,7 +177,18 @@ function createBookClient(options = {}) {
       }),
       proxyPrefix,
     );
-    return getCachedJsonWithRetry(keyUrl, fetchOptions);
+    return getCachedJsonWithRetry(keyUrl, fetchOptions, {
+      pageKey: true,
+      throttled: true,
+    });
+  }
+
+  async function getPageIds({ slug, lang = "1", from = 0, count = 10 } = {}, fetchOptions = {}) {
+    const url = applyProxyPrefix(
+      `https://www.rekhta.org/EbookData/GetEbookPageIds/?slug=${encodeURIComponent(slug)}&lang=${encodeURIComponent(lang)}&from=${from}&count=${count}`,
+      proxyPrefix,
+    );
+    return getCachedJsonWithRetry(url, fetchOptions, { throttled: true });
   }
 
   async function fetchImageBlob(imageUrl, fetchOptions = {}) {
@@ -232,36 +247,76 @@ function createBookClient(options = {}) {
     };
   }
 
-  async function getCachedJsonWithRetry(url, fetchOptions = {}) {
+  async function getCachedJsonWithRetry(
+    url,
+    fetchOptions = {},
+    { pageKey = false, throttled = false } = {},
+  ) {
     if (!fetchOptions.forceRefresh) {
       const cachedValue = await jsonCache.match(url);
-      if (cachedValue) {
+      if (cachedValue !== null && cachedValue !== "") {
         return cachedValue;
       }
     }
 
-    return getCachedJson(url, fetchOptions);
+    if (!throttled) return getCachedJson(url, fetchOptions, { pageKey });
+
+    const existingRequest = requestInFlight.get(url);
+    if (existingRequest) return existingRequest;
+
+    const request = getCachedJson(url, fetchOptions, { pageKey, throttled });
+    requestInFlight.set(url, request);
+    try {
+      return await request;
+    } finally {
+      if (requestInFlight.get(url) === request) requestInFlight.delete(url);
+    }
   }
 
-  async function getCachedJson(url, fetchOptions = {}) {
+  async function getCachedJson(
+    url,
+    fetchOptions = {},
+    { pageKey = false, throttled = false } = {},
+  ) {
     return fetchWithRetry(
       async () => {
-        const response = await fetchImpl(url, {
-          method: "GET",
-          origin: "https://rekhta.org",
-          referrer: "https://rekhta.org",
-          headers: {
-            Accept: "application/json",
-          },
-        });
+        const request = async () => {
+          const response = await fetchImpl(url, {
+            method: "GET",
+            origin: "https://www.rekhta.org",
+            referrer: "https://www.rekhta.org/",
+            headers: {
+              Accept: "application/json, text/javascript, */*; q=0.01",
+              "X-Requested-With": "XMLHttpRequest",
+            },
+          });
 
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`);
-        }
+          if (!response.ok) {
+            const error = new Error(`Request failed with status ${response.status}`);
+            error.retryAfterMs = getRetryAfterMs(response);
+            throw error;
+          }
 
-        const payload = await response.json();
-        await jsonCache.put(url, payload);
-        return payload;
+          let payload = await response.json();
+          if (typeof payload === "string") {
+            try {
+              payload = JSON.parse(payload);
+            } catch {
+              // Leave non-JSON strings as-is; validation below will report it.
+            }
+          }
+          if (pageKey && (!payload || !Array.isArray(payload.Sub) || !payload.Sub.length)) {
+            const error = new Error("Rekhta returned no tile map for this page key.");
+            error.noRetry = true;
+            throw error;
+          }
+          await jsonCache.put(url, payload);
+          return payload;
+        };
+
+        return throttled
+          ? scheduleRekhtaApiRequest(request, fetchOptions.signal)
+          : request();
       },
       { signal: fetchOptions.signal },
     );
@@ -318,6 +373,62 @@ function buildManifestUrl(bookUrl) {
   return bookUrl;
 }
 
+function getRetryAfterMs(response) {
+  const value = response.headers?.get?.("retry-after");
+  if (!value) return 0;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const retryAt = Date.parse(value);
+  return Number.isFinite(retryAt) ? Math.max(0, retryAt - Date.now()) : 0;
+}
+
+function scheduleRekhtaApiRequest(task, signal) {
+  const scheduled = rekhtaApiRequestQueue.then(async () => {
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    const waitMs = Math.max(0, nextRekhtaApiRequestAt - Date.now());
+    if (waitMs) await waitForRequestSlot(waitMs, signal);
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+
+    try {
+      return await task();
+    } catch (error) {
+      if (error.retryAfterMs > 0) {
+        nextRekhtaApiRequestAt = Math.max(
+          nextRekhtaApiRequestAt,
+          Date.now() + error.retryAfterMs,
+        );
+      }
+      throw error;
+    } finally {
+      nextRekhtaApiRequestAt = Math.max(
+        nextRekhtaApiRequestAt,
+        Date.now() + REKHTA_API_MIN_INTERVAL_MS,
+      );
+    }
+  });
+  rekhtaApiRequestQueue = scheduled.catch(() => {});
+  return scheduled;
+}
+
+function waitForRequestSlot(waitMs, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, waitMs);
+    const onAbort = () => {
+      clearTimeout(timeoutId);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
 // Retry logic with exponential backoff and request deduplication
 async function fetchWithRetry(fetchFn, options = {}) {
   const { signal } = options;
@@ -337,6 +448,7 @@ async function fetchWithRetry(fetchFn, options = {}) {
       if (error.name === "AbortError") {
         throw error;
       }
+      if (error.noRetry) throw error;
 
       // 403 Forbidden likely means the domain is blocked; don't waste retries
       const is403 =
@@ -355,9 +467,10 @@ async function fetchWithRetry(fetchFn, options = {}) {
       }
 
       // Wait before retrying
-      if (attempt < MAX_RETRIES) {
-        const delayMs = RETRY_DELAYS[attempt] || 5000;
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      const maxRetries = error.retryAfterMs > 0 ? 1 : MAX_RETRIES;
+      if (attempt < maxRetries) {
+        const delayMs = error.retryAfterMs || RETRY_DELAYS[attempt] || 5000;
+        await waitForRequestSlot(delayMs, signal);
         console.debug(
           `Request retry ${attempt + 1}/${MAX_RETRIES} after ${delayMs}ms`,
         );
@@ -604,36 +717,36 @@ function canvasToBlob(canvas, type, quality) {
 
 function createJsonCache() {
   const cacheName = "rekhta-downloader-json-v1";
+  let cacheWarningShown = false;
 
   return {
     async match(url) {
-      const cacheStorage = await getCacheStorage();
-      if (!cacheStorage) {
-        return memoryJsonCache.get(url) || null;
-      }
+      try {
+        const cacheStorage = await getCacheStorage();
+        if (!cacheStorage) return getMemoryValue(url);
 
-      const response = await cacheStorage.match(url);
-      if (!response) {
-        return memoryJsonCache.get(url) || null;
+        const response = await cacheStorage.match(url);
+        if (!response) return getMemoryValue(url);
+        return await response.json();
+      } catch (error) {
+        warnCacheUnavailable(error);
+        return getMemoryValue(url);
       }
-
-      return response.json();
     },
     async put(url, payload) {
       memoryJsonCache.set(url, payload);
 
-      const cacheStorage = await getCacheStorage();
-      if (!cacheStorage) {
-        return;
+      try {
+        const cacheStorage = await getCacheStorage();
+        if (!cacheStorage) return;
+
+        const response = new Response(JSON.stringify(payload), {
+          headers: { "Content-Type": "application/json" },
+        });
+        await cacheStorage.put(url, response);
+      } catch (error) {
+        warnCacheUnavailable(error);
       }
-
-      const response = new Response(JSON.stringify(payload), {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      await cacheStorage.put(url, response);
     },
   };
 
@@ -642,7 +755,22 @@ function createJsonCache() {
       return null;
     }
 
-    return caches.open(cacheName);
+    try {
+      return await globalThis.caches.open(cacheName);
+    } catch (error) {
+      warnCacheUnavailable(error);
+      return null;
+    }
+  }
+
+  function getMemoryValue(url) {
+    return memoryJsonCache.has(url) ? memoryJsonCache.get(url) : null;
+  }
+
+  function warnCacheUnavailable(error) {
+    if (cacheWarningShown) return;
+    cacheWarningShown = true;
+    console.warn("[reader] Browser cache unavailable; using in-memory cache.", error);
   }
 }
 
@@ -652,9 +780,12 @@ function buildPageKeyUrl({ bookId, pageId, pageIndex, template } = {}) {
   }
 
   const endpointTemplate = template || bookSelectors.get("pageKeyEndpoint");
+  // Reader references use one-based page numbers; Rekhta's pgIdx query value
+  // is zero-based (page 1 => pgIdx=0), as confirmed by the captured requests.
+  const apiPageIndex = Math.max(0, Number(pageIndex ?? 1) - 1);
   return endpointTemplate
     .replace("{bookId}", encodeURIComponent(bookId || ""))
-    .replace("{pageIndex}", encodeURIComponent(String(pageIndex ?? 1)))
+    .replace("{pageIndex}", encodeURIComponent(String(apiPageIndex)))
     .replace("{pageId}", encodeURIComponent(pageId));
 }
 

@@ -82,7 +82,6 @@ const state = {
   modalPageIndex: 0,
   pageNodes: [],
   readerRequestToken: 0,
-  previewObserver: null,
   previewRequests: new Map(),
   isTwoPageMode: false,
   // "auto" = follow viewport width (default); "one"/"two" = an explicit
@@ -105,6 +104,7 @@ const state = {
 };
 
 const previewLimiter = createLimiter(deviceProfile.previewConcurrency);
+const pageIdWindowRequests = new WeakMap();
 // Shared across the currently-open book's Download button AND every queued
 // download below, so total concurrent canvas/unscramble work never exceeds
 // what the device can safely handle, no matter how many books are "in
@@ -384,73 +384,93 @@ function buildManifestPageReference(manifest, pageIndex) {
   };
 }
 
-async function fetchPageIdWindow({ pageIndex, count = 20 } = {}) {
-  const manifest = state.manifest;
-  if (!manifest || !manifest.bookUrl) {
+async function fetchPageIdWindow({
+  manifest = state.manifest,
+  pageIndex,
+  count = 10,
+  client = bookClient,
+  signal,
+} = {}) {
+  if (!manifest || !manifest.bookUrl || !client?.getPageIds) {
     return [];
   }
 
-  const proxyPrefix = elements.proxyInput.value.trim();
   const bookUrl = new URL(manifest.bookUrl);
   const slug = bookUrl.pathname.replace(/^\/ebooks\//i, "").split("/")[0];
   const lang = bookUrl.searchParams.get("lang") || "1";
   const normalizedIndex = Math.max(0, Number(pageIndex) || 0);
-  const from = Math.max(1, normalizedIndex + 1 - Math.floor(count / 2));
+  // Rekhta's page-ID API is zero-based (`from: 0` returns the first page).
+  // Fixed windows make concurrent page lookups share one ID request.
+  const from = Math.floor(normalizedIndex / count) * count;
   const endpoint = `https://www.rekhta.org/EbookData/GetEbookPageIds/?slug=${encodeURIComponent(slug)}&lang=${encodeURIComponent(lang)}&from=${from}&count=${count}`;
+  const requestKey = `${client.proxyPrefix}|${endpoint}`;
+  let manifestRequests = pageIdWindowRequests.get(manifest);
+  if (!manifestRequests) {
+    manifestRequests = new Map();
+    pageIdWindowRequests.set(manifest, manifestRequests);
+  }
+  const existingRequest = manifestRequests.get(requestKey);
+  if (existingRequest) return existingRequest;
 
-  const response = await fetch(applyProxyPrefix(endpoint, proxyPrefix), {
-    method: "GET",
-    mode: "cors",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Page ID window fetch failed with status ${response.status}`,
+  const request = (async () => {
+    const payload = await client.getPageIds(
+      { slug, lang, from, count },
+      { signal },
     );
-  }
+    const ids = Array.isArray(payload?.ids) ? payload.ids : [];
+    const startFrom = Number(payload?.from ?? from);
 
-  const payload = await response.json();
-  const ids = Array.isArray(payload?.ids) ? payload.ids : [];
-  const startFrom = Number(payload?.from ?? from);
+    if (!ids.length) return [];
 
-  if (!ids.length) {
-    return [];
-  }
+    for (let offset = 0; offset < ids.length; offset += 1) {
+      const arrayIndex = startFrom + offset;
+      if (arrayIndex < 0 || arrayIndex >= manifest.pageCount) continue;
 
-  for (let offset = 0; offset < ids.length; offset += 1) {
-    const arrayIndex = startFrom + offset - 1;
-    if (arrayIndex < 0 || arrayIndex >= manifest.pageCount) {
-      continue;
-    }
-
-    const pageId = ids[offset];
-    manifest.pageIds[arrayIndex] = pageId;
-    if (
-      !manifest.scrambleMap[arrayIndex] ||
-      !manifest.scrambleMap[arrayIndex].pageId
-    ) {
-      manifest.scrambleMap[arrayIndex] = {
-        ...buildManifestPageReference(manifest, arrayIndex),
+      const pageId = ids[offset];
+      manifest.pageIds[arrayIndex] = pageId;
+      if (!manifest.scrambleMap[arrayIndex]?.pageId) {
+        manifest.scrambleMap[arrayIndex] = {
+          ...buildManifestPageReference(manifest, arrayIndex),
+          pageId,
+        };
+      }
+      manifest.scrambleMap[arrayIndex].pageId = pageId;
+      manifest.scrambleMap[arrayIndex].pageIndex = arrayIndex + 1;
+      manifest.scrambleMap[arrayIndex].keyUrl = buildPageKeyUrl({
+        bookId: manifest.bookId,
         pageId,
-      };
+        pageIndex: arrayIndex + 1,
+      });
     }
-    manifest.scrambleMap[arrayIndex].pageId = pageId;
-    manifest.scrambleMap[arrayIndex].pageIndex = arrayIndex + 1;
-    manifest.scrambleMap[arrayIndex].keyUrl = buildPageKeyUrl({
-      bookId: manifest.bookId,
-      pageId,
-      pageIndex: arrayIndex + 1,
-    });
-  }
 
-  return ids;
+    return ids;
+  })();
+
+  manifestRequests.set(requestKey, request);
+  try {
+    return await request;
+  } finally {
+    if (manifestRequests.get(requestKey) === request) {
+      manifestRequests.delete(requestKey);
+    }
+  }
 }
 
 async function ensurePageReference(pageIndex) {
-  const manifest = state.manifest;
+  return ensureManifestPageReference(
+    state.manifest,
+    pageIndex,
+    bookClient,
+    state.abortController?.signal,
+  );
+}
+
+async function ensureManifestPageReference(
+  manifest,
+  pageIndex,
+  client,
+  signal,
+) {
   if (!manifest || !Number.isInteger(pageIndex)) {
     return null;
   }
@@ -480,10 +500,13 @@ async function ensurePageReference(pageIndex) {
     return manifest.scrambleMap[pageIndex];
   }
 
-  const windowSize = 20;
+  const windowSize = 10;
   const nextPageRef = await fetchPageIdWindow({
+    manifest,
     pageIndex,
     count: windowSize,
+    client,
+    signal,
   });
 
   if (!nextPageRef.length) {
@@ -581,8 +604,19 @@ async function downloadBookToPdf(
   manifest,
   { limiter, onProgress, signal } = {},
 ) {
-  const renderJobs = manifest.scrambleMap.map((pageRef) =>
-    limiter(() => client.renderPageToCanvas(pageRef, { signal })),
+  const renderJobs = manifest.scrambleMap.map((_, pageIndex) =>
+    limiter(async () => {
+      const pageRef = await ensureManifestPageReference(
+        manifest,
+        pageIndex,
+        client,
+        signal,
+      );
+      if (!pageRef) {
+        throw new Error(`Page ${pageIndex + 1} could not be resolved.`);
+      }
+      return client.renderPageToCanvas(pageRef, { signal });
+    }),
   );
 
   let pdfDocument = null;
@@ -863,7 +897,7 @@ function renderManifest(manifest) {
 
     const status = document.createElement("p");
     status.className = "page-status";
-    status.textContent = "Waiting to enter view";
+    status.textContent = "Click to open this page";
 
     body.appendChild(status);
     card.append(number, body);
@@ -871,31 +905,6 @@ function renderManifest(manifest) {
     return { body, card, status };
   });
 
-  observePreviewCards();
-}
-
-function observePreviewCards() {
-  state.previewObserver?.disconnect();
-  state.previewObserver = new IntersectionObserver(onPreviewIntersection, {
-    rootMargin: "300px 0px",
-    threshold: 0.05,
-  });
-
-  state.pageNodes.forEach(({ card }) => {
-    state.previewObserver.observe(card);
-  });
-}
-
-function onPreviewIntersection(entries) {
-  entries.forEach((entry) => {
-    if (!entry.isIntersecting) {
-      return;
-    }
-
-    const pageIndex = Number(entry.target.dataset.pageIndex);
-    schedulePreview(pageIndex);
-    state.previewObserver.unobserve(entry.target);
-  });
 }
 
 function schedulePreview(pageIndex) {
@@ -949,9 +958,9 @@ function schedulePreview(pageIndex) {
       }
 
       const node = state.pageNodes[pageIndex];
-      node.status.textContent =
-        "Preview failed. Scroll away and back to retry.";
-      state.previewObserver?.observe(node.card);
+      node.status.textContent = error.retryAfterMs
+        ? `Rekhta is rate limiting requests. Try again after ${Math.ceil(error.retryAfterMs / 1000)} seconds.`
+        : "Preview failed. Click this page to retry.";
     })
     .finally(() => {
       state.previewRequests.delete(pageIndex);
@@ -963,8 +972,6 @@ function schedulePreview(pageIndex) {
 
 function resetPreviewState() {
   closeReader();
-  state.previewObserver?.disconnect();
-  state.previewObserver = null;
   state.pageNodes = [];
   state.previewRequests.clear();
   state.isUrduBook = false;

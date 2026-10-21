@@ -26,7 +26,8 @@ const server = http.createServer((req, res) => {
   // ── CORS pre-flight ──────────────────────────────────────────────────────
   res.setHeader("Access-Control-Allow-Origin",  "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With");
+  res.setHeader("Access-Control-Expose-Headers", "Retry-After");
   res.setHeader("Access-Control-Max-Age",       "86400");
 
   if (req.method === "OPTIONS") {
@@ -93,14 +94,17 @@ const server = http.createServer((req, res) => {
     method:   "GET",
     headers: {
       "Accept":          req.headers["accept"] || "*/*",
+      "Accept-Language": req.headers["accept-language"] || "en-US,en;q=0.9",
       "Accept-Encoding": "identity",          // avoid compressed response complexity
+      "Cache-Control":   req.headers["cache-control"] || "no-cache",
       "Host":            targetParsed.hostname,
       "Origin":          "https://www.rekhta.org",
       "Referer":         "https://www.rekhta.org/",
-      "User-Agent":
+      "X-Requested-With": req.headers["x-requested-with"] || "XMLHttpRequest",
+      "Pragma":          req.headers["pragma"] || "no-cache",
+      "User-Agent":      req.headers["user-agent"] ||
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-        "AppleWebKit/537.36 (KHTML, like Gecko) " +
-        "Chrome/125.0.0.0 Safari/537.36",
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
     },
   };
 
@@ -132,7 +136,8 @@ const server = http.createServer((req, res) => {
 
     passHeaders["Access-Control-Allow-Origin"]  = "*";
     passHeaders["Access-Control-Allow-Methods"] = "GET, OPTIONS";
-    passHeaders["Access-Control-Allow-Headers"] = "Content-Type, Accept";
+    passHeaders["Access-Control-Allow-Headers"] = "Content-Type, Accept, X-Requested-With";
+    passHeaders["Access-Control-Expose-Headers"] = "Retry-After";
 
     res.writeHead(proxyRes.statusCode, passHeaders);
     proxyRes.pipe(res, { end: true });
