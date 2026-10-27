@@ -469,62 +469,80 @@ async function downloadBook(url, opts) {
 
   const results = [];
   const failures = [];
-  const queue = [...selectedPages];
-
-  async function worker() {
-    while (queue.length) {
-      const pageNum = queue.shift();
-      const idx = pageNum - 1;
-      // ensure pageId
-      if (!manifest.pageIds[idx]) {
-        await ensurePageIdWindow(url, proxy, manifest, idx, 50);
-      }
-      const pageId = manifest.pageIds[idx];
-      const imageName = pages[idx];
-      if (!pageId) {
-        failures.push({ page: pageNum, error: "Rekhta did not provide a page ID." });
-        continue;
-      }
-      if (!imageName) {
-        failures.push({ page: pageNum, error: "Manifest did not provide an image filename." });
-        continue;
-      }
-      const imgUrl = `${IMAGE_BASE}${bookId}/${imageName}`.replace(/\/?$/, "");
-
-      try {
-        const raw = await fetchBuffer(imgUrl, proxy);
-        // fetch pageKey
-        const pageKey = await fetchPageKey(bookId, pageNum, pageId, proxy, url);
-        const finalBuf = await unscrambleBufferWithCanvas(pageKey, raw, scale);
-
-        if (images) {
-          const imgOut = path.join(
-            outDir,
-            `${path.basename(out, path.extname(out))}_page_${String(pageNum).padStart(3, "0")}.jpg`,
-          );
-          fs.writeFileSync(imgOut, finalBuf);
-          if (!keepImages) results.push({ page: pageNum, img: imgOut });
-          else results.push({ page: pageNum, img: imgOut });
-        } else {
-          results.push({ page: pageNum, buf: finalBuf });
+  async function downloadPages(pageNumbers) {
+    const queue = [...pageNumbers];
+    const passFailures = [];
+    async function worker() {
+      while (queue.length) {
+        const pageNum = queue.shift();
+        const idx = pageNum - 1;
+        // ensure pageId
+        if (!manifest.pageIds[idx]) {
+          await ensurePageIdWindow(url, proxy, manifest, idx, 50);
         }
-      } catch (err) {
-        failures.push({ page: pageNum, error: err.message || String(err) });
-        console.error("Failed page", pageNum, err.message || err);
+        const pageId = manifest.pageIds[idx];
+        const imageName = pages[idx];
+        if (!pageId) {
+          passFailures.push({ page: pageNum, error: "Rekhta did not provide a page ID." });
+          continue;
+        }
+        if (!imageName) {
+          passFailures.push({ page: pageNum, error: "Manifest did not provide an image filename." });
+          continue;
+        }
+        const imgUrl = `${IMAGE_BASE}${bookId}/${imageName}`.replace(/\/?$/, "");
+
+        try {
+          const raw = await fetchBuffer(imgUrl, proxy);
+          // fetch pageKey
+          const pageKey = await fetchPageKey(bookId, pageNum, pageId, proxy, url);
+          const finalBuf = await unscrambleBufferWithCanvas(pageKey, raw, scale);
+
+          if (images) {
+            const imgOut = path.join(
+              outDir,
+              `${path.basename(out, path.extname(out))}_page_${String(pageNum).padStart(3, "0")}.jpg`,
+            );
+            fs.writeFileSync(imgOut, finalBuf);
+            results.push({ page: pageNum, img: imgOut });
+          } else {
+            results.push({ page: pageNum, buf: finalBuf });
+          }
+        } catch (err) {
+          passFailures.push({ page: pageNum, error: err.message || String(err) });
+          console.error("Failed page", pageNum, err.message || err);
+        }
       }
     }
+
+    const workers = [];
+    for (let i = 0; i < concurrency; i++) workers.push(worker());
+    await Promise.all(workers);
+    return passFailures;
   }
 
-  // run workers
-  const workers = [];
-  for (let i = 0; i < concurrency; i++) workers.push(worker());
-  await Promise.all(workers);
+  const failedFile = path.join(outDir, "failed.txt");
+  failures.push(...await downloadPages(selectedPages));
+  if (failures.length) {
+    const firstFailures = new Map(failures.map((failure) => [failure.page, failure]));
+    const retryPages = [...firstFailures.keys()].sort((a, b) => a - b);
+    console.warn(`Retrying ${retryPages.length} failed page(s): ${retryPages.join(", ")}`);
+    failures.length = 0;
+    failures.push(...await downloadPages(retryPages));
+  }
 
   results.sort((a, b) => a.page - b.page);
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(
+    failedFile,
+    failures.length ? `${failures.map(({ page }) => page).sort((a, b) => a - b).join(",")}\n` : "",
+    "utf8",
+  );
   if (failures.length) {
     const summary = failures.map((failure) => `page ${failure.page}: ${failure.error}`).join("\n");
-    throw new Error(`${failures.length} of ${selectedPages.length} selected pages failed; refusing to save a partial PDF.\n${summary}`);
+    throw new Error(`${failures.length} of ${selectedPages.length} selected pages failed after retry. Page numbers saved to ${failedFile}.\n${summary}`);
   }
+  console.log("All selected pages succeeded; cleared", failedFile);
 
   // build PDF if requested
   if (pdf) {
