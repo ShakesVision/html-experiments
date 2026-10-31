@@ -1,14 +1,16 @@
 // ==UserScript==
 // @name         Rekhta Reader: key collector
 // @namespace    rekhta-reader
-// @version      2.0.0
-// @description  Collects page IDs + unscramble tile maps for the open book using Rekhta's own session (bucket "c"), then exports a bundle for dwn.js / the reader proxy.
+// @version      2.1.0
+// @description  Collects page IDs + unscramble tile maps for the open book using Rekhta's own session, then builds a PDF directly or exports a bundle for dwn.js / the reader.
 // @match        https://www.rekhta.org/ebooks/*
 // @run-at       document-start
+// @require      https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @connect      localhost
 // @connect      127.0.0.1
+// @connect      ebooksapi.rekhta.org
 // ==/UserScript==
 
 (function () {
@@ -16,6 +18,9 @@
 
   const PROXY = "http://localhost:8888";
   const MIN_INTERVAL_MS = 1600;
+  const MAX_ATTEMPTS = 3; // per request; then the page is reported as failed
+  const TILE = 50;
+  const GAP = 16;
   const W = typeof unsafeWindow !== "undefined" ? unsafeWindow : window;
   const slug = location.pathname.replace(/^\/ebooks\//i, "").split(/[/?#]/)[0];
   const lang = new URL(location.href).searchParams.get("lang") || "1";
@@ -95,7 +100,7 @@
   // ── Active collection: same-origin fetch = same treatment as the site ──
   const delay = (ms) => new Promise((r) => setTimeout(r, ms));
   async function apiGet(url) {
-    for (let attempt = 0; attempt < 6 && running; attempt++) {
+    for (let attempt = 0; attempt < MAX_ATTEMPTS && running; attempt++) {
       const res = await origFetch.call(W, url, {
         credentials: "include",
         headers: { Accept: "application/json, text/javascript, */*; q=0.01", "X-Requested-With": "XMLHttpRequest" },
@@ -108,13 +113,14 @@
         return data;
       }
       if (res.status !== 429 && res.status < 500) throw new Error("HTTP " + res.status);
+      if (attempt + 1 >= MAX_ATTEMPTS) break;
       const wait = (Number(res.headers.get("retry-after")) || 60) * 1000 + 2000;
       for (let left = wait; left > 0 && running; left -= 1000) {
-        status(`429 — cooling down ${Math.ceil(left / 1000)}s`);
+        status(`429 — cooling down ${Math.ceil(left / 1000)}s (try ${attempt + 2}/${MAX_ATTEMPTS})`);
         await delay(1000);
       }
     }
-    throw new Error("gave up");
+    throw new Error(`gave up after ${MAX_ATTEMPTS} attempts`);
   }
 
   async function collect() {
@@ -140,7 +146,9 @@
         await delay(MIN_INTERVAL_MS);
         if (!ids.length || !bundle.pageIds[from]) { status(`No id returned for page ${from + 1}; stopping.`); break; }
       }
-      // 2) Tile maps for every page not captured yet
+      // 2) Tile maps for every page not captured yet (each page tried once
+      //    per run; apiGet itself caps at MAX_ATTEMPTS)
+      const failed = [];
       for (let i = 0; i < bundle.totalPages && running; i++) {
         const pgid = bundle.pageIds[i];
         if (!pgid || bundle.keys[pgid]) continue;
@@ -148,14 +156,99 @@
         try {
           const key = await apiGet(`/EbookData/GetEbookFromApi/?bkId=${encodeURIComponent(bundle.bookId)}&pgIdx=${i}&pgid=${encodeURIComponent(pgid)}`);
           if (Array.isArray(key?.Sub) && key.Sub.length) bundle.keys[pgid] = key;
+          else failed.push(i + 1);
           saveBundle(); render();
         } catch (e) {
+          failed.push(i + 1);
           console.warn("[rr] page", i + 1, e);
         }
         await delay(MIN_INTERVAL_MS);
       }
-      status(running ? "Done. Export or push to proxy." : "Paused.");
+      const missingIds = bundle.totalPages - bundle.pageIds.slice(0, bundle.totalPages).filter(Boolean).length;
+      status(!running ? "Paused."
+        : failed.length || missingIds ? `Finished with gaps: ${failed.length} keys failed${missingIds ? `, ${missingIds} ids missing` : ""}. Resume later.`
+        : "All keys collected.");
       if (running) pushToProxy(true);
+    } finally {
+      running = false;
+      render();
+    }
+  }
+
+  // ── Full-book PDF straight from the userscript ─────────────────────────
+  // Images come from ebooksapi.rekhta.org (no API throttle). GM_xmlhttpRequest
+  // bypasses CORS; without it (console paste) we try a CORS fetch.
+  function getImageBlob(url) {
+    if (typeof GM_xmlhttpRequest === "function") {
+      return new Promise((resolve, reject) => GM_xmlhttpRequest({
+        method: "GET", url, responseType: "blob", timeout: 45000,
+        onload: (r) => (r.status === 200 ? resolve(r.response) : reject(new Error("HTTP " + r.status))),
+        onerror: () => reject(new Error("network error")),
+        ontimeout: () => reject(new Error("timeout")),
+      }));
+    }
+    return origFetch.call(W, url, { mode: "cors" }).then((r) => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.blob();
+    });
+  }
+  async function getImageWithRetry(url) {
+    let last;
+    for (let a = 0; a < MAX_ATTEMPTS; a++) {
+      try { return await getImageBlob(url); } catch (e) { last = e; await delay(1500 * (a + 1)); }
+    }
+    throw last;
+  }
+  async function unscramble(key, blob) {
+    const img = await createImageBitmap(blob);
+    const width = Number(key.PageWidth || key.Width) || Number(key.X) * TILE || img.width;
+    const height = Number(key.PageHeight) || Number(key.Y) * TILE || img.height;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    for (const t of key.Sub) {
+      ctx.drawImage(img, t.X1 * (TILE + GAP), t.Y1 * (TILE + GAP), TILE, TILE, t.X2 * TILE, t.Y2 * TILE, TILE, TILE);
+    }
+    img.close?.();
+    return canvas;
+  }
+  async function downloadPdf() {
+    const jsPDF = (window.jspdf || W.jspdf)?.jsPDF;
+    if (!jsPDF) return status("jsPDF missing — install as a userscript (needs @require).");
+    if (running) return;
+    readMeta();
+    running = true;
+    render();
+    const failed = [];
+    let pdf = null;
+    try {
+      for (let i = 0; i < bundle.totalPages && running; i++) {
+        const key = bundle.keys[bundle.pageIds[i]];
+        const name = bundle.pages[i];
+        if (!key || !name) { failed.push(i + 1); continue; }
+        status(`PDF page ${i + 1}/${bundle.totalPages}`);
+        ui.querySelector("#rr-prog").value = i + 1;
+        try {
+          const blob = await getImageWithRetry(`https://ebooksapi.rekhta.org/images/${bundle.bookId}/${name}`);
+          const canvas = await unscramble(key, blob);
+          const fmt = [canvas.width, canvas.height];
+          const orient = canvas.width > canvas.height ? "landscape" : "portrait";
+          if (!pdf) pdf = new jsPDF({ unit: "pt", format: fmt, orientation: orient, compress: true });
+          else pdf.addPage(fmt, orient);
+          pdf.addImage(canvas.toDataURL("image/jpeg", 0.88), "JPEG", 0, 0, fmt[0], fmt[1], undefined, "FAST");
+          canvas.width = canvas.height = 1;
+        } catch (e) {
+          failed.push(i + 1);
+          console.warn("[rr] pdf page", i + 1, e);
+        }
+      }
+      if (!running) return status("PDF cancelled.");
+      if (!pdf) return status("No pages rendered — collect keys first.");
+      pdf.save(`${(bundle.title || slug).replace(/[\\/:*?"<>|]+/g, "-")}.pdf`);
+      status(failed.length ? `PDF saved · skipped ${failed.length}: ${failed.slice(0, 15).join(", ")}${failed.length > 15 ? "…" : ""}` : "PDF saved · all pages");
     } finally {
       running = false;
       render();
@@ -214,12 +307,14 @@
       <div id="rr-status" style="min-height:16px;color:#9cf;margin:4px 0"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
         <button id="rr-go" style="grid-column:1/3"></button>
+        <button id="rr-pdf" style="grid-column:1/3;font-weight:bold">⬇ Download PDF</button>
         <button id="rr-exp">Export JSON</button>
         <button id="rr-push">Push to proxy</button>
         <button id="rr-clr" style="grid-column:1/3">Clear saved</button>
       </div>`;
     document.body.appendChild(ui);
     ui.querySelector("#rr-go").onclick = () => (running ? (running = false) : collect());
+    ui.querySelector("#rr-pdf").onclick = () => (running ? (running = false) : downloadPdf());
     ui.querySelector("#rr-exp").onclick = exportFile;
     ui.querySelector("#rr-push").onclick = () => pushToProxy(false);
     ui.querySelector("#rr-clr").onclick = () => {

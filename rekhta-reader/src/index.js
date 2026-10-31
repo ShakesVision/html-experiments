@@ -100,6 +100,9 @@ const requestInFlight = new Map(); // Deduplication: key -> Promise
 const failedRequests = new Map(); // Track failures: key -> { count, timestamp }
 const FAILURE_CACHE_TTL = 60000; // Cache failures for 1 minute
 const MAX_RETRIES = 3;
+const MAX_ATTEMPTS = 3; // total tries per request, then give up
+// A 429 means "wait ~60s"; never block a whole book on that — cap the wait.
+const MAX_RETRY_WAIT_MS = 15000;
 const RETRY_DELAYS = [500, 1500, 3000]; // Exponential backoff in ms
 const REKHTA_API_MIN_INTERVAL_MS = 1500;
 let nextRekhtaApiRequestAt = 0;
@@ -492,7 +495,7 @@ async function fetchWithRetry(fetchFn, options = {}) {
   const { signal } = options;
   let lastError;
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     if (signal?.aborted) {
       throw new DOMException("Aborted", "AbortError");
     }
@@ -524,15 +527,11 @@ async function fetchWithRetry(fetchFn, options = {}) {
         throw error;
       }
 
-      // Wait before retrying
-      const maxRetries = error.retryAfterMs > 0 ? 1 : MAX_RETRIES;
-      if (attempt < maxRetries) {
-        const delayMs = error.retryAfterMs || RETRY_DELAYS[attempt] || 5000;
-        await waitForRequestSlot(delayMs, signal);
-        console.debug(
-          `Request retry ${attempt + 1}/${MAX_RETRIES} after ${delayMs}ms`,
-        );
-      }
+      // Wait before retrying (hard cap: MAX_ATTEMPTS total tries)
+      if (attempt + 1 >= MAX_ATTEMPTS) break;
+      const delayMs = Math.min(MAX_RETRY_WAIT_MS, error.retryAfterMs || RETRY_DELAYS[attempt] || 5000);
+      console.debug(`Request retry ${attempt + 1}/${MAX_ATTEMPTS - 1} after ${delayMs}ms`);
+      await waitForRequestSlot(delayMs, signal);
     }
   }
 

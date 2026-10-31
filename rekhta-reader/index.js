@@ -644,13 +644,25 @@ async function downloadBookToPdf(
         throw new Error(`Page ${pageIndex + 1} could not be resolved.`);
       }
       return client.renderPageToCanvas(pageRef, { signal });
-    }),
+    }).then(
+      (canvas) => ({ canvas }),
+      (error) => ({ error }),
+    ),
   );
 
   let pdfDocument = null;
+  const failedPages = [];
 
   for (let index = 0; index < renderJobs.length; index += 1) {
-    const canvas = await renderJobs[index];
+    const { canvas, error } = await renderJobs[index];
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    if (error) {
+      if (error.name === "AbortError") throw error;
+      console.warn(`[pdf] page ${index + 1} skipped:`, error.message);
+      failedPages.push(index + 1);
+      onProgress?.(index + 1, renderJobs.length, failedPages);
+      continue;
+    }
     const orientation = canvas.width > canvas.height ? "landscape" : "portrait";
     const pageFormat = [canvas.width, canvas.height];
 
@@ -678,9 +690,13 @@ async function downloadBookToPdf(
     canvas.width = 1;
     canvas.height = 1;
 
-    onProgress?.(index + 1, renderJobs.length);
+    onProgress?.(index + 1, renderJobs.length, failedPages);
   }
 
+  if (!pdfDocument) {
+    throw new Error(`No pages could be rendered (${failedPages.length} failed). Load a key bundle (🔑 Keys) or wait for the rate limit to reset.`);
+  }
+  pdfDocument.failedPages = failedPages;
   return pdfDocument;
 }
 
@@ -716,7 +732,13 @@ async function onDownloadPdf() {
     });
     pdfDocument.save(filename);
     setBusy(false);
-    setStatus("PDF export finished.", "success");
+    const failed = pdfDocument.failedPages || [];
+    setStatus(
+      failed.length
+        ? `PDF saved, but ${failed.length} page(s) were skipped: ${failed.join(", ")}. Collect their keys with the userscript and export again.`
+        : "PDF export finished.",
+      failed.length ? "error" : "success",
+    );
   } catch (error) {
     handleError(error, "PDF export stopped before completion.");
   }
@@ -805,7 +827,9 @@ async function processQueueItem(item) {
 
     item.status = "done";
     item.progress = 100;
-    item.message = "Downloaded";
+    item.message = pdfDocument.failedPages?.length
+      ? `Downloaded · skipped pages ${pdfDocument.failedPages.join(", ")}`
+      : "Downloaded";
   } catch (error) {
     if (error.name === "AbortError") {
       item.status = "cancelled";

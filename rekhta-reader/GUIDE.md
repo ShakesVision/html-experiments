@@ -33,10 +33,17 @@ instead of `GM_xmlhttpRequest`.)
 3. Click **Collect keys**. The script:
    - fetches all page IDs (resuming from the first missing one),
    - fetches each missing tile map, one request every ~1.6 s,
-   - on 429 shows a countdown, waits `Retry-After` + 2 s and continues.
+   - on 429 shows a countdown, waits `Retry-After` + 2 s and retries. A
+     request is tried **at most 3 times**, then that page is marked failed
+     and the run moves on. It never loops forever. The final status lists
+     the gaps; click **Resume** later to fill only those.
    - Progress is stored in `localStorage`, so you can **Pause**, reload or
      close the tab and **Resume** later.
 4. When it shows `Total/Total keys`:
+   - **⬇ Download PDF** builds the whole book PDF right there. Images come
+     from `ebooksapi.rekhta.org`, are unscrambled in the page and saved via
+     jsPDF. No proxy, no Node. Click again to cancel. Pages without a key
+     are skipped and listed.
    - **Export JSON** → downloads `<slug>.rekhta-keys.json`, or
    - **Push to proxy** → sends it to the local proxy (must be running).
      This also happens automatically when collection finishes.
@@ -117,10 +124,12 @@ the last throttle state.
   They go through the throttled API.
 - **Reader:** click any page. Prev/next and 1-/2-page view work as before.
 - **PDF:** downloads the whole current book. Keyed pages need no API call, so
-  only image downloads happen.
+  only image downloads happen. Each request is tried at most 3 times (429
+  waits are capped at 15 s). A page that still fails is **skipped**, not
+  fatal. The PDF is saved and the status lists the skipped page numbers.
 - **Queue (bottom section):** paste several book URLs, or use **Queue** for
   the current one. Every queued book uses the loaded/pushed bundles, so load
-  or push all their bundles first.
+  or push all their bundles first. Rows show skipped pages too.
 
 **Troubleshooting**
 - Still seeing 429: a page lacked a key. Resume the collector for that book
