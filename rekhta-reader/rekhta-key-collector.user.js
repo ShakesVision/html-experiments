@@ -384,7 +384,7 @@
   function mountUi() {
     ui = document.createElement("section");
     ui.style.cssText = "position:fixed;z-index:2147483647;left:8px;bottom:8px;width:230px;padding:10px;background:#141414;color:#eee;border:1px solid #555;border-radius:8px;font:12px/1.4 system-ui,sans-serif;box-shadow:0 4px 18px #0009";
-    ui.innerHTML = `<b>Rekhta key collector</b>
+    ui.innerHTML = `<div style="color:red;display:flex;justify-content:space-between"><b>Rekhta collector</b><br><i>tools.shakeeb.in</i></div>
       <div id="rr-count" style="margin:4px 0"></div>
       <progress id="rr-prog" style="width:100%"></progress>
       <div id="rr-status" style="min-height:16px;color:#9cf;margin:4px 0"></div>
