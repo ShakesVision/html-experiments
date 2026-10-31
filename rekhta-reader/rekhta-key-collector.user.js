@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Rekhta Reader: key collector
 // @namespace    rekhta-reader
-// @version      2.1.0
+// @version      2.2.0
 // @description  Collects page IDs + unscramble tile maps for the open book using Rekhta's own session, then builds a PDF directly or exports a bundle for dwn.js / the reader.
 // @match        https://www.rekhta.org/ebooks/*
 // @run-at       document-start
@@ -266,6 +266,78 @@
     return downloadPdf();
   }
 
+  // ── Multi-book queue (sequential, survives page navigation) ───────────
+  // State lives in localStorage on www.rekhta.org: { urls, index, active, log }
+  const QUEUE_KEY = "rr_queue";
+  const loadQueue = () => Object.assign({ urls: [], index: 0, active: false, log: [] }, safeParse(localStorage.getItem(QUEUE_KEY)));
+  const saveQueue = (q) => localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+  const slugOf = (u) => { try { return new URL(u).pathname.replace(/^\/ebooks\//i, "").split("/")[0]; } catch { return ""; } };
+  function normalizeBookUrl(line) {
+    let u = line.trim();
+    if (!u) return "";
+    if (!/^https?:/i.test(u)) u = "https://www.rekhta.org/ebooks/" + u.replace(/^\/?(ebooks\/)?/i, "");
+    try {
+      const url = new URL(u);
+      // detail pages → reader page
+      url.pathname = url.pathname.replace(/^\/ebooks\/detail\//i, "/ebooks/");
+      return url.hostname.endsWith("rekhta.org") && /^\/ebooks\/[^/]+/i.test(url.pathname) ? url.href : "";
+    } catch { return ""; }
+  }
+  function startQueue(text) {
+    const urls = [...new Set(text.split(/\s+/).map(normalizeBookUrl).filter(Boolean))];
+    if (!urls.length) return status("No valid rekhta.org/ebooks/ links.");
+    saveQueue({ urls, index: 0, active: true, log: [] });
+    goToCurrent();
+  }
+  function stopQueue() {
+    const q = loadQueue();
+    q.active = false;
+    saveQueue(q);
+    running = false;
+    renderQueue();
+    status("Queue stopped.");
+  }
+  function goToCurrent() {
+    const q = loadQueue();
+    if (q.index >= q.urls.length) {
+      q.active = false;
+      saveQueue(q);
+      renderQueue();
+      return status(`Queue finished · ${q.log.filter((l) => l.ok).length}/${q.urls.length} books OK`);
+    }
+    const target = q.urls[q.index];
+    if (slugOf(target) === slug) runQueueItem();
+    else location.href = target;
+  }
+  async function runQueueItem() {
+    const q = loadQueue();
+    renderQueue();
+    status(`Queue ${q.index + 1}/${q.urls.length}: starting…`);
+    await delay(1500); // let the page settle (scripts with bookId etc.)
+    let ok = false;
+    try { ok = await collectAndPdf(); } catch (e) { console.warn("[rr] queue item", e); }
+    const after = loadQueue();
+    if (!after.active) return; // stopped by user meanwhile
+    after.log.push({ url: after.urls[after.index], ok, keys: Object.keys(bundle.keys).length, total: bundle.totalPages });
+    after.index++;
+    saveQueue(after);
+    // Free localStorage space: the PDF is saved, keys are no longer needed.
+    if (ok) localStorage.removeItem(STORE);
+    await delay(3000); // give the PDF download a moment before navigating
+    goToCurrent();
+  }
+  function renderQueue() {
+    if (!ui) return;
+    const q = loadQueue();
+    const box = ui.querySelector("#rr-q-info");
+    box.textContent = q.urls.length
+      ? `${q.active ? "Running" : "Idle"} · ${Math.min(q.index, q.urls.length)}/${q.urls.length} done` +
+        (q.log.some((l) => !l.ok) ? ` · failed: ${q.log.filter((l) => !l.ok).map((l) => slugOf(l.url)).join(", ")}` : "")
+      : "";
+    ui.querySelector("#rr-q-start").disabled = q.active;
+    ui.querySelector("#rr-q-stop").disabled = !q.active;
+  }
+
   // ── Export ──────────────────────────────────────────────────────────────
   function exportFile() {
     readMeta();
@@ -325,8 +397,19 @@
         <button id="rr-exp">Export JSON</button>
         <button id="rr-push">Push to proxy</button>
         <button id="rr-clr" style="grid-column:1/3">Clear saved</button>
+        <details style="grid-column:1/3"><summary>Multi-book queue</summary>
+          <textarea id="rr-q-urls" rows="4" placeholder="One rekhta.org/ebooks/… link per line" style="width:100%;box-sizing:border-box;margin-top:4px;font:11px monospace"></textarea>
+          <div style="display:flex;gap:4px"><button id="rr-q-start" style="flex:1">▶ Run queue</button><button id="rr-q-stop" style="flex:1">■ Stop</button></div>
+          <div id="rr-q-info" style="margin-top:4px;color:#fc6;word-break:break-word"></div>
+        </details>
       </div>`;
     document.body.appendChild(ui);
+    const qUrls = ui.querySelector("#rr-q-urls");
+    qUrls.value = settings.queueText || "";
+    qUrls.oninput = () => { settings.queueText = qUrls.value; saveSettings(); };
+    ui.querySelector("#rr-q-start").onclick = () => startQueue(qUrls.value);
+    ui.querySelector("#rr-q-stop").onclick = stopQueue;
+    if (loadQueue().urls.length) ui.querySelector("details").open = true;
     const delayInput = ui.querySelector("#rr-delay");
     delayInput.value = settings.delayMs;
     delayInput.onchange = () => {
@@ -348,6 +431,13 @@
     };
     readMeta();
     render();
+    renderQueue();
+    const q = loadQueue();
+    if (q.active) {
+      const target = q.urls[q.index];
+      if (target && slugOf(target) === slug) runQueueItem();
+      else goToCurrent(); // landed elsewhere (redirect/manual nav) → resume
+    }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountUi);
   else mountUi();

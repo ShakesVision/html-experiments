@@ -49,6 +49,23 @@ instead of `GM_xmlhttpRequest`.)
      This also happens automatically when collection finishes.
 5. **Clear saved** wipes this book's progress.
 
+**One-click:** **⚡ Collect + PDF** collects any missing keys and then builds
+the PDF. If the run is paused, it stops without making a PDF.
+
+**Delay (ms):** the pause after every API request during collection
+(default 1600). It is saved across sessions. Lower is faster but hits 429
+sooner.
+
+**Multi-book queue:** open *Multi-book queue* in the panel and paste
+rekhta.org ebook links, one per line (`/ebooks/detail/…` links and bare slugs
+also work). Click **▶ Run queue**. The script opens each book in turn, runs
+Collect + PDF, then moves to the next. Books are processed one at a time,
+fully unattended. Queue state lives in `localStorage`, so it continues across
+page loads and resumes after a reload. **■ Stop** halts it. The info line
+shows progress and any books that failed. A book's saved keys are cleared
+once its PDF is saved. The first time, your browser may ask to *allow
+multiple downloads* for rekhta.org; allow it.
+
 The status line shows the throttle bucket, e.g. `throttle 12/150 (c)`. `c` is
 correct. `i` means you're being counted per IP; try logging in to rekhta.org.
 
