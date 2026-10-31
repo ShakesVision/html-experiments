@@ -17,7 +17,10 @@
   "use strict";
 
   const PROXY = "http://localhost:8888";
-  const MIN_INTERVAL_MS = 1600;
+  const SETTINGS_KEY = "rr_settings";
+  const settings = Object.assign({ delayMs: 1600 }, safeParse(localStorage.getItem(SETTINGS_KEY)));
+  const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  function safeParse(s) { try { return JSON.parse(s) || {}; } catch { return {}; } }
   const MAX_ATTEMPTS = 3; // per request; then the page is reported as failed
   const TILE = 50;
   const GAP = 16;
@@ -143,7 +146,7 @@
         const base = Number(data?.from ?? from);
         ids.forEach((id, i) => { if (id) bundle.pageIds[base + i] = id; });
         saveBundle(); render();
-        await delay(MIN_INTERVAL_MS);
+        await delay(settings.delayMs);
         if (!ids.length || !bundle.pageIds[from]) { status(`No id returned for page ${from + 1}; stopping.`); break; }
       }
       // 2) Tile maps for every page not captured yet (each page tried once
@@ -162,13 +165,14 @@
           failed.push(i + 1);
           console.warn("[rr] page", i + 1, e);
         }
-        await delay(MIN_INTERVAL_MS);
+        await delay(settings.delayMs);
       }
       const missingIds = bundle.totalPages - bundle.pageIds.slice(0, bundle.totalPages).filter(Boolean).length;
       status(!running ? "Paused."
         : failed.length || missingIds ? `Finished with gaps: ${failed.length} keys failed${missingIds ? `, ${missingIds} ids missing` : ""}. Resume later.`
         : "All keys collected.");
       if (running) pushToProxy(true);
+      return { completed: running, failed: failed.length, missingIds };
     } finally {
       running = false;
       render();
@@ -245,14 +249,21 @@
           console.warn("[rr] pdf page", i + 1, e);
         }
       }
-      if (!running) return status("PDF cancelled.");
-      if (!pdf) return status("No pages rendered — collect keys first.");
+      if (!running) { status("PDF cancelled."); return false; }
+      if (!pdf) { status("No pages rendered — collect keys first."); return false; }
       pdf.save(`${(bundle.title || slug).replace(/[\\/:*?"<>|]+/g, "-")}.pdf`);
       status(failed.length ? `PDF saved · skipped ${failed.length}: ${failed.slice(0, 15).join(", ")}${failed.length > 15 ? "…" : ""}` : "PDF saved · all pages");
+      return true;
     } finally {
       running = false;
       render();
     }
+  }
+
+  async function collectAndPdf() {
+    const result = await collect();
+    if (!result?.completed) return false;
+    return downloadPdf();
   }
 
   // ── Export ──────────────────────────────────────────────────────────────
@@ -307,13 +318,24 @@
       <div id="rr-status" style="min-height:16px;color:#9cf;margin:4px 0"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
         <button id="rr-go" style="grid-column:1/3"></button>
-        <button id="rr-pdf" style="grid-column:1/3;font-weight:bold">⬇ Download PDF</button>
+        <button id="rr-all" style="grid-column:1/3;font-weight:bold">⚡ Collect + PDF</button>
+        <button id="rr-pdf" style="grid-column:1/3">⬇ Download PDF</button>
+        <label style="grid-column:1/3;display:flex;gap:6px;align-items:center">Delay (ms)
+          <input id="rr-delay" type="number" min="0" step="100" style="width:80px"></label>
         <button id="rr-exp">Export JSON</button>
         <button id="rr-push">Push to proxy</button>
         <button id="rr-clr" style="grid-column:1/3">Clear saved</button>
       </div>`;
     document.body.appendChild(ui);
+    const delayInput = ui.querySelector("#rr-delay");
+    delayInput.value = settings.delayMs;
+    delayInput.onchange = () => {
+      settings.delayMs = Math.max(0, Number(delayInput.value) || 0);
+      delayInput.value = settings.delayMs;
+      saveSettings();
+    };
     ui.querySelector("#rr-go").onclick = () => (running ? (running = false) : collect());
+    ui.querySelector("#rr-all").onclick = () => (running ? (running = false) : collectAndPdf());
     ui.querySelector("#rr-pdf").onclick = () => (running ? (running = false) : downloadPdf());
     ui.querySelector("#rr-exp").onclick = exportFile;
     ui.querySelector("#rr-push").onclick = () => pushToProxy(false);
