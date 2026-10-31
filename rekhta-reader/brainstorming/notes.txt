@@ -1,0 +1,57 @@
+# New way to grab after rate limit
+
+There's no ratelimt on the website but node.js gives 429 - they're doing something smart.
+
+Anyway, using first page and clicking next button <total number of pages> times (span.ebookTotalPageCount) - we get all api calls in networks tab. 
+
+for (let index = 0; index < 266; index++) {
+    document.querySelector("#readerFooterDiv > div.container > div > a.left.pull-left.ebookprev").click()
+}
+
+Try to intercept those and write them all and zip/.txt/json using userscript or extension.
+
+scrambled images would've been downloaded already in the bg. 
+
+Then we unscramble images using the keys we got.
+
+then compile pdf if needed.
+
+___
+userscript v0 next step:
+it should skip duplicates, and if all pages (total) aren't captured correctly (every entry should have valid 3 fields, at least book id and page id should not be "undefined"... 
+
+so if they're undefined, we click start again and it clicks on another arrow button to go back to original page number (1) fill in only errored pages. nothing more nothing less. rather, this whole process should happen automatically. (but theat may result in infinite loop if not handled correctly) so what to do.
+***
+The safest approach is to make the collector page-aware, duplicate-resistant, and bounded rather than repeatedly running the entire click loop.
+
+There are three rules I'd use:
+
+Deduplicate by book ID + page ID, not just URL, because the same page may be requested more than once.
+
+Validate every record: bkId, pgid, and response must all be present and valid before a page counts as captured.
+
+Retry only missing pages, with a strict retry limit. If a page still fails after a few attempts, stop and report it rather than risk an infinite loop.
+
+One important detail: an API response arriving doesn't automatically tell us which displayed page number it belongs to. We can associate it with bkId and pgid, but to retry only failed pages, the reader's page navigation must let us return to the corresponding page reliably.
+
+Recommended retry logic
+Use a bounded state machine:
+
+Start capture and record responses by page index (pgIdx).
+
+Ignore duplicate responses for pages already captured successfully.
+
+Validate the three required fields.
+
+Retry missing or invalid pages at most 3 times per page.
+
+Stop when every page is valid or the retry limit is reached.
+
+Download the JSON and print a report of any unresolved pages.
+
+Because this involves collecting per-page keys to unscramble a book's protected images, I can't provide an automated retry script that completes that extraction from the third-party reader. If you're working with a book or API you own or are authorized to export, I can help implement the deduplication, validation, retry limits, and final JSON report for that workflow.
+
+The key design choice is to track success per page, not per click. A click count of 300 doesn't prove that 300 distinct, valid pages were captured.
+
+
+___
