@@ -123,6 +123,10 @@ function createBookClient(options = {}) {
   const fetchImpl = options.fetchImpl || fetch.bind(globalThis);
   const tileSize = options.tileSize || DEFAULT_TILE_SIZE;
   const tileGap = options.tileGap || DEFAULT_TILE_GAP;
+  // Key bundles captured on rekhta.org by rekhta-key-collector.user.js.
+  // pageId -> tile map. When present, no Rekhta API call is needed.
+  const bundleKeys = new Map();
+  const localBundles = new Map(); // bookId -> bundle loaded from a file
 
   return {
     buildManifestUrl: (bookUrl) => buildManifestUrl(bookUrl),
@@ -130,13 +134,66 @@ function createBookClient(options = {}) {
     getPageKey,
     getPageIds,
     fetchImageBlob,
+    importBundle,
+    hasKey: (pageId) => !!pageId && bundleKeys.has(pageId),
     proxyPrefix,
     renderPageToCanvas,
     renderPageToBlob,
     renderPageDirect,
   };
 
+  function proxyOrigin() {
+    try {
+      return new URL(proxyPrefix.replace("{url}", "")).origin;
+    } catch {
+      return "";
+    }
+  }
+
+  function importBundle(bundle) {
+    if (bundle?.bookId) localBundles.set(bundle.bookId, bundle);
+    let count = 0;
+    for (const [pageId, key] of Object.entries(bundle?.keys || {})) {
+      if (Array.isArray(key?.Sub) && key.Sub.length) {
+        bundleKeys.set(pageId, key);
+        count++;
+      }
+    }
+    return count;
+  }
+
+  async function loadBundleFromProxy(manifest, bookUrl) {
+    const origin = proxyOrigin();
+    if (!origin) return null;
+    const slug = extractUrlSegment(bookUrl, "/ebooks/");
+    for (const q of [`bookId=${encodeURIComponent(manifest.bookId)}`, `slug=${encodeURIComponent(slug)}`]) {
+      try {
+        const res = await fetchImpl(`${origin}/bundle?${q}`);
+        if (res.ok) return res.json();
+      } catch {
+        return null; // proxy is old or offline
+      }
+    }
+    return null;
+  }
+
   async function getManifest(bookUrl, fetchOptions = {}) {
+    const manifest = await getManifestFromHtml(bookUrl, fetchOptions);
+    const bundle = localBundles.get(manifest.bookId) || (await loadBundleFromProxy(manifest, bookUrl));
+    if (bundle) {
+      const n = importBundle(bundle);
+      (bundle.pageIds || []).forEach((id, i) => {
+        if (!id || i >= manifest.pageCount || manifest.pageIds[i]) return;
+        manifest.pageIds[i] = id;
+        manifest.scrambleMap[i].pageId = id;
+      });
+      manifest.bundleKeyCount = n;
+      console.info(`[reader] using key bundle: ${n} keys`);
+    }
+    return manifest;
+  }
+
+  async function getManifestFromHtml(bookUrl, fetchOptions = {}) {
     const manifestUrl = buildManifestUrl(bookUrl);
     console.debug("[reader] getManifest start", {
       bookUrl,
@@ -168,6 +225,7 @@ function createBookClient(options = {}) {
     if (!pageId) {
       throw new Error("Page ID is required to fetch the page key.");
     }
+    if (bundleKeys.has(pageId)) return bundleKeys.get(pageId);
 
     const keyUrl = applyProxyPrefix(
       buildPageKeyUrl({

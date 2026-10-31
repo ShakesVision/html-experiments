@@ -1,0 +1,5 @@
+
+proxy/cache/
+proxy/*.har
+proxy/*.bak
+*.rekhta-keys.json

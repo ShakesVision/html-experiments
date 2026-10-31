@@ -40,6 +40,7 @@ function parseArgs(argv) {
     concurrency: 1,
     parallel: 1,
     keepImages: false,
+    keys: null, // path to a *.rekhta-keys.json bundle from the userscript
   };
 
   for (let i = 2; i < argv.length; i++) {
@@ -49,14 +50,20 @@ function parseArgs(argv) {
     else if (a === "--images") args.images = true;
     else if (a === "--no-pdf") args.pdf = false;
     else if (a === "--keep-images") args.keepImages = true;
+    else if (a === "--keys") args.keys = argv[++i];
     else if (a === "--range" || a === "--pages") args.range = argv[++i];
     else if (a === "--scale") args.scale = Number(argv[++i]) || 1;
     else if (a === "--concurrency")
       args.concurrency = Math.max(1, Number(argv[++i]) || args.concurrency);
     else if (a === "--parallel")
       args.parallel = Math.max(1, Number(argv[++i]) || args.parallel);
+    else if (a === "--allow-api") args.allowApi = true;
     else args.urls.push(a);
   }
+  // A bundle carries everything; the book URL becomes optional.
+  if (args.keys && !args.urls.length) args.urls.push("bundle:" + args.keys);
+  // With a bundle only image downloads remain, so a small pool is fine.
+  if (args.keys && !argv.includes("--concurrency")) args.concurrency = 3;
 
   return args;
 }
@@ -110,22 +117,47 @@ async function fetchJson(url, proxy, referer) {
 
 async function fetchBuffer(url, proxy) {
   const full = applyProxy(proxy, url);
-  const res = await fetch(full, { method: "GET", headers: requestHeaders("*/*") });
-  if (!res.ok) throw new Error(`Fetch failed ${res.status} ${url}`);
-  return Buffer.from(await res.arrayBuffer());
+  const delays = [2000, 5000, 15000];
+  for (let attempt = 0; ; attempt++) {
+    const headers = requestHeaders("image/avif,image/webp,image/*,*/*;q=0.8");
+    delete headers["X-Requested-With"];
+    const res = await fetch(full, { method: "GET", headers });
+    if (res.ok) return Buffer.from(await res.arrayBuffer());
+    if (attempt >= delays.length || (res.status !== 429 && res.status < 500)) {
+      throw new Error(`Fetch failed ${res.status} ${url}`);
+    }
+    const ra = Number(res.headers.get("retry-after"));
+    await new Promise((r) => setTimeout(r, ra > 0 ? ra * 1000 : delays[attempt]));
+  }
 }
 
 function requestHeaders(accept, referer = "https://www.rekhta.org/") {
   return {
     Accept: accept,
     "Accept-Language": "en-US,en;q=0.9",
-    "Cache-Control": "no-cache",
-    Origin: "https://www.rekhta.org",
-    Pragma: "no-cache",
     Referer: referer,
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
     "X-Requested-With": "XMLHttpRequest",
   };
+}
+
+function loadBundle(file) {
+  const raw = JSON.parse(fs.readFileSync(file, "utf8"));
+  // Also accept the old userscript_v1 format: [{bkId, pgid, response}]
+  if (Array.isArray(raw)) {
+    const keys = {};
+    let bookId = "";
+    for (const it of raw) {
+      try {
+        let k = typeof it.response === "string" ? JSON.parse(it.response) : it.response;
+        if (typeof k === "string") k = JSON.parse(k);
+        if (Array.isArray(k?.Sub) && k.Sub.length) keys[it.pgid] = k;
+        bookId = bookId || it.bkId;
+      } catch {}
+    }
+    return { bookId, keys, pages: [], pageIds: [], totalPages: 0 };
+  }
+  return raw;
 }
 
 function readScriptValue(source, variableName) {
@@ -428,14 +460,24 @@ function makePdfFromJpegs(images) {
 async function downloadBook(url, opts) {
   const { proxy, out, images, pdf, range, scale, concurrency, keepImages } =
     opts;
-  console.log("Fetching manifest...", url);
-  const html = await fetchText(url, proxy);
+  // A bundle (from rekhta-key-collector.user.js) carries bookId, page files,
+  // page IDs and every tile map — then no Rekhta API call is needed at all.
+  const bundle = opts.keys ? loadBundle(opts.keys) : null;
+  let html = "";
+  if (!bundle?.pages?.length) {
+    if (url.startsWith("bundle:")) throw new Error("Bundle has no page list; pass the book URL as well.");
+    console.log("Fetching manifest...", url);
+    html = await fetchText(url, proxy);
+  } else {
+    console.log(`Using key bundle ${opts.keys} (${Object.keys(bundle.keys || {}).length} keys)`);
+  }
   const bookId =
-    readScriptValue(html, "bookId") || extractUrlSegment(url, "/ebooks/");
-  const pages = parseScriptArray(html, "pages");
-  const pageIds = parseScriptArray(html, "pageIds");
+    bundle?.bookId || readScriptValue(html, "bookId") || extractUrlSegment(url, "/ebooks/");
+  const pages = bundle?.pages?.length ? bundle.pages : parseScriptArray(html, "pages");
+  const pageIds = bundle?.pageIds?.length ? bundle.pageIds : parseScriptArray(html, "pageIds");
+  const bundleKeys = bundle?.keys || {};
   const totalPageCount = Number(
-    readScriptValue(html, "totalPageCount") || pages.length || pageIds.length,
+    bundle?.totalPages || readScriptValue(html, "totalPageCount") || pages.length || pageIds.length,
   );
   const pageCount =
     Number.isFinite(totalPageCount) && totalPageCount > 0
@@ -477,13 +519,17 @@ async function downloadBook(url, opts) {
         const pageNum = queue.shift();
         const idx = pageNum - 1;
         // ensure pageId
-        if (!manifest.pageIds[idx]) {
+        if (!manifest.pageIds[idx] && !bundle) {
           await ensurePageIdWindow(url, proxy, manifest, idx, 50);
         }
         const pageId = manifest.pageIds[idx];
         const imageName = pages[idx];
         if (!pageId) {
-          passFailures.push({ page: pageNum, error: "Rekhta did not provide a page ID." });
+          passFailures.push({ page: pageNum, error: bundle ? "Page ID missing from bundle — resume the collector." : "Rekhta did not provide a page ID." });
+          continue;
+        }
+        if (bundle && !isUsablePageKey(bundleKeys[pageId]) && !opts.allowApi) {
+          passFailures.push({ page: pageNum, error: "Key missing from bundle — resume the collector (or pass --allow-api)." });
           continue;
         }
         if (!imageName) {
@@ -493,9 +539,11 @@ async function downloadBook(url, opts) {
         const imgUrl = `${IMAGE_BASE}${bookId}/${imageName}`.replace(/\/?$/, "");
 
         try {
+          // Key first: if the API is throttled we don't waste the image fetch.
+          const pageKey = isUsablePageKey(bundleKeys[pageId])
+            ? bundleKeys[pageId]
+            : await fetchPageKey(bookId, pageNum, pageId, proxy, url);
           const raw = await fetchBuffer(imgUrl, proxy);
-          // fetch pageKey
-          const pageKey = await fetchPageKey(bookId, pageNum, pageId, proxy, url);
           const finalBuf = await unscrambleBufferWithCanvas(pageKey, raw, scale);
 
           if (images) {
@@ -564,7 +612,7 @@ async function main() {
   const opts = parseArgs(process.argv);
   if (!opts.urls.length) {
     console.error(
-      "Usage: node dwn.js <bookUrl> [--proxy <proxy>] [--out <out.pdf>] [--images] [--range 1-10] [--scale 0.8] [--concurrency 4] [--parallel 1] [--keep-images]",
+      "Usage: node dwn.js <bookUrl> [--keys <slug>.rekhta-keys.json] [--proxy <proxy>] [--out <out.pdf>] [--images] [--range 1-10] [--scale 0.8] [--concurrency 4] [--parallel 1] [--keep-images]",
     );
     process.exit(2);
   }

@@ -20,6 +20,33 @@ let bookClient = createBookClient({
   proxyPrefix: DEFAULT_PROXY_TEMPLATE,
 });
 
+// Key bundles (*.rekhta-keys.json) loaded via the "Keys" button.
+const importedBundles = [];
+{
+  const keysButton = document.getElementById("keys-button");
+  const keysInput = document.getElementById("keys-input");
+  keysButton?.addEventListener("click", () => keysInput.click());
+  keysInput?.addEventListener("change", async () => {
+    let total = 0;
+    let lastUrl = "";
+    for (const file of keysInput.files) {
+      try {
+        const bundle = JSON.parse(await file.text());
+        importedBundles.push(bundle);
+        total += bookClient.importBundle(bundle);
+        if (bundle.slug) lastUrl = `https://www.rekhta.org/ebooks/${bundle.slug}`;
+      } catch (e) {
+        alert(`${file.name}: not a valid key bundle (${e.message})`);
+      }
+    }
+    keysInput.value = "";
+    keysButton.title = `${total} page keys loaded`;
+    keysButton.classList.add("is-active");
+    const urlInput = document.querySelector("#book-form input[type='url'], #book-form input[name='url'], #book-form input[type='text']");
+    if (lastUrl && urlInput && !urlInput.value.trim()) urlInput.value = lastUrl;
+  });
+}
+
 const elements = {
   bookForm: document.getElementById("book-form"),
   cacheBadge: document.getElementById("cache-badge"),
@@ -534,6 +561,7 @@ async function loadBook(
 
   localStorage.setItem(PROXY_STORAGE_KEY, proxyPrefix);
   bookClient = createBookClient({ proxyPrefix });
+  for (const b of importedBundles) bookClient.importBundle(b);
   cancelActiveWork();
   resetPreviewState();
 
@@ -745,6 +773,7 @@ async function processQueueItem(item) {
   // main viewer's `bookClient` (which can be reassigned by loadBook() while
   // a queued download is still in flight).
   const client = createBookClient({ proxyPrefix });
+  for (const b of importedBundles) client.importBundle(b);
 
   item.status = "fetching";
   item.message = "Loading manifest...";
@@ -905,6 +934,27 @@ function renderManifest(manifest) {
     return { body, card, status };
   });
 
+  // Pages whose tile map is already known (key bundle / proxy cache) need no
+  // rate-limited API call — render them lazily as they scroll into view.
+  state.previewObserver?.disconnect();
+  const keyed = manifest.scrambleMap.filter((ref) => bookClient.hasKey?.(ref.pageId)).length;
+  if (keyed) {
+    setStatus(`${keyed}/${manifest.pageCount} page keys available from bundle — previews load as you scroll.`, "success");
+    state.previewObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const index = Number(entry.target.dataset.pageIndex);
+          if (!bookClient.hasKey?.(manifest.scrambleMap[index]?.pageId)) continue;
+          state.previewObserver.unobserve(entry.target);
+          state.pageNodes[index].status.textContent = "Loading…";
+          schedulePreview(index);
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    state.pageNodes.forEach(({ card }) => state.previewObserver.observe(card));
+  }
 }
 
 function schedulePreview(pageIndex) {
@@ -972,6 +1022,7 @@ function schedulePreview(pageIndex) {
 
 function resetPreviewState() {
   closeReader();
+  state.previewObserver?.disconnect();
   state.pageNodes = [];
   state.previewRequests.clear();
   state.isUrduBook = false;
